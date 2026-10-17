@@ -419,7 +419,8 @@ In simple words: **each player is the boss of their own character, and the host 
 ### 13.7 Connection indicator
 A small signal icon in the corner: 🟢 good (under 100 ms), 🟡 OK (100–200 ms), 🔴 laggy (over 200 ms). Tapping it shows the ping and whether you're connected directly or through the relay.
 
-## 14. Art style 💬
+## 14. Art style 🔒
+*Locked 2026-10-17. Exact shapes are refined in the game on a real phone.*
 Background depth is in section 9; colors are in section 4.
 
 ### 14.1 How the art is made
@@ -488,9 +489,65 @@ Stylized slim figures with a **big head (about half head, half body)**, arms and
 ### 14.7 Silhouette test
 Every character and object must be recognizable as a **plain black shape**. If two things look the same in silhouette, one of them gets redesigned (P2).
 
+## 15. Sound and music 💬
+
+### 15.1 The most important rule: sound is a bonus, never required
+Many people play on their phone **with the sound off** (and on iPhone the silent switch can mute web games). So **nothing important is told by sound alone**: every sound also has a visual (P2). Sound makes the game *feel* better (P4); it never decides whether you can play it.
+
+### 15.2 How the sounds are made
+| Kind | Made with | Why |
+|---|---|---|
+| Most effects (jumps, clicks, chimes, UI) | **Synthesized in code** with the phone's built-in audio engine (Web Audio) | Tiny download, every sound can vary slightly each time, easy to tweak in words |
+| Organic textures (fire crackle, water lapping, stone rumble) | Code synthesis first; if that sounds too fake, **free CC0 recordings** (no credit needed, free to use) that we layer and process | Real fire and water are hard to fake well |
+| Voices ("hah!", "hm.") | Option A: **you and a friend record** a few short sounds and we process them (pitch, effects). Option B: synthesized "babble" voices. Option C: no voices | A personal touch would be fun |
+| Music | **Composed in code** as layered loops (section 15.4). If it isn't good enough, switch to free licensed tracks (CC0 or credited CC-BY) | Matches our "everything in code" approach and has no license risk |
+
+(L4 means nothing is taken from Fireboy & Watergirl. Free-license library sounds are allowed.)
+
+### 15.3 Sound personality
+| | 🔥 Hot Boy | 💧 Cool Girl |
+|---|---|---|
+| Steps | Small crackly taps | Soft wet pats |
+| Jump | Whoosh plus a spark burst | Light splash plus an airy swish |
+| Land | Heavy thump with sizzling sparks | Soft ripple |
+| Near danger | Fizzing and sputtering as his flame shrinks | Bubbling and hissing as she starts to boil |
+| Death | Steam hiss, then an angry "pfft" | Boiling bubble, then an evaporating sigh |
+| Victory | Small firework pops | Glassy chime plus a "click" as the sunglasses drop |
+| Voice (if used) | Short, loud "hah!", "yeah!" | Calm "hm.", "nice." |
+
+### 15.4 Music: a duet
+- **Mood:** an ancient jungle temple, mysterious, rhythmic and warm. Instruments: **kalimba and marimba plucks, hand drums, soft low flute, deep drones, distant chimes**.
+- **The music is a duet**, and it reacts to play:
+  - Base layer: drones and soft ambience, always playing.
+  - **Hot Boy's layer: hand drums and warm plucks**, which get louder while he moves.
+  - **Cool Girl's layer: airy chimes and flowing arpeggios**, which get louder while she moves.
+  - When both are moving, the full song plays. Teamwork literally sounds better (P1).
+- Gem pickups play notes **in the same key as the music**, so collecting sounds musical.
+- Music **ducks** (quiets down) during death and swells on level complete.
+- **Different temple chapters get a different music variation** (later).
+
+### 15.5 Complete sound list (first version)
+| Group | Sounds |
+|---|---|
+| Characters | steps, jump, land, near-danger loop, death, victory, idle waiting gesture |
+| Liquids | lava bubbling loop, water lapping loop, poison gloop loop, splash when entering your own liquid |
+| Mechanisms | button press click and stone rumble, lever clunk, platform grinding loop (start and stop), gate sliding, door hum when near, door opening |
+| Gems | pickup chime, with a rising pitch for quick combos; warm tone for Hot Boy's gems, glassy tone for Cool Girl's |
+| UI | tap, back, ready, partner joined (two-note chime), stars counting up (three rising notes), hold-to-restart rising tone and pop |
+| Ambience | temple room tone, distant wind, dripping water, faint jungle insects far away |
+
+### 15.6 Mixing rules
+- **Priority:** your own action feedback > partner events > music > ambience.
+- **Small phone speakers have little bass**, so important sounds live in the mid range and must sound good on a phone speaker. We test on the phone speaker, not just headphones.
+- **Frequent sounds are quiet** (steps), and rare events are louder (death, victory). Nothing gets annoying after 100 repeats.
+- **Every sound varies slightly** in pitch and volume each time (section 8).
+- **Stereo position:** sounds come from where they happen: lava on the left is heard more on the left. Hazard loops get **louder as you get closer**, an extra warning (always with a visual too).
+- Your partner's sounds play slightly quieter than your own.
+- **Settings:** music volume, sound volume, vibration on or off.
+
 ---
 
-## 15. Topics still to design ❓
+## 16. Topics still to design ❓
 We'll go through these in order and fill in a section for each.
 
 1. ~~Color rules~~ ✅
@@ -503,13 +560,13 @@ We'll go through these in order and fill in a section for each.
 8. ~~The game flow~~ ✅ (section 11)
 9. ~~Scoring and progress~~ ✅ (section 12)
 10. ~~Online rules~~ ✅ (section 13)
-11. **Art style**: drafted (section 14)
-12. **Sound and music**
+11. ~~Art style~~ ✅ (section 14)
+12. **Sound and music**: drafted (section 15)
 13. **Level design rules** and the first 5 levels
 
 ---
 
-## 16. Decision log
+## 17. Decision log
 | Date | Decision |
 |---|---|
 | 2026-10-17 | Name: **Hot Boy & Cool Girl**, set in an ancient jungle temple. |
@@ -528,4 +585,5 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Scoring and progress locked: 3 team stars per level, no death penalty, finish to unlock, saves on both phones. |
 | 2026-10-17 | Level size (32×18 grid), thumb zones, and ledge nudge, head nudge and small step-up locked. |
 | 2026-10-17 | Online rules locked: each player owns their character, the host referees the world; hold-to-restart with a fill-ring animation. |
-| 2026-10-17 | Character personality: hot-headed Hot Boy vs. cool-headed Cool Girl, stylish not cute (art style still a draft). |
+| 2026-10-17 | Character personality: hot-headed Hot Boy vs. cool-headed Cool Girl, stylish not cute (art style locked). |
+| 2026-10-17 | Art style locked: characters drawn in code, world in SVG, shader liquids, dynamic lighting. |
