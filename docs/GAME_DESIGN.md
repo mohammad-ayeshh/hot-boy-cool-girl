@@ -13,7 +13,8 @@ We decide things here first and implement them second. When code and this doc di
 ## 1. The game in one sentence 🔒
 A two-player **online co-op puzzle platformer for phones**: a fire boy and a water girl work together to get through a dark jungle temple, where each is safe in their own element and in danger in the other's.
 
-## 2. Design pillars (principles we never break) 💬
+## 2. Design pillars (principles we never break) 🔒
+*Locked 2026-10-17.*
 Every feature, level and screen must pass all of these. If an idea breaks a pillar, the idea changes, not the pillar.
 
 ### P1. Together or not at all
@@ -36,7 +37,8 @@ From opening the link to playing together in **under 30 seconds**: no accounts, 
 ### P6. Your character is always yours
 Online lag must **never** make your own character feel slow. Your character responds on your screen right away; the network only affects how you see your partner.
 
-## 3. Hard limits (non-negotiable constraints) 💬
+## 3. Hard limits (non-negotiable constraints) 🔒
+*Locked 2026-10-17.*
 | # | Limit |
 |---|---|
 | L1 | Runs in the phone browser on **Android and iPhone**, in **landscape**. Can be added to the home screen. |
@@ -89,28 +91,184 @@ Online lag must **never** make your own character feel slow. Your character resp
 
 ---
 
-## 5. Topics still to design ❓
-We'll go through these in order and fill in a section for each.
+## 5. Screen and camera 🔒
+*Locked 2026-10-17.*
 
-1. ~~Color rules~~ ✅
-2. **Design pillars and hard limits**: review and lock sections 2 and 3
-3. **Screen and camera**: how much of the level fits on a phone screen
-4. **Controls**: touch layout and buttons
-5. **Characters and movement**: looks, speed, jump, how they feel
-6. **Level building blocks**: hazards, buttons, levers, platforms, boxes, gems, doors, and which ones come first
-7. **The game flow**: open link → room → level select → play → results
-8. **Scoring and progress**: time, gems, stars, unlocking levels
-9. **Online rules**: who hosts, disconnects, restarting, dying
-10. **Art style and effects**: character design, temple look, lighting, particles
-11. **Sound and music**
-12. **Level design rules** and the first 5 levels
+### 5.1 One level = one screen
+The **whole level is always visible**. No scrolling camera. Both players can always see each other and the whole puzzle, which makes co-op planning easy (P1, P2).
+
+### 5.2 Level size 💬 *(numbers may be tuned in the first prototype)*
+- Levels are built on a grid of **32 × 18 tiles** (16:9 shape, the shape of most phone screens).
+- The level is scaled to **fill the screen height**. On the S23 Ultra a tile is about 22 screen points and a character about 1 tile wide and 1.5 tiles tall.
+- **Wider phones** (S23, iPhones are about 19.5:9) get extra space on the left and right. We fill it with temple decoration, and that is where the thumbs rest.
+- **Squarer screens** (tablets) get decorated bands at the top and bottom.
+
+### 5.3 Thumb zones (level design rule) 💬
+On 16:9 phones the thumbs cover the bottom-left and bottom-right corners of the level. **The bottom-left and bottom-right 4 × 4 tile areas of every level contain no gems, buttons, levers, doors or hazard edges**: only solid wall or simple floor.
+
+## 6. Controls 🔒
+*Locked 2026-10-17.*
+
+### 6.1 Only three actions
+Like the original: **left, right, jump**. Nothing else is needed during play. Buttons, levers, boxes and doors all work by walking into them or standing on them.
+
+### 6.2 Touch layout (recommended)
+| Side | Zone | How it works |
+|---|---|---|
+| Left thumb | **Move zone** (left ~40% of the screen) | Put your thumb down **anywhere** in the zone and **slide left or right** from that spot to walk. A small ring appears under your thumb. Lift to stop. |
+| Right thumb | **Jump zone** (right ~40% of the screen) | **Tap anywhere** in the zone to jump. **Hold longer = higher jump**, quick tap = small hop. |
+| Top center | **Pause button** | Small and out of the way. Opens: resume, restart level, settings, leave room. |
+
+**Why this layout:**
+- You never have to hit a small exact button. The #1 problem with phone platformers is the thumb sliding off a button you can't see or feel.
+- Walking is on/off at full speed (not like a car's gas pedal), so it is as precise as a keyboard.
+- No big buttons painted over the level, so you can see the whole puzzle (P2).
+
+### 6.3 Making it feel good (P3)
+- **Dead zone:** the thumb must slide about 10 points before you start walking, so resting a thumb doesn't move you.
+- **Direction flip:** sliding back past where you first touched turns you around instantly; there's no need to lift your thumb.
+- **Jump buffer** 🔒: a jump tapped up to ~0.12 s *before* landing still happens.
+- **Coyote time** 🔒: you can still jump for ~0.1 s *after* walking off a ledge.
+- **Haptics (Android):** a light tick on jump and landing.
+- On-screen hints show the zones on the first level and fade away after a few seconds of play.
+
+### 6.4 Also supported
+- **Keyboard** (PC testing): arrows or A/D to move, W, Up or Space to jump, Esc to pause.
+- **Gamepad** (optional later): stick or d-pad and the A button.
+- **Settings (later):** an optional "fixed buttons" layout, left-handed swap, and control size.
+
+## 7. Characters and movement 💬
+
+### 7.1 Same moves, different elements
+Hot Boy and Cool Girl **move exactly the same**: same speed, same jump, same size. The only differences are:
+- **What hurts them**: lava hurts Cool Girl, water hurts Hot Boy, violet hurts both.
+- **Looks and personality**, in visuals and sound only.
+
+*Why:* it's fair, easy to learn, and makes levels much easier to design (P1, P3). The original game did the same.
+
+### 7.2 Personality (visual only)
+| | Hot Boy | Cool Girl |
+|---|---|---|
+| Shape | Pointy, flickering flame | Round, wobbly water drop |
+| Motion | Energetic, sparks fly off him | Smooth and flowing, leaves droplets |
+| Idle | Flame flickers, embers rise | Gentle wobble, ripples |
+| Trail | Faint glowing embers that fade | Small wet drips that fade |
+| Light | Warm orange, flickering | Cool blue, steady |
+
+The two silhouettes are very different, so you can tell them apart without color (P2). The full art design comes in the art topic.
+
+### 7.3 Abilities: only run and jump
+- No double jump, no dash, no wall jump, no attacks. Simple like the original.
+- Players **walk through each other** (no collision, no standing on each other's heads). *Why:* standing on a partner whose position is delayed by the network would feel jittery and unfair (P6).
+- A player **walks normally through their own liquid**, as if it were floor (Hot Boy in lava, Cool Girl in water).
+
+### 7.4 Hitboxes are forgiving (P3)
+- A character's collision box is **slightly smaller than how they look**.
+- Hazards kill only when you're **clearly inside** them, not when a pixel touches the edge.
+- Rule: *close calls should be survived and feel exciting; deaths should feel deserved.*
+
+### 7.5 Movement numbers (starting values, tuned in the Feel Lab)
+Measured in tiles (1 tile ≈ the character's width).
+
+| Property | Value | Feel |
+|---|---|---|
+| Run speed | 7.5 tiles/s | crosses the screen in ~4 s |
+| Time to full speed | ~0.08 s | snappy but not robotic |
+| Time to stop | ~0.06 s | stops where you expect |
+| Max jump height (hold) | 3.25 tiles | |
+| Min jump height (quick tap) | ~1.2 tiles | |
+| Time to top of jump | ~0.38 s | |
+| Falling | 1.6× faster than rising | jumps feel weighty, not floaty |
+| Apex hang | gravity halves near the top | a moment of control at the peak |
+| Max fall speed | capped | long falls stay readable |
+| Longest gap you can jump | ~4 tiles | |
+
+These numbers become **level design rules**: walls up to 3 tiles are jumpable, gaps up to 4 tiles are crossable. Every level must respect them.
+
+### 7.6 Traversal helpers (P3)
+| Helper | What it does |
+|---|---|
+| Coyote time 🔒 | Jump a split second after leaving a ledge |
+| Jump buffer 🔒 | A jump pressed just before landing still happens |
+| Ledge nudge | If you miss a ledge top by a few pixels, you get pushed up onto it instead of sliding down |
+| Head nudge | If you jump and clip a ceiling corner by a few pixels, you slide around it instead of stopping dead |
+| Small step-up | Tiny bumps (less than ¼ tile) are walked over automatically |
+
+## 8. Game feel ("juice") 💬
+Game feel is built **from the first prototype**. It isn't left for the end. Inspired by Sébastien Bénard's (deepnight) *Game Feel* demo, https://deepnight.net/games/game-feel/ (source: https://github.com/deepnight/gamefeel).
+
+### 8.1 The Feel Lab
+Like that demo, the first thing we build is a **Feel Lab**: one test room with both characters and a **settings panel on the phone** where every effect below can be switched **on/off** and tuned with sliders. That lets us *see and feel* the difference each effect makes, then keep the best values.
+
+### 8.2 Effect catalog
+*Names in brackets are the matching deepnight demo options.*
+
+**Movement**
+- Squash and stretch on jump, land and turn [heroSquashAndStretch]
+- Dust or embers puff on jump, land and turn-around [jumpFx]
+- Basic animations: idle, run, jump, fall, land [basicAnimations]
+- Ledge and head nudges plus puffs when they help you [cliffGrabHelper, smallStepsHelper, climbFx]
+- Coyote time and jump buffer [justInTimeJump, ctrlQueue]
+
+**Camera** (kept small, because the whole level must stay visible)
+- Small shake on death, heavy landings and big doors [camShakesXY]
+- Tiny camera kick on hard landings [camBumpXY]
+- Very slight zoom pulse on death and level complete [camBumpZoom]
+
+**Light and flashes**
+- Each character carries their own light; liquids glow [lighting]
+- White flash on a character when they die or press something [blinkImpact]
+- Soft full-screen flash on death and when the level is completed [flashbang]
+
+**World reactions**
+- Liquids splash and ripple when entered; the splash color shows the element
+- Element-themed deaths instead of a plain disappear [cadavers]: Hot Boy hisses into steam in water, Cool Girl boils into vapor on lava, violet hazards dissolve either one into violet sparks
+- Trails that fade: embers for Hot Boy, drips for Cool Girl [a friendly version of the demo's blood/wall-burn marks]
+- Buttons sink with a click, platforms ease in and out, doors glow brighter as their player gets close
+
+**Time**
+- Hit-stop: a ~0.08 s freeze on death [slowMos]
+- Slow-motion moment when both players reach their doors
+
+**Rewards**
+- Gem pickup: pop, sparkle burst, and a sound whose pitch rises for quick consecutive pickups
+- Level complete: both doors burst with light, and the results screen counts up
+
+**Sound and haptics**
+- Every action has a sound with slight random pitch
+- Phone vibration on jump, land, death and button press (Android)
+
+*Not used* (they don't fit our game): shooting effects, recoil, bullets, enemy knockback, and control locks after big landings (being stunned breaks P3).
 
 ---
 
-## 6. Decision log
+## 9. Topics still to design ❓
+We'll go through these in order and fill in a section for each.
+
+1. ~~Color rules~~ ✅
+2. ~~Design pillars and hard limits~~ ✅
+3. ~~Screen and camera~~ ✅ (section 5)
+4. ~~Controls~~ ✅ (section 6)
+5. **Characters and movement**: in progress (section 7)
+6. **Game feel catalog**: drafted (section 8)
+7. **Level building blocks**: hazards, buttons, levers, platforms, boxes, gems, doors, and which ones come first
+8. **The game flow**: open link → room → level select → play → results
+9. **Scoring and progress**: time, gems, stars, unlocking levels
+10. **Online rules**: who hosts, disconnects, restarting, dying
+11. **Art style**: character design, temple look, lighting
+12. **Sound and music**
+13. **Level design rules** and the first 5 levels
+
+---
+
+## 10. Decision log
 | Date | Decision |
 |---|---|
 | 2026-10-17 | Name: **Hot Boy & Cool Girl**, set in an ancient jungle temple. |
 | 2026-10-17 | Tech: web game (TypeScript, PixiJS, PeerJS), PWA, hosted free on GitHub Pages. |
 | 2026-10-17 | Online-only 2-player, friends on both Android and iPhone. |
 | 2026-10-17 | Color rules locked; **violet = danger to everyone**. |
+| 2026-10-17 | Design pillars P1–P6 and hard limits L1–L6 locked. |
+| 2026-10-17 | One level = one screen, no scrolling camera. |
+| 2026-10-17 | Controls locked: slide-to-move on the left, tap/hold-to-jump on the right, coyote time and jump buffer. |
+| 2026-10-17 | Game feel is built from the first prototype, starting with a Feel Lab (toggle panel, inspired by deepnight's demo). |
