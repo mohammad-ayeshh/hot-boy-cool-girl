@@ -54,6 +54,30 @@ document.addEventListener('visibilitychange', () => {
 });
 
 export const canFullscreen = (): boolean => !!document.fullscreenEnabled;
+export const isFullscreen = (): boolean => !!document.fullscreenElement;
+/** iPhone Safari has no fullscreen for web pages: only "Add to Home Screen" removes the browser bars. */
+export const isIOS = (): boolean => /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// Remembered choice: if the player turns fullscreen off, the first tap stops forcing it on.
+const FS_KEY = 'hbcg.fullscreen.v1';
+export function wantsFullscreen(): boolean {
+  try { return localStorage.getItem(FS_KEY) !== '0'; } catch { return true; }
+}
+function rememberFullscreen(on: boolean): void {
+  try { localStorage.setItem(FS_KEY, on ? '1' : '0'); } catch { /* private mode: not remembered */ }
+}
+
+/** Fullscreen button: switch on or off and remember the choice. */
+export async function toggleFullscreen(): Promise<void> {
+  if (isFullscreen()) {
+    rememberFullscreen(false);
+    await document.exitFullscreen();
+  } else {
+    rememberFullscreen(true);
+    await enterFullscreenLandscape();
+  }
+}
 
 export async function enterFullscreenLandscape(): Promise<void> {
   if (!document.fullscreenElement) await document.documentElement.requestFullscreen({ navigationUI: 'hide' });

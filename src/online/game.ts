@@ -72,6 +72,7 @@ export async function startGame(): Promise<void> {
       <button class="hud-btn" data-act="menu" aria-label="Pause">⏸</button>
     </div>
     <button class="net-dot hidden" data-act="net" aria-label="Connection"></button>
+    <button class="fs-btn hud-btn" data-act="fullscreen"></button>
     <div class="toast hidden"></div>
     <div class="overlay screen" id="scr"></div>
     <div class="overlay hidden" id="menu"></div>
@@ -84,6 +85,7 @@ export async function startGame(): Promise<void> {
   const toastEl = $<HTMLElement>('.toast');
   const menuEl = $<HTMLElement>('#menu');
   const lostEl = $<HTMLElement>('#lost');
+  const fsBtn = $<HTMLElement>('.fs-btn');
 
   let toastTimer = 0;
   const toast = (text: string, ms = 2500) => {
@@ -95,7 +97,7 @@ export async function startGame(): Promise<void> {
 
   // The first touch unlocks sound and (on Android) goes fullscreen.
   let unlocked = false;
-  window.addEventListener('pointerdown', () => {
+  window.addEventListener('pointerdown', (e) => {
     if (unlocked) return;
     unlocked = true;
     device.unlock();
@@ -103,8 +105,27 @@ export async function startGame(): Promise<void> {
     music.start();
     music.configure(settings.music, settings.musicVolume);
     updateMusic();
-    if (device.canFullscreen() && !device.isStandalone() && matchMedia('(pointer: coarse)').matches) device.enterFullscreenLandscape().catch(() => {});
+    const fsTap = !!(e.target as HTMLElement).closest('[data-act="fullscreen"]');
+    if (!fsTap && device.wantsFullscreen() && device.canFullscreen() && !device.isStandalone() && matchMedia('(pointer: coarse)').matches) {
+      device.enterFullscreenLandscape().catch(() => {});
+    }
   }, { capture: true });
+
+  // ---------------------------------------------------------------- fullscreen button
+  // Not needed when opened from the home-screen icon (it's already fullscreen there).
+  const fsLabel = () => device.isFullscreen() ? '⛶ Exit full screen' : '⛶ Full screen';
+  function updateFsButton(): void {
+    fsBtn.textContent = fsLabel();
+    fsBtn.classList.toggle('hidden', device.isStandalone() || screen === 'play');
+    const menuFs = menuEl.querySelector<HTMLElement>('[data-act="fullscreen"]');
+    if (menuFs) menuFs.textContent = fsLabel();
+  }
+  document.addEventListener('fullscreenchange', updateFsButton);
+  function fullscreenTapped(): void {
+    if (device.canFullscreen()) { device.toggleFullscreen().catch(() => {}); return; }
+    // iPhone: Safari can't hide its bars for a web page; only the home-screen icon plays fullscreen.
+    toast(device.isIOS() ? 'iPhone: tap Share ⬆, then “Add to Home Screen”, and open the game from its icon.' : 'This browser can’t go full screen.', 6000);
+  }
   // Taps on menus must not leave a stuck touch on the game.
   ui.addEventListener('pointerdown', (e) => { if ((e.target as HTMLElement).closest('button, input, .overlay')) stage.controls.reset(); });
 
@@ -117,6 +138,7 @@ export async function startGame(): Promise<void> {
     netDot.classList.toggle('hidden', s === 'home');
     if (!playing) { closeMenu(); stage.showHints = false; }
     render();
+    updateFsButton();
     updateMusic();
   }
 
@@ -252,6 +274,7 @@ export async function startGame(): Promise<void> {
     else if (act === 'home') { leaveRoom(); lostEl.classList.add('hidden'); }
     else if (act === 'update') location.reload();
     else if (act === 'net') toast(netText());
+    else if (act === 'fullscreen') fullscreenTapped();
   });
   ui.addEventListener('input', (ev) => {
     const t = ev.target as HTMLInputElement;
@@ -477,6 +500,7 @@ export async function startGame(): Promise<void> {
       <h2>Paused <small>(the game keeps running)</small></h2>
       <button class="primary big" data-act="resume">Resume</button>
       <button class="hold-btn big" id="hold"><span class="hold-ring"></span><span>Hold to restart</span></button>
+      ${device.isStandalone() ? '' : `<button data-act="fullscreen">${fsLabel()}</button>`}
       <button data-act="leave">Leave room</button>
     </div>`;
     menuEl.classList.remove('hidden');

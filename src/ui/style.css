@@ -478,3 +478,11 @@ button.chosen { outline: 3px solid var(--gold); outline-offset: 2px; }
 }
 .map-node small .on { color: #e3b04b; }
 .map-node small .off { color: rgba(255, 255, 255, 0.18); }
+
+/* Fullscreen on/off, top-left on menu screens (during play it lives in the pause menu). */
+.fs-btn {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 5;
+}

@@ -603,7 +603,26 @@ Sketches drawn on the real 32 × 18 grid: [`docs/levels/chapter1-sketch.png`](le
 These sketches are a starting point. The real levels are built and tuned in the game and playtested (D12).
 
 ### 16.3 Level editor ("design your own level") 💬
-*Proposed 2026-10-17, not decided yet.* See the discussion in the conversation; to be locked before building.
+*Parked for later (2026-10-17). These are the saved ideas: discuss and lock them before building.*
+
+**The problem it solves:** a level saved on one phone has to reach the other player's phone. A level is tiny (a 32×18 grid plus a few mechanisms, about 1 KB of text), so **no server is needed**.
+
+**Sharing (two ways):**
+1. **In the room:** when you're already playing together, your phone sends the level to your friend over the phone-to-phone connection the game already uses. Their phone can keep a copy.
+2. **As a link:** the whole level is packed inside a web link (`…/?level=…`) that you send on WhatsApp or similar. Opening it shows the level and offers to save it on that phone.
+
+**Saving:** levels are saved on the phone (like progress), in a "My levels" list.
+
+**The editor (on the phone):**
+- Paint the 32×18 grid: stone, lava, water, poison.
+- Place gems, both doors and both start spots.
+- Place buttons, levers, moving platforms and gates, and link them with a rune.
+- Test-play it right inside the editor.
+
+**Built-in checks (so homemade levels follow the same rules as ours, 7.7 and 16.1):**
+- Warns about "almost" jumps: 4-tile ledges and 5-tile gaps.
+- Warns about a missing door or start spot, and about things placed in the thumb corners.
+- **"Beat it to share it":** a level can be shared only after the two of you have finished it once (like Mario Maker), so nobody can send an impossible level.
 
 ---
 
@@ -654,3 +673,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | **Feel Lab built.** Building it showed that the first jump numbers broke the level metrics (6-tile gaps were jumpable), so the jump starting values changed: 0.30 s to the top (was 0.38) and falling 2× faster (was 1.6×). Max gap is now 4.9 tiles. |
 | 2026-10-17 | **First playable slice built:** online play of Chapter 1 levels 1–2 (no mechanisms needed), with home, share link, lobby, results with stars, saving, and the online rules in 13 (host as referee, deaths restart both, hold-to-restart, pause and away icons, waiting and rejoin with the same code, version check, connection dot). For now the lobby and the level map are one screen. Levels 3–5 show "soon" until the mechanisms exist. Music is not in yet. |
 | 2026-10-17 | **Chapter 1 complete (levels 3–5):** pressure buttons, levers, moving platforms and gates are in, all linked by gold runes. Both phones run them; your own touches react instantly, and the host corrects platforms and levers 5× a second. Riding a platform looks glued on the partner's screen too. **Lobby and level map are now separate screens** (characters first, then a temple map with a path of level stones). **The duet music is in**: drone and pad, Hot Boy's drums and plucks, and Cool Girl's chimes and arpeggios, each louder while that character moves, plus title, lobby (your own layer until your friend joins), map and results-jingle variations. **Trailing hair and footstep fire added (14.5).** "Design your own level" opened as a new topic (16.3). |
+| 2026-10-17 | Level editor **parked for later**; its ideas (sharing in the room and by link, saved on the phone, built-in checks, beat it to share it) are saved in 16.3. |
