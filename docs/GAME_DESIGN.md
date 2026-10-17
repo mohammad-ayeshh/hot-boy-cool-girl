@@ -287,7 +287,8 @@ Like that demo, the first thing we build is a **Feel Lab**: one test room with b
 - **The foreground never hides gameplay.** Foreground silhouettes live only at the edges and side margins, and fade out if a character goes behind them.
 - **The background never steals focus.** It stays inside the dark, muted world palette (section 4.3). Bright color and glow are for the gameplay layer only.
 
-## 10. Level building blocks 💬
+## 10. Level building blocks 🔒
+*Locked 2026-10-17 (all three sets).*
 Each block follows the color rules: orange or blue = belongs to one player, violet = danger to both, gold = shared mechanism.
 
 ### 10.1 Linking mechanisms
@@ -318,9 +319,28 @@ Every button or lever and the thing it controls show the **same gold rune symbol
 ### 10.4 Set 3: later ideas
 Light beams and mirrors, wind fans, ice floors, portals, timed switches, falling blocks.
 
+## 11. Game flow 💬
+The path from opening the link to playing must take **under 30 seconds** (P5).
+
+### 11.1 Screens
+| Screen | What happens |
+|---|---|
+| **Home** | Two big buttons: **Create room** and **Join room**. An optional nickname, remembered on the device. |
+| **Invite** | The host sees the 4-letter code plus a **Share** button that sends a link like `…/hot-boy-cool-girl/?room=ABCD` through WhatsApp or any app. Opening that link **joins the room automatically**, with no typing. |
+| **Lobby** | Both characters are shown; each player taps the one they want. The host starts as Hot Boy, and a **Swap** button switches roles. |
+| **Level map** | A temple map with all levels; locked ones show a padlock. **Either player** can pick a level, the other sees it highlighted, and **both tap Ready** to start. |
+| **Play** | The level. |
+| **Results** | Time, gems and stars count up. Buttons: **Next level**, **Retry**, **Level map**. Both tap the same choice to continue. |
+
+### 11.2 Flow rules
+- **No tutorial screens.** The first levels *are* the tutorial: they teach by design, with short hints drawn into the level itself.
+- **Dying restarts the level instantly** for both players, after the short death effect (about 1 s). No "game over" screen, no menu to click through (P5).
+- **Pause doesn't freeze the game** (it's online). Your partner sees a small "partner is in the menu" icon.
+- **If a player disconnects**, the other sees "Waiting for partner…", and the same room code works to rejoin. The details come in the online rules topic.
+
 ---
 
-## 11. Topics still to design ❓
+## 12. Topics still to design ❓
 We'll go through these in order and fill in a section for each.
 
 1. ~~Color rules~~ ✅
@@ -329,8 +349,8 @@ We'll go through these in order and fill in a section for each.
 4. ~~Controls~~ ✅ (section 6)
 5. ~~Characters, movement and level metrics~~ ✅ (section 7)
 6. **Game feel catalog**: drafted (section 8)
-7. **Level building blocks**: drafted (section 10)
-8. **The game flow**: open link → room → level select → play → results
+7. ~~Level building blocks~~ ✅ (section 10)
+8. **The game flow**: drafted (section 11)
 9. **Scoring and progress**: time, gems, stars, unlocking levels
 10. **Online rules**: who hosts, disconnects, restarting, dying
 11. **Art style**: character design, temple look, lighting (depth notes in section 9)
@@ -339,7 +359,7 @@ We'll go through these in order and fill in a section for each.
 
 ---
 
-## 12. Decision log
+## 13. Decision log
 | Date | Decision |
 |---|---|
 | 2026-10-17 | Name: **Hot Boy & Cool Girl**, set in an ancient jungle temple. |
@@ -353,3 +373,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Characters locked: identical movement, run + jump only, walk through each other, forgiving hitboxes. |
 | 2026-10-17 | Level metrics locked: levels use standard sizes matched to the jump; every jump is clearly possible or clearly impossible. |
 | 2026-10-17 | Art direction: Silksong-style layered depth background (draft). |
+| 2026-10-17 | Level building blocks locked: Set 1 (first levels), Set 2 (later), Set 3 (someday); linked mechanisms share a gold rune symbol. |
