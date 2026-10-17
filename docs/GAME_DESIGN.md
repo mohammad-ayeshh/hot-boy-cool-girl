@@ -376,7 +376,8 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 - No coins, shop or ads (P5).
 - *Later idea:* cosmetic rewards for stars (hats, trail colors) that never change gameplay.
 
-## 13. Online rules 💬
+## 13. Online rules 🔒
+*Locked 2026-10-17.*
 
 ### 13.1 Who is in charge of what
 | Thing | Who decides | Why |
@@ -398,6 +399,7 @@ In simple words: **each player is the boss of their own character, and the host 
 ### 13.3 Deaths and restarts
 - When anyone dies, **both** phones play the death effect and the level **restarts for both** about 1 s later.
 - **Either player can restart** from the pause menu at any time. The button must be **held for 1 s** to avoid accidents, and the partner sees "Cool Girl restarted the level".
+- **Hold-to-restart animation:** while held, a ring fills around the button over 1 s and the button gently shakes and brightens. Releasing early drains the ring back smoothly. When full, a small pop, a vibration and a flash confirm the restart.
 
 ### 13.4 Pause and leaving the app
 - The pause menu **doesn't freeze** the game. The partner sees a small "in menu" icon over that character.
@@ -417,9 +419,66 @@ In simple words: **each player is the boss of their own character, and the host 
 ### 13.7 Connection indicator
 A small signal icon in the corner: 🟢 good (under 100 ms), 🟡 OK (100–200 ms), 🔴 laggy (over 200 ms). Tapping it shows the ping and whether you're connected directly or through the relay.
 
+## 14. Art style 💬
+Background depth is in section 9; colors are in section 4.
+
+### 14.1 How the art is made
+| Part | Made with | Why |
+|---|---|---|
+| **Characters** | **Drawn in code**: PixiJS vector shapes plus particles | Perfectly smooth at any screen size, and every part can squash, stretch, blink and wobble (P4). Changes can be described in words and made in minutes. |
+| **Tiles, decorations, doors, gems, mechanisms** | **SVG files** (vector drawings written by hand), turned into textures when the game loads | Crisp on every phone, tiny download, easy to edit |
+| **Background layers** | SVG silhouettes plus fog and light in code | Matches the layered-depth plan (section 9) |
+| **Liquids** | A **shader** (a small graphics program on the GPU) | Animated waves, a glowing surface, endless movement at almost no cost |
+| **Lighting** | A light layer: dark world, each character and glowing object adds its own light | "Light tells the story" (section 4.1) |
+| **Effects** | The particle system we already have | Embers, droplets, dust, sparkles |
+| **Menus** | HTML and CSS, styled like temple stone and gold | Sharp text, easy layout, accessible |
+
+**Not used:** pixel art (needs a pixel artist), AI-generated images (inconsistent style, unclear rights, breaks L4), and store-bought asset packs (they'd never match).
+Everything is original and lives in the code repository, so any part can be changed or replaced by a real artist later.
+
+### 14.2 What makes the characters cute
+1. **All head.** The body *is* the head: one round shape with tiny feet. Big head-to-body ratio = cute.
+2. **Big eyes, set low and wide**, with two shine dots each. Large pupils.
+3. **Round everything.** Even Hot Boy's flame tips are soft and rounded, never sharp.
+4. **Tiny details:** small blushing cheeks, a small smile, little bean feet that patter when walking.
+5. **Soft bounce:** an idle "breathing" bob, squash on landing, stretch on jumping (section 8).
+6. **Secondary motion:** Hot Boy's flame tips lag behind and flicker as he moves; Cool Girl's wave curl jiggles.
+7. **Life:** random blinking, and they glance at each other when standing close.
+
+### 14.3 Signature features
+| | Hot Boy | Cool Girl |
+|---|---|---|
+| Top | Three rounded flame tongues (the middle one tallest) | A single wave curl, like a ponytail |
+| Body | Flame-orange with a bright yellow inner flame | Drop-blue with a light "belly" and a shine highlight |
+| Face | Dark brown eyes, warm red blush | Navy eyes with tiny lashes, soft pink blush |
+| Feet | Deep orange | Deep blue |
+| Around them | Floating embers | Floating droplets |
+
+### 14.4 Expressions that help gameplay (P2)
+| Moment | Expression |
+|---|---|
+| Idle | Happy, blinking |
+| Running | Determined squint |
+| Falling far | Wide eyes, small "o" mouth |
+| **Near the deadly element** | **Nervous: sweat drop, wobbly eyes**, a built-in warning |
+| Dying | Dizzy swirl eyes, then the element death effect (section 8) |
+| Level complete | Big smile, a jump and a spin at the door |
+
+### 14.5 The temple world
+- **Stone tiles:** carved blocks with soft rounded corners, a light top edge (light from above), dark cracks. Edges join automatically ("autotiling"), so walls never look like a grid.
+- **Moss and vines** on top edges and hanging down, in muted green only.
+- **Liquids:** a shader surface that glows; lava heavy, water quick, poison thick (section 4.4).
+- **Gems:** faceted crystals with a shine that sweeps across. The Hot Boy gem has a flame shape and the Cool Girl gem a drop shape.
+- **Doors:** stone arches with the player's symbol glowing above; they glow brighter as their player gets close.
+- **Mechanisms:** brass and gold with carved runes (section 10.1).
+- **Font:** a rounded, friendly font such as *Fredoka* (free license), bundled with the game.
+
+### 14.6 Silhouette test
+Every character and object must be recognizable as a **plain black shape**. If two things look the same in silhouette, one of them gets redesigned (P2).
+
 ---
 
-## 14. Topics still to design ❓
+## 15. Topics still to design ❓
 We'll go through these in order and fill in a section for each.
 
 1. ~~Color rules~~ ✅
@@ -431,14 +490,14 @@ We'll go through these in order and fill in a section for each.
 7. ~~Level building blocks~~ ✅ (section 10)
 8. ~~The game flow~~ ✅ (section 11)
 9. ~~Scoring and progress~~ ✅ (section 12)
-10. **Online rules**: drafted (section 13)
-11. **Art style**: character design, temple look, lighting (depth notes in section 9)
+10. ~~Online rules~~ ✅ (section 13)
+11. **Art style**: drafted (section 14)
 12. **Sound and music**
 13. **Level design rules** and the first 5 levels
 
 ---
 
-## 15. Decision log
+## 16. Decision log
 | Date | Decision |
 |---|---|
 | 2026-10-17 | Name: **Hot Boy & Cool Girl**, set in an ancient jungle temple. |
@@ -456,3 +515,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Game feel catalog, layered-depth art direction and game flow locked. |
 | 2026-10-17 | Scoring and progress locked: 3 team stars per level, no death penalty, finish to unlock, saves on both phones. |
 | 2026-10-17 | Level size (32×18 grid), thumb zones, and ledge nudge, head nudge and small step-up locked. |
+| 2026-10-17 | Online rules locked: each player owns their character, the host referees the world; hold-to-restart with a fill-ring animation. |
