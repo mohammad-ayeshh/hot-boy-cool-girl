@@ -436,35 +436,47 @@ Background depth is in section 9; colors are in section 4.
 **Not used:** pixel art (needs a pixel artist), AI-generated images (inconsistent style, unclear rights, breaks L4), and store-bought asset packs (they'd never match).
 Everything is original and lives in the code repository, so any part can be changed or replaced by a real artist later.
 
-### 14.2 What makes the characters cute
-1. **All head.** The body *is* the head: one round shape with tiny feet. Big head-to-body ratio = cute.
-2. **Big eyes, set low and wide**, with two shine dots each. Large pupils.
-3. **Round everything.** Even Hot Boy's flame tips are soft and rounded, never sharp.
-4. **Tiny details:** small blushing cheeks, a small smile, little bean feet that patter when walking.
-5. **Soft bounce:** an idle "breathing" bob, squash on landing, stretch on jumping (section 8).
-6. **Secondary motion:** Hot Boy's flame tips lag behind and flicker as he moves; Cool Girl's wave curl jiggles.
-7. **Life:** random blinking, and they glance at each other when standing close.
+### 14.2 Personality: the names are the personality
+*Chosen 2026-10-17 (replaces the earlier "cute" direction).* Both names have a double meaning:
+- **Hot Boy**: made of fire, and **hot-headed**.
+- **Cool Girl**: made of water, and **cool-headed**.
 
-### 14.3 Signature features
-| | Hot Boy | Cool Girl |
+They're an opposites duo: **he rushes in, she thinks first.** They are stylish characters with attitude, not cute ones.
+
+| | 🔥 Hot Boy | 💧 Cool Girl |
 |---|---|---|
-| Top | Three rounded flame tongues (the middle one tallest) | A single wave curl, like a ponytail |
-| Body | Flame-orange with a bright yellow inner flame | Drop-blue with a light "belly" and a shine highlight |
-| Face | Dark brown eyes, warm red blush | Navy eyes with tiny lashes, soft pink blush |
-| Feet | Deep orange | Deep blue |
+| In one line | Hot-headed show-off with a big heart | Calm, sharp and effortlessly cool |
+| Traits | Bold, impatient, loud, brave, a bit reckless | Composed, smart, stylish, a little sassy |
+| Shape language | **Sharp and spiky**: triangles, broad shoulders, leans forward | **Smooth and flowing**: long curves, slim and tall, stands upright |
+| Hair | Blazing flame mohawk swept back; **grows bigger when running or excited** | Long water hair swept over one eye, **flowing behind her like a ribbon** |
+| Face | Angled eyebrows, cocky grin with a little fang | Half-closed confident eyes, one raised eyebrow, smirk |
+| Signature item | His flaming hair | **Sunglasses** resting on her head |
+
+### 14.3 Body
+Stylized slim figures with a **big head (about half head, half body)**, arms and legs, so they can act through poses (cross arms, fist pump, hair flip). At game size they're small, so **personality comes mostly from pose and movement**, then the face.
+
+### 14.4 Personality in motion (also helps gameplay, P2)
+| Moment | 🔥 Hot Boy | 💧 Cool Girl |
+|---|---|---|
+| Walking | Fast and bouncy, leaning forward, embers flying | Smooth glide, no bounce, hair flowing |
+| Waiting | Taps his foot, punches the air, then waves "come on!" at his partner | Crosses her arms and leans; after a while rolls her eyes: "whenever you're ready" |
+| Jumping | Explosive takeoff with a burst of sparks | Graceful arc with a small splash ring |
+| Landing | Heavy stomp, sparks splash out | Soft landing with a ripple |
+| **Near the deadly liquid** | **Flame shrinks and sputters**: scared but acting tough | **Starts steaming and bubbling**: the only time she loses her cool |
+| Dying | Fizzles out in an angry puff of steam | Evaporates with an annoyed look |
+| Level complete | Fist pump, his flames erupt like fireworks | Hair flip, **sunglasses drop onto her face** 😎 |
+
+### 14.5 Personality details
+| | 🔥 Hot Boy | 💧 Cool Girl |
+|---|---|---|
+| Light | **Pulses** brighter when he's excited (running, jumping) | **Steady**, with a gentle shimmer like light through water |
+| Trail | Small **scorch marks** that glow and fade | A **shiny wet trail** that reflects light for a moment |
+| Sounds | Fire crackles, short "hah!" grunts | Soft splashes, a cool "hm." |
 | Around them | Floating embers | Floating droplets |
 
-### 14.4 Expressions that help gameplay (P2)
-| Moment | Expression |
-|---|---|
-| Idle | Happy, blinking |
-| Running | Determined squint |
-| Falling far | Wide eyes, small "o" mouth |
-| **Near the deadly element** | **Nervous: sweat drop, wobbly eyes**, a built-in warning |
-| Dying | Dizzy swirl eyes, then the element death effect (section 8) |
-| Level complete | Big smile, a jump and a spin at the door |
+**Reactions to each other** at the end of a level: a high-five at the doors, or her shaking her head when he celebrates too much.
 
-### 14.5 The temple world
+### 14.6 The temple world
 - **Stone tiles:** carved blocks with soft rounded corners, a light top edge (light from above), dark cracks. Edges join automatically ("autotiling"), so walls never look like a grid.
 - **Moss and vines** on top edges and hanging down, in muted green only.
 - **Liquids:** a shader surface that glows; lava heavy, water quick, poison thick (section 4.4).
@@ -473,7 +485,7 @@ Everything is original and lives in the code repository, so any part can be chan
 - **Mechanisms:** brass and gold with carved runes (section 10.1).
 - **Font:** a rounded, friendly font such as *Fredoka* (free license), bundled with the game.
 
-### 14.6 Silhouette test
+### 14.7 Silhouette test
 Every character and object must be recognizable as a **plain black shape**. If two things look the same in silhouette, one of them gets redesigned (P2).
 
 ---
@@ -516,3 +528,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Scoring and progress locked: 3 team stars per level, no death penalty, finish to unlock, saves on both phones. |
 | 2026-10-17 | Level size (32×18 grid), thumb zones, and ledge nudge, head nudge and small step-up locked. |
 | 2026-10-17 | Online rules locked: each player owns their character, the host referees the world; hold-to-restart with a fill-ring animation. |
+| 2026-10-17 | Character personality: hot-headed Hot Boy vs. cool-headed Cool Girl, stylish not cute (art style still a draft). |
