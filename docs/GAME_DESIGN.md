@@ -137,7 +137,8 @@ Like the original: **left, right, jump**. Nothing else is needed during play. Bu
 - **Gamepad** (optional later): stick or d-pad and the A button.
 - **Settings (later):** an optional "fixed buttons" layout, left-handed swap, and control size.
 
-## 7. Characters and movement 💬
+## 7. Characters and movement 🔒
+*Locked 2026-10-17. The exact numbers in 7.5 are tuned in the Feel Lab; the level metrics in 7.7 always follow them.*
 
 ### 7.1 Same moves, different elements
 Hot Boy and Cool Girl **move exactly the same**: same speed, same jump, same size. The only differences are:
@@ -175,15 +176,13 @@ Measured in tiles (1 tile ≈ the character's width).
 | Run speed | 7.5 tiles/s | crosses the screen in ~4 s |
 | Time to full speed | ~0.08 s | snappy but not robotic |
 | Time to stop | ~0.06 s | stops where you expect |
-| Max jump height (hold) | 3.25 tiles | |
+| Max jump height (hold) | 3.5 tiles | clears a 3-tile ledge with half a tile to spare |
 | Min jump height (quick tap) | ~1.2 tiles | |
 | Time to top of jump | ~0.38 s | |
 | Falling | 1.6× faster than rising | jumps feel weighty, not floaty |
 | Apex hang | gravity halves near the top | a moment of control at the peak |
 | Max fall speed | capped | long falls stay readable |
-| Longest gap you can jump | ~4 tiles | |
-
-These numbers become **level design rules**: walls up to 3 tiles are jumpable, gaps up to 4 tiles are crossable. Every level must respect them.
+| Longest gap you can jump | ~4.5 tiles (running, full jump) | a 4-tile gap is safe |
 
 ### 7.6 Traversal helpers (P3)
 | Helper | What it does |
@@ -193,6 +192,30 @@ These numbers become **level design rules**: walls up to 3 tiles are jumpable, g
 | Ledge nudge | If you miss a ledge top by a few pixels, you get pushed up onto it instead of sliding down |
 | Head nudge | If you jump and clip a ceiling corner by a few pixels, you slide around it instead of stopping dead |
 | Small step-up | Tiny bumps (less than ¼ tile) are walked over automatically |
+
+### 7.7 Level metrics: the map matches the jump 🔒
+*Decided 2026-10-17.* Levels are built from a small set of **standard sizes** that exactly match what the characters can do. Players learn these sizes without noticing, and then they can *read* a level at a glance: "I can make that jump" or "that's a wall" (P2, P3).
+
+**Golden rule: every jump is either clearly possible or clearly impossible.** There are no "almost" sizes that need pixel-perfect luck.
+
+| Shape | Standard size | Meaning |
+|---|---|---|
+| Small step | 1 tile high | a quick tap hop |
+| Ledge | 2 tiles high | a normal jump |
+| High ledge | 3 tiles high | a full (held) jump: the maximum |
+| ~~4 tiles high~~ | **never used** | "almost" height = frustration |
+| Wall | 5+ tiles high | clearly can't be jumped |
+| Gap | 1–3 tiles | easy jump |
+| Long gap | 4 tiles | running full jump: the maximum |
+| ~~5 tiles~~ | **never used** | "almost" distance |
+| Impossible gap | 6+ tiles | clearly needs another way |
+| Tunnel height | at least 2 tiles | the character is 1.5 tiles tall |
+| Ceiling above a jump | at least 5 tiles | a lower ceiling must be on purpose |
+
+How we keep it true:
+- The Feel Lab has a **metrics room** with every standard step and gap, so we tune the movement until each one feels right.
+- A debug overlay can draw the **jump arc** from the character, to check levels.
+- If the movement numbers ever change, this table and every level are re-checked. Later, a level checker can flag any 4-tile ledge or 5-tile gap automatically.
 
 ## 8. Game feel ("juice") 💬
 Game feel is built **from the first prototype**. It isn't left for the end. Inspired by Sébastien Bénard's (deepnight) *Game Feel* demo, https://deepnight.net/games/game-feel/ (source: https://github.com/deepnight/gamefeel).
@@ -242,26 +265,81 @@ Like that demo, the first thing we build is a **Feel Lab**: one test room with b
 
 ---
 
-## 9. Topics still to design ❓
+## 9. Art direction: layered depth 💬
+*Early notes; the full art topic comes later.* Goal: a background with **many layers of depth**, like *Hollow Knight: Silksong*, while the gameplay layer stays the clearest thing on screen (P2).
+
+### 9.1 Layers (back to front)
+| Layer | Content | Motion |
+|---|---|---|
+| 6. Far depths | Dark gradient, distant moonlight through cracks in the temple roof | almost still |
+| 5. Distant ruins | Hazy silhouettes of giant pillars, statues and arches | very slow |
+| 4. Jungle middle | Giant roots, hanging vines, broken columns | gentle sway |
+| 3. Back wall | Carved stone wall with glowing runes, right behind the level | slow |
+| 2. Air | Fog bands, light shafts, dust motes and fireflies at different depths | drifting |
+| **1. Gameplay** | Tiles, characters, hazards, mechanisms | **sharpest, most contrast** |
+| 0. Foreground | Dark blurred silhouettes of leaves, vines and pillars, **only at the screen edges and side margins** | sways, close particles |
+
+### 9.2 Depth rules
+- **Farther = hazier.** Each layer back gets less contrast, less saturation, more fog color, less detail and more blur.
+- **Farther = slower.** Background motion (swaying vines, drifting fog) gets slower and smaller with depth. This creates depth even though our camera doesn't scroll.
+- **Gentle parallax without scrolling.** Background layers shift a few pixels following the players' average position, so the world feels 3D while the level itself never moves.
+- **Optional tilt parallax.** Tilting the phone shifts the layers slightly, like looking into a window (a setting; iPhone asks for permission).
+- **The foreground never hides gameplay.** Foreground silhouettes live only at the edges and side margins, and fade out if a character goes behind them.
+- **The background never steals focus.** It stays inside the dark, muted world palette (section 4.3). Bright color and glow are for the gameplay layer only.
+
+## 10. Level building blocks 💬
+Each block follows the color rules: orange or blue = belongs to one player, violet = danger to both, gold = shared mechanism.
+
+### 10.1 Linking mechanisms
+Every button or lever and the thing it controls show the **same gold rune symbol** (circle, triangle, square, star…). You can see what controls what without trial and error, and it works without color vision (P2).
+
+### 10.2 Set 1: the first levels
+| Block | How it works |
+|---|---|
+| Stone | Solid floors, walls and ceilings, built to the level metrics (7.7) |
+| Lava pool 🟧 | Safe for Hot Boy, deadly for Cool Girl |
+| Water pool 🟦 | Safe for Cool Girl, deadly for Hot Boy |
+| Poison pool 🟪 | Deadly for both |
+| Gems 🟧🟦 | Each player collects only their own color |
+| Exit doors 🟧🟦 | One per player. The level ends when **both** stand at their own door at the same time |
+| Pressure button 🟨 | Active **only while someone stands on it**: the classic "you hold it, I go" co-op move (P1) |
+| Lever 🟨 | Pushed left or right by walking into it; it stays where you left it |
+| Moving platform / elevator 🟨 | Moves while its linked button is held, or by lever position |
+| Stone gate 🟨 | Slides open or closed, linked to a button or lever |
+
+### 10.3 Set 2: once the basics work
+| Block | Why later |
+|---|---|
+| Pushable box | Needs careful online sync (who is pushing) |
+| 45° slopes | Extra physics; very much part of the original's feel |
+| Elemental barriers | e.g. a fire curtain only Hot Boy can pass |
+| Shared gems 🟨 | Either player can collect them |
+
+### 10.4 Set 3: later ideas
+Light beams and mirrors, wind fans, ice floors, portals, timed switches, falling blocks.
+
+---
+
+## 11. Topics still to design ❓
 We'll go through these in order and fill in a section for each.
 
 1. ~~Color rules~~ ✅
 2. ~~Design pillars and hard limits~~ ✅
 3. ~~Screen and camera~~ ✅ (section 5)
 4. ~~Controls~~ ✅ (section 6)
-5. **Characters and movement**: in progress (section 7)
+5. ~~Characters, movement and level metrics~~ ✅ (section 7)
 6. **Game feel catalog**: drafted (section 8)
-7. **Level building blocks**: hazards, buttons, levers, platforms, boxes, gems, doors, and which ones come first
+7. **Level building blocks**: drafted (section 10)
 8. **The game flow**: open link → room → level select → play → results
 9. **Scoring and progress**: time, gems, stars, unlocking levels
 10. **Online rules**: who hosts, disconnects, restarting, dying
-11. **Art style**: character design, temple look, lighting
+11. **Art style**: character design, temple look, lighting (depth notes in section 9)
 12. **Sound and music**
 13. **Level design rules** and the first 5 levels
 
 ---
 
-## 10. Decision log
+## 12. Decision log
 | Date | Decision |
 |---|---|
 | 2026-10-17 | Name: **Hot Boy & Cool Girl**, set in an ancient jungle temple. |
@@ -272,3 +350,6 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | One level = one screen, no scrolling camera. |
 | 2026-10-17 | Controls locked: slide-to-move on the left, tap/hold-to-jump on the right, coyote time and jump buffer. |
 | 2026-10-17 | Game feel is built from the first prototype, starting with a Feel Lab (toggle panel, inspired by deepnight's demo). |
+| 2026-10-17 | Characters locked: identical movement, run + jump only, walk through each other, forgiving hitboxes. |
+| 2026-10-17 | Level metrics locked: levels use standard sizes matched to the jump; every jump is clearly possible or clearly impossible. |
+| 2026-10-17 | Art direction: Silksong-style layered depth background (draft). |
