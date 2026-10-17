@@ -341,7 +341,8 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 - **Pause doesn't freeze the game** (it's online). Your partner sees a small "partner is in the menu" icon.
 - **If a player disconnects**, the other sees "Waiting for partner…", and the same room code works to rejoin. The details come in the online rules topic.
 
-## 12. Scoring and progress 💬
+## 12. Scoring and progress 🔒
+*Locked 2026-10-17.*
 
 ### 12.1 Three stars per level, earned as a team
 | Star | How to earn it |
@@ -388,7 +389,7 @@ We'll go through these in order and fill in a section for each.
 6. ~~Game feel catalog~~ ✅ (section 8)
 7. ~~Level building blocks~~ ✅ (section 10)
 8. ~~The game flow~~ ✅ (section 11)
-9. **Scoring and progress**: drafted (section 12)
+9. ~~Scoring and progress~~ ✅ (section 12)
 10. **Online rules**: who hosts, disconnects, restarting, dying
 11. **Art style**: character design, temple look, lighting (depth notes in section 9)
 12. **Sound and music**
@@ -412,3 +413,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Art direction: Silksong-style layered depth background. |
 | 2026-10-17 | Level building blocks locked: Set 1 (first levels), Set 2 (later), Set 3 (someday); linked mechanisms share a gold rune symbol. |
 | 2026-10-17 | Game feel catalog, layered-depth art direction and game flow locked. |
+| 2026-10-17 | Scoring and progress locked: 3 team stars per level, no death penalty, finish to unlock, saves on both phones. |
