@@ -489,7 +489,8 @@ Stylized slim figures with a **big head (about half head, half body)**, arms and
 ### 14.7 Silhouette test
 Every character and object must be recognizable as a **plain black shape**. If two things look the same in silhouette, one of them gets redesigned (P2).
 
-## 15. Sound and music 💬
+## 15. Sound and music 🔒
+*Locked 2026-10-17.*
 
 ### 15.1 The most important rule: sound is a bonus, never required
 Many people play on their phone **with the sound off** (and on iPhone the silent switch can mute web games). So **nothing important is told by sound alone**: every sound also has a visual (P2). Sound makes the game *feel* better (P4); it never decides whether you can play it.
@@ -499,7 +500,7 @@ Many people play on their phone **with the sound off** (and on iPhone the silent
 |---|---|---|
 | Most effects (jumps, clicks, chimes, UI) | **Synthesized in code** with the phone's built-in audio engine (Web Audio) | Tiny download, every sound can vary slightly each time, easy to tweak in words |
 | Organic textures (fire crackle, water lapping, stone rumble) | Code synthesis first; if that sounds too fake, **free CC0 recordings** (no credit needed, free to use) that we layer and process | Real fire and water are hard to fake well |
-| Voices ("hah!", "hm.") | Option A: **you and a friend record** a few short sounds and we process them (pitch, effects). Option B: synthesized "babble" voices. Option C: no voices | A personal touch would be fun |
+| Voices ("hah!", "hm.") | **Planned for later:** you and a friend record a few short sounds that we process (pitch, effects). Until then, no voices. | A personal touch |
 | Music | **Composed in code** as layered loops (section 15.4). If it isn't good enough, switch to free licensed tracks (CC0 or credited CC-BY) | Matches our "everything in code" approach and has no license risk |
 
 (L4 means nothing is taken from Fireboy & Watergirl. Free-license library sounds are allowed.)
@@ -526,6 +527,12 @@ Many people play on their phone **with the sound off** (and on iPhone the silent
 - Music **ducks** (quiets down) during death and swells on level complete.
 - **Different temple chapters get a different music variation** (later).
 
+### 15.4b Menu music
+- **Home screen:** a calm title theme that mixes both motifs: drums and chimes, slow and inviting.
+- **Lobby:** while waiting alone, only **your** character's layer plays. When your partner joins, **their layer fades in** and the song is complete, so you hear that your friend arrived.
+- **Level map:** a softer, quieter variation of the title theme.
+- **Results:** a short "jingle" that gets bigger with more stars, then the level map music returns.
+
 ### 15.5 Complete sound list (first version)
 | Group | Sounds |
 |---|---|
@@ -545,9 +552,42 @@ Many people play on their phone **with the sound off** (and on iPhone the silent
 - Your partner's sounds play slightly quieter than your own.
 - **Settings:** music volume, sound volume, vibration on or off.
 
+## 16. Level design 💬
+
+### 16.1 Level design rules
+Every level must follow all of these, plus the pillars, the level metrics (7.7) and the thumb zones (5.3).
+
+| # | Rule | In simple words |
+|---|---|---|
+| D1 | **Both players are needed** | Each player helps the other at least once. Nobody spends the level just waiting (P1). |
+| D2 | **One new idea per level** | Introduce one new thing at a time. Never two new things at once. |
+| D3 | **Teach → test → twist** | First meet a new thing where it's safe, then use it with a little risk, then combine it with something you already know. |
+| D4 | **Teach without words** | The level itself shows the idea. Hints are tiny and drawn into the level (a glowing arrow, a symbol), never text boxes. |
+| D5 | **Readable at the start** | From the first second you can see the doors, the hazards and the mechanisms, and start planning (P2). |
+| D6 | **No unfair surprises** | No hidden traps, no blind jumps, no death you couldn't see coming. |
+| D7 | **Both stay busy** | Paths split and meet again so both players are doing something most of the time. |
+| D8 | **Gems guide and tempt** | Easy gems show the way; harder gems sit in riskier spots, a choice for players chasing ⭐⭐. |
+| D9 | **Short** | The first levels take under 1 minute; later levels up to about 5. |
+| D10 | **Doors close together** | The two exit doors are near each other, so the team finishes together. |
+| D11 | **Difficulty is a wave, not a wall** | A hard level is followed by an easier breather. Each chapter ends with a level that combines everything. |
+| D12 | **Playtested by two people on phones** | Before a level is final, two people play it on phones. We watch where they die and fix whatever felt unfair. |
+
+### 16.2 Chapter 1: The Temple Gate (first 5 levels)
+Sketches drawn on the real 32 × 18 grid: [`docs/levels/chapter1-sketch.png`](levels/chapter1-sketch.png) (made with `tools/level_sketch.py`).
+
+| # | Name | Teaches | How it works |
+|---|---|---|---|
+| 1 | **First Steps** | Moving, jumping 1–3 tiles, your own liquid is safe, both doors are needed | Two separate lanes: Hot Boy walks through lava on the upper lane, Cool Girl through water on the lower one. They meet on a staircase up to the doors. |
+| 2 | **Wrong Pool** | The other's liquid is deadly, violet kills both, the 3-tile ledge, 3-wide jumps | One shared path: Cool Girl jumps over lava, Hot Boy over water, both over poison. The risky gems float right above the pools. |
+| 3 | **Hold the Button** | Pressure buttons and a gate | A gate splits the room. Hot Boy holds the button so Cool Girl can pass, then she holds the button on the other side so he can pass. |
+| 4 | **Going Up** | Elevators held by a button; a lever that stays | One holds the button while the other rides the elevator up to a high shelf. Up there, a lever raises a second elevator to bring the partner up. |
+| 5 | **Crossing Together** | Everything combined: the chapter "exam" | A ferry platform crosses a wide poison pit while either button is held, and the players take turns sending it across. On the far side a lever opens the gate to the doors. |
+
+These sketches are a starting point. The real levels are built and tuned in the game and playtested (D12).
+
 ---
 
-## 16. Topics still to design ❓
+## 17. Topics still to design ❓
 We'll go through these in order and fill in a section for each.
 
 1. ~~Color rules~~ ✅
@@ -561,12 +601,12 @@ We'll go through these in order and fill in a section for each.
 9. ~~Scoring and progress~~ ✅ (section 12)
 10. ~~Online rules~~ ✅ (section 13)
 11. ~~Art style~~ ✅ (section 14)
-12. **Sound and music**: drafted (section 15)
-13. **Level design rules** and the first 5 levels
+12. ~~Sound and music~~ ✅ (section 15)
+13. **Level design rules and the first 5 levels**: drafted (section 16)
 
 ---
 
-## 17. Decision log
+## 18. Decision log
 | Date | Decision |
 |---|---|
 | 2026-10-17 | Name: **Hot Boy & Cool Girl**, set in an ancient jungle temple. |
@@ -587,3 +627,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Online rules locked: each player owns their character, the host referees the world; hold-to-restart with a fill-ring animation. |
 | 2026-10-17 | Character personality: hot-headed Hot Boy vs. cool-headed Cool Girl, stylish not cute (art style locked). |
 | 2026-10-17 | Art style locked: characters drawn in code, world in SVG, shader liquids, dynamic lighting. |
+| 2026-10-17 | Sound and music locked: sound is never required, code-made sounds, the music is a reacting duet, menu music added; recorded voices planned for later. |
