@@ -21,6 +21,8 @@ export interface Pose {
   whiten: number;
   /** 0..1 smoothed "excitement" (running, jumping) */
   excite: number;
+  /** seconds since the level was completed, or -1 */
+  victory: number;
 }
 
 const HOT = { core: 0xfff0c2, light: 0xffb02e, main: 0xff6a1a, dark: 0xb8320c, ink: 0x4a1204 };
@@ -95,7 +97,8 @@ export class CharacterView extends Container {
     g.roundShape([{ x: -3.5, y: 0 }, { x: 3.5, y: 0 }, { x: 8, y: -12 }, { x: -7, y: -12.5 }], 2.2).fill(C(HOT.main));
     g.poly([1, -2, 4, -2, 6.5, -11, 1, -11.5]).fill({ color: C(HOT.light), alpha: 0.65 });
     // front arm
-    const frontHand = air ? { x: 9, y: p.vy < 0 ? -22 : -18 } : idleHot(p, 1) ?? { x: 4 + swing, y: -1 + Math.abs(swing) * 0.15 };
+    const pump = p.victory >= 0 ? Math.abs(Math.sin(p.victory * 8)) : 0; // victory fist pump
+    const frontHand = p.victory >= 0 ? { x: 7, y: -22 - pump * 4 } : air ? { x: 9, y: p.vy < 0 ? -22 : -18 } : idleHot(p, 1) ?? { x: 4 + swing, y: -1 + Math.abs(swing) * 0.15 };
     limb(g, 5, -10.5, frontHand.x, frontHand.y, C(HOT.main), 4);
     g.circle(frontHand.x, frontHand.y, 2.8).fill(C(HOT.light));
 
@@ -104,7 +107,7 @@ export class CharacterView extends Container {
     this.head.rotation = a ? -this.upper.rotation * 0.6 : 0;
     const h = this.headG.clear();
     // flaming mohawk, swept back; grows when excited, shrinks and sputters near water
-    const flame = Math.max(0.35, 1 + p.excite * 0.55 - p.danger * 0.6);
+    const flame = Math.max(0.35, 1 + p.excite * 0.55 - p.danger * 0.6) * (p.victory >= 0 ? 1.5 + pump * 0.3 : 1);
     const sputter = p.danger > 0.2 && a ? (Math.random() < p.danger * 0.25 ? 0.5 : 1) : 1;
     const layers: [number, number][] = [[HOT.main, 1], [HOT.light, 0.68], [HOT.core, 0.38]];
     for (const [col, k] of layers) {
@@ -165,7 +168,7 @@ export class CharacterView extends Container {
     const g = this.upperG.clear();
     const swing = run ? Math.sin(ph) * 3 : 0;
     const air = !p.grounded && a;
-    const crossed = a && p.grounded && !run; // arms crossed while waiting
+    const crossed = (a && p.grounded && !run) || p.victory >= 0; // arms crossed while waiting
     // hair ribbon flows behind her (drawn first so it's behind the body)
     const hairCol = C(COOL.main);
     // back arm
@@ -194,7 +197,8 @@ export class CharacterView extends Container {
     // long water hair, flowing like a ribbon behind her
     const flow = a ? 1 + p.speed * 0.8 : 1;
     // angle away from "hanging straight down": more when running, up when falling
-    const ang = 0.35 + (a ? p.speed * 0.95 + (p.grounded ? 0 : p.vy > 0 ? Math.min(1.4, p.vy / 9) : Math.max(-0.3, p.vy / 40)) : 0);
+    const flip = p.victory >= 0 ? Math.sin(Math.min(1, p.victory / 0.45) * Math.PI) * 1.3 : 0; // hair flip
+    const ang = 0.35 + flip + (a ? p.speed * 0.95 + (p.grounded ? 0 : p.vy > 0 ? Math.min(1.4, p.vy / 9) : Math.max(-0.3, p.vy / 40)) : 0);
     const N = 9;
     const top: number[] = [];
     const bot: number[] = [];
@@ -216,11 +220,6 @@ export class CharacterView extends Container {
     // hair cap swept over one eye
     h.poly([-10.5, 2, -10, -5, -5, -10, 3, -11, 9, -7.5, 10.5, -3, 6, -4.5, 2.5, -3, 0.5, 2.5, -2.5, 6, -6, 7]).fill(hairCol);
     h.moveTo(-7, -7).quadraticCurveTo(0, -11, 7, -7.5).stroke({ width: 1.2, color: C(COOL.core), alpha: 0.8, cap: 'round' });
-    // sunglasses resting on her head
-    h.roundRect(-3, -12.5, 5.2, 3, 1.3).fill(C(SHADES));
-    h.roundRect(3, -12, 5.2, 3, 1.3).fill(C(SHADES));
-    h.moveTo(2.2, -11.2).lineTo(3, -11).stroke({ width: 1, color: C(SHADES) });
-    h.moveTo(-1.8, -12).lineTo(0, -11).stroke({ width: 0.8, color: C(COOL.core), alpha: 0.9 });
     // face: one visible eye, half-closed and confident; raised brow; smirk
     const ink = C(COOL.ink);
     const shock = Math.min(1, p.danger * 1.6); // the only time she loses her cool
@@ -236,7 +235,19 @@ export class CharacterView extends Container {
     h.moveTo(4, -4.8 - shock).quadraticCurveTo(6.8, -7.2 - shock, 9.2, -5).stroke({ width: 1.5, color: ink, cap: 'round' }); // raised brow
     if (shock > 0.5) h.ellipse(6, 5.2, 1.3, 1.6).fill(ink); // "oh no"
     else h.moveTo(3.5, 5.4).quadraticCurveTo(6.5, 6.4, 8.8, 4.2).stroke({ width: 1.4, color: ink, cap: 'round' }); // smirk
+    // sunglasses: resting on her head, they drop onto her face when the level is done 😎
+    const k = p.victory >= 0 ? easeOutBack(Math.min(1, Math.max(0, (p.victory - 0.3) / 0.25))) : 0;
+    const gx1 = -3 + 2.6 * k, gy1 = -12.5 + 11 * k, gx2 = 3 + 1.4 * k, gy2 = -12 + 10.6 * k;
+    h.roundRect(gx1, gy1, 5.2, 3, 1.3).fill(C(SHADES));
+    h.roundRect(gx2, gy2, 5.2, 3, 1.3).fill(C(SHADES));
+    h.moveTo(gx1 + 5.2, gy1 + 0.8).lineTo(gx2, gy2 + 1).stroke({ width: 1, color: C(SHADES) });
+    h.moveTo(gx1 + 1.2, gy1 + 0.5).lineTo(gx1 + 3, gy1 + 1.5).stroke({ width: 0.8, color: C(COOL.core), alpha: 0.9 });
   }
+}
+
+function easeOutBack(t: number): number {
+  const c = 1.7;
+  return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
 }
 
 // ------------------------------------------------------------------ shared limb helpers

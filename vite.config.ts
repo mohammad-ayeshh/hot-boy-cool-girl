@@ -8,4 +8,6 @@ export default defineConfig(({ mode }) => ({
   plugins: mode === 'http' ? [] : [basicSsl()], // self-signed HTTPS so phones get a secure context (PWA, wake lock, fullscreen)
   server: { host: true, port: 5173 },
   preview: { host: true, port: 4173 },
+  // Build time: both phones compare it, so friends never play on mismatched versions (design doc 13.6).
+  define: { __BUILD__: JSON.stringify(Date.now()) },
 }));

@@ -36,11 +36,17 @@ function ctx(): AudioContext | null {
 
 const vary = (v: number, amt = 0.08) => v * (1 - amt + Math.random() * amt * 2);
 
-/** Panned output node: sounds come from where they happen (15.6). pan -1..1 */
-function out(ac: AudioContext, pan: number): AudioNode {
+/** Panned output node: sounds come from where they happen (15.6). pan -1..1; gain < 1 for the partner's sounds. */
+function out(ac: AudioContext, pan: number, gain: number): AudioNode {
   const p = ac.createStereoPanner();
   p.pan.value = Math.max(-1, Math.min(1, pan));
-  p.connect(master!);
+  if (gain === 1) {
+    p.connect(master!);
+    return p;
+  }
+  const g = ac.createGain();
+  g.gain.value = gain;
+  p.connect(g).connect(master!);
   return p;
 }
 
@@ -78,10 +84,10 @@ function hiss(ac: AudioContext, dest: AudioNode, filter: BiquadFilterType, f0: n
   src.stop(t + dur + 0.02);
 }
 
-export function jump(e: Elem, pan: number): void {
+export function jump(e: Elem, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  const o = out(ac, pan);
+  const o = out(ac, pan, gain);
   if (e === 'fire') {
     hiss(ac, o, 'bandpass', vary(900), vary(2600), 1.2, 0.16, 0.35); // whoosh
     tone(ac, o, 'sawtooth', vary(140), vary(260), 0.09, 0.07); // punch
@@ -92,10 +98,10 @@ export function jump(e: Elem, pan: number): void {
   }
 }
 
-export function land(e: Elem, strength: number, pan: number): void {
+export function land(e: Elem, strength: number, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  const o = out(ac, pan);
+  const o = out(ac, pan, gain);
   const v = Math.min(1, 0.3 + strength);
   if (e === 'fire') {
     tone(ac, o, 'triangle', vary(150), 55, 0.14, 0.32 * v); // heavy thump
@@ -106,30 +112,30 @@ export function land(e: Elem, strength: number, pan: number): void {
   }
 }
 
-export function step(e: Elem, pan: number): void {
+export function step(e: Elem, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  const o = out(ac, pan);
+  const o = out(ac, pan, gain);
   if (e === 'fire') hiss(ac, o, 'bandpass', vary(2500, 0.3), 1800, 3, 0.035, 0.07); // crackly tap
   else hiss(ac, o, 'lowpass', vary(900, 0.3), 300, 1, 0.05, 0.06); // wet pat
 }
 
-export function turn(e: Elem, pan: number): void {
+export function turn(e: Elem, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  hiss(ac, out(ac, pan), 'bandpass', vary(e === 'fire' ? 1500 : 2200), 900, 2, 0.06, 0.06);
+  hiss(ac, out(ac, pan, gain), 'bandpass', vary(e === 'fire' ? 1500 : 2200), 900, 2, 0.06, 0.06);
 }
 
-export function nudge(pan: number): void {
+export function nudge(pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  tone(ac, out(ac, pan), 'sine', vary(700), vary(900), 0.05, 0.05);
+  tone(ac, out(ac, pan, gain), 'sine', vary(700), vary(900), 0.05, 0.05);
 }
 
-export function splash(kind: Liquid, pan: number): void {
+export function splash(kind: Liquid, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  const o = out(ac, pan);
+  const o = out(ac, pan, gain);
   if (kind === 'water') {
     hiss(ac, o, 'bandpass', vary(1600), 600, 1.5, 0.18, 0.18);
     tone(ac, o, 'sine', vary(800), 400, 0.08, 0.06, 0.03);
@@ -139,10 +145,10 @@ export function splash(kind: Liquid, pan: number): void {
   }
 }
 
-export function death(e: Elem, cause: Liquid, pan: number): void {
+export function death(e: Elem, cause: Liquid, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  const o = out(ac, pan);
+  const o = out(ac, pan, gain);
   if (cause === 'poison') {
     hiss(ac, o, 'bandpass', 1200, 300, 4, 0.4, 0.3);
     tone(ac, o, 'square', 300, 70, 0.35, 0.08);
@@ -159,10 +165,10 @@ export function death(e: Elem, cause: Liquid, pan: number): void {
 // Gem notes are in the music's key (15.4): a minor pentatonic on A.
 const SCALE = [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880];
 
-export function gem(e: Elem, combo: number, pan: number): void {
+export function gem(e: Elem, combo: number, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  const o = out(ac, pan);
+  const o = out(ac, pan, gain);
   const f = SCALE[Math.min(combo, SCALE.length - 1) + 3] ?? 880;
   if (e === 'fire') {
     tone(ac, o, 'triangle', f, f, 0.22, 0.2); // warm
@@ -173,8 +179,32 @@ export function gem(e: Elem, combo: number, pan: number): void {
   }
 }
 
-export function respawn(e: Elem, pan: number): void {
+export function respawn(e: Elem, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
-  tone(ac, out(ac, pan), e === 'fire' ? 'triangle' : 'sine', 300, 600, 0.18, 0.08);
+  tone(ac, out(ac, pan, gain), e === 'fire' ? 'triangle' : 'sine', 300, 600, 0.18, 0.08);
+}
+
+export function victory(e: Elem, pan: number, gain = 1): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, gain);
+  if (e === 'fire') {
+    // little firework pops
+    for (let i = 0; i < 4; i++) {
+      hiss(ac, o, 'bandpass', vary(2500), 800, 1.5, 0.12, 0.2, 0.15 + i * 0.13);
+      tone(ac, o, 'triangle', vary(392 * (1 + i * 0.25)), 200, 0.12, 0.08, 0.15 + i * 0.13);
+    }
+  } else {
+    tone(ac, o, 'sine', 1318.5, 1318.5, 0.5, 0.12, 0.1); // glassy chime
+    tone(ac, o, 'sine', 1975.5, 1975.5, 0.4, 0.06, 0.12);
+    hiss(ac, o, 'highpass', 6000, 6000, 1, 0.02, 0.15, 0.45); // sunglasses click
+  }
+}
+
+export function chime(notes: number[], gap = 0.09, vol = 0.12): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, 0, 1);
+  notes.forEach((f, i) => tone(ac, o, 'sine', f, f, 0.35, vol, i * gap));
 }

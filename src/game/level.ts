@@ -11,9 +11,12 @@ export type Elem = 'fire' | 'water';
 export const LIQUID_DEPTH = 0.2;
 
 export interface Gem { x: number; y: number; elem: Elem }
+export interface Point { x: number; y: number }
 export interface LevelData {
   tiles: Tile[][]; // [row][col]
-  spawn: Record<Elem, { x: number; y: number }>;
+  spawn: Record<Elem, Point>;
+  /** Exit doors: x = middle, y = the floor they stand on. Absent in test rooms. */
+  doors: Partial<Record<Elem, Point>>;
   gems: Gem[];
 }
 
@@ -21,13 +24,15 @@ const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P
 
 /**
  * Parse an ASCII map. `#` stone, `L` lava, `W` water, `P` poison,
- * `h`/`c` Hot Boy / Cool Girl start (feet on the bottom of that cell), `r`/`b` fire/water gem.
+ * `h`/`c` Hot Boy / Cool Girl start (feet on the bottom of that cell), `H`/`C` their exit doors
+ * (standing on the bottom of that cell), `r`/`b` fire/water gem.
  */
 export function parseLevel(rows: readonly string[]): LevelData {
   if (rows.length !== ROWS) throw new Error(`Level must have ${ROWS} rows, got ${rows.length}`);
   const tiles: Tile[][] = [];
   const spawn = { fire: { x: 2, y: ROWS - 3 }, water: { x: 3, y: ROWS - 3 } };
   const gems: Gem[] = [];
+  const doors: Partial<Record<Elem, Point>> = {};
   rows.forEach((line, y) => {
     if (line.length !== COLS) throw new Error(`Row ${y} must have ${COLS} columns, got ${line.length}`);
     const row: Tile[] = [];
@@ -35,12 +40,14 @@ export function parseLevel(rows: readonly string[]): LevelData {
       row.push(CHAR_TILE[ch] ?? 'empty');
       if (ch === 'h') spawn.fire = { x: x + 0.5, y: y + 1 };
       else if (ch === 'c') spawn.water = { x: x + 0.5, y: y + 1 };
+      else if (ch === 'H') doors.fire = { x: x + 0.5, y: y + 1 };
+      else if (ch === 'C') doors.water = { x: x + 0.5, y: y + 1 };
       else if (ch === 'r') gems.push({ x: x + 0.5, y: y + 0.5, elem: 'fire' });
       else if (ch === 'b') gems.push({ x: x + 0.5, y: y + 0.5, elem: 'water' });
     });
     tiles.push(row);
   });
-  return { tiles, spawn, gems };
+  return { tiles, spawn, doors, gems };
 }
 
 export class Level {

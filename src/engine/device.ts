@@ -15,7 +15,9 @@ export function audioContext(): AudioContext | null {
 }
 
 export function haptic(ms = 12): void {
-  navigator.vibrate?.(ms); // Android only; iOS Safari has no vibration API
+  // Android only (iOS Safari has no vibration API). Browsers refuse it before the first tap.
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+  navigator.vibrate?.(ms);
 }
 
 /** Short synthesized blip; pitch is randomized slightly so repeats don't sound robotic. */

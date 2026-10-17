@@ -225,7 +225,7 @@ Game feel is built **from the first prototype**. It isn't left for the end. Insp
 ### 8.1 The Feel Lab
 Like that demo, the first thing we build is a **Feel Lab**: one test room with both characters and a **settings panel on the phone** where every effect below can be switched **on/off** and tuned with sliders. That lets us *see and feel* the difference each effect makes, then keep the best values.
 
-**Built 2026-10-17** (`src/lab/`). It is the default page for now; the old device and network test moved to `?test`.
+**Built 2026-10-17** (`src/lab/`), at `?lab`. The old device and network test is at `?test`.
 - The room is the **metrics room** (7.7): steps of 2, 1 and 3 tiles, a 2-tile tunnel, lava, water and poison pools, gaps of 2, 3, 4 and 6 tiles, a 6-tile wall, and gems.
 - One phone, no network: you control one character and tap **🔥/💧** to swap.
 - **⚙️ Feel Lab** opens the panel. Every setting is generated from one list (`src/game/settings.ts`), and changed rows are highlighted in gold. Buttons: *All effects off*, *All effects on*, *Defaults*, and **Copy my values**, which copies only the changed values as text to paste back into the chat.
@@ -643,3 +643,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Sound and music locked: sound is never required, code-made sounds, the music is a reacting duet, menu music added; recorded voices planned for later. |
 | 2026-10-17 | Level design rules D1–D12 and Chapter 1 (5 levels) locked. **Design phase complete.** |
 | 2026-10-17 | **Feel Lab built.** Building it showed that the first jump numbers broke the level metrics (6-tile gaps were jumpable), so the jump starting values changed: 0.30 s to the top (was 0.38) and falling 2× faster (was 1.6×). Max gap is now 4.9 tiles. |
+| 2026-10-17 | **First playable slice built:** online play of Chapter 1 levels 1–2 (no mechanisms needed), with home, share link, lobby, results with stars, saving, and the online rules in 13 (host as referee, deaths restart both, hold-to-restart, pause and away icons, waiting and rejoin with the same code, version check, connection dot). For now the lobby and the level map are one screen. Levels 3–5 show "soon" until the mechanisms exist. Music is not in yet. |

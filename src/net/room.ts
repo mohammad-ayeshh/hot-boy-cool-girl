@@ -15,6 +15,11 @@ export interface RoomEvents {
   onDisconnected(reason: string): void;
 }
 
+/** Joining failed because nobody is hosting this code (so we may host it ourselves). */
+export class RoomNotFoundError extends Error {}
+/** Hosting failed because someone else already hosts this code. */
+export class RoomTakenError extends Error {}
+
 export function makeRoomCode(): string {
   let code = '';
   for (let i = 0; i < CODE_LENGTH; i++) code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
@@ -38,10 +43,12 @@ function waitForPeerOpen(peer: Peer): Promise<string> {
 /**
  * A two-player room over WebRTC. The host owns a short room code; the guest joins with it.
  * After connecting, both sides are symmetric: send() / onMessage.
+ * The host keeps the code for the whole session: if the guest drops, the same code works to rejoin (13.5).
  */
 export class Room {
   private conn: DataConnection | null = null;
   private closed = false;
+  private lastRecv = 0;
 
   private constructor(
     private readonly peer: Peer,
@@ -53,20 +60,31 @@ export class Room {
     peer.on('disconnected', () => { if (!this.closed && !peer.destroyed) peer.reconnect(); });
   }
 
-  static async host(events: RoomEvents): Promise<Room> {
+  /** Host a new random code, or (with `wanted`) a specific one, e.g. to take back your room after a drop. */
+  static async host(events: RoomEvents, wanted?: string): Promise<Room> {
     for (let attempt = 0; attempt < 5; attempt++) {
-      const code = makeRoomCode();
+      const code = wanted ?? makeRoomCode();
       const peer = new Peer(ID_PREFIX + code, { debug: 1 });
       try {
         await waitForPeerOpen(peer);
       } catch (err) {
         peer.destroy();
-        if ((err as PeerError<string>).type === 'unavailable-id') continue; // code taken, roll again
+        if ((err as PeerError<string>).type === 'unavailable-id') {
+          if (wanted) throw new RoomTakenError(`Room ${code} is already open.`);
+          continue; // code taken, roll again
+        }
         throw new Error(`Could not reach the matchmaking server (${(err as PeerError<string>).type}).`);
       }
       const room = new Room(peer, code, true, events);
       peer.on('connection', (c) => {
-        if (room.conn) { c.on('open', () => c.close()); return; } // room is full
+        // A live partner already here: the room is full (13.6). A silent one has dropped: replace it.
+        if (room.conn?.open && performance.now() - room.lastRecv < 4000) {
+          c.on('open', () => { c.send({ t: 'full' }); setTimeout(() => c.close(), 500); });
+          return;
+        }
+        const old = room.conn;
+        room.conn = null;
+        old?.close();
         room.attach(c);
       });
       return room;
@@ -90,7 +108,7 @@ export class Room {
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => fail(new Error('Connection timed out. The network may need a relay server.')), CONNECT_TIMEOUT_MS);
       const onPeerError = (err: PeerError<string>) => {
-        fail(new Error(err.type === 'peer-unavailable' ? `Room ${code} not found.` : `Connection failed (${err.type}).`));
+        fail(err.type === 'peer-unavailable' ? new RoomNotFoundError(`Room ${code} not found.`) : new Error(`Connection failed (${err.type}).`));
       };
       const fail = (e: Error) => { clearTimeout(timer); peer.off('error', onPeerError); room.close(); reject(e); };
       conn.on('open', () => { clearTimeout(timer); peer.off('error', onPeerError); resolve(); });
@@ -135,12 +153,30 @@ export class Room {
     return 'direct';
   }
 
+  /** Milliseconds since the partner last sent anything. */
+  get silentFor(): number {
+    return performance.now() - this.lastRecv;
+  }
+
+  /** Drop the current partner connection (host keeps the room open for a rejoin). */
+  dropPartner(): void {
+    const c = this.conn;
+    this.conn = null;
+    c?.close();
+  }
+
   private attach(c: DataConnection): void {
     this.conn = c;
-    const onOpen = () => this.events.onConnected();
+    this.lastRecv = performance.now();
+    const onOpen = () => { this.lastRecv = performance.now(); this.events.onConnected(); };
     if (c.open) onOpen(); else c.on('open', onOpen);
-    c.on('data', (d) => this.events.onMessage(d));
-    c.on('close', () => { if (!this.closed) this.events.onDisconnected('The other player left.'); });
-    c.on('error', (e) => { if (!this.closed) this.events.onDisconnected(`Connection error: ${e.type}`); });
+    c.on('data', (d) => { if (this.conn === c) { this.lastRecv = performance.now(); this.events.onMessage(d); } });
+    const lost = (reason: string) => {
+      if (this.closed || this.conn !== c) return;
+      this.conn = null;
+      this.events.onDisconnected(reason);
+    };
+    c.on('close', () => lost('The other player left.'));
+    c.on('error', (e) => lost(`Connection error: ${e.type}`));
   }
 }
