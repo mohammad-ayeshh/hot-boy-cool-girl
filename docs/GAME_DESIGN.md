@@ -97,13 +97,13 @@ Online lag must **never** make your own character feel slow. Your character resp
 ### 5.1 One level = one screen
 The **whole level is always visible**. No scrolling camera. Both players can always see each other and the whole puzzle, which makes co-op planning easy (P1, P2).
 
-### 5.2 Level size 💬 *(numbers may be tuned in the first prototype)*
+### 5.2 Level size 🔒
 - Levels are built on a grid of **32 × 18 tiles** (16:9 shape, the shape of most phone screens).
 - The level is scaled to **fill the screen height**. On the S23 Ultra a tile is about 22 screen points and a character about 1 tile wide and 1.5 tiles tall.
 - **Wider phones** (S23, iPhones are about 19.5:9) get extra space on the left and right. We fill it with temple decoration, and that is where the thumbs rest.
 - **Squarer screens** (tablets) get decorated bands at the top and bottom.
 
-### 5.3 Thumb zones (level design rule) 💬
+### 5.3 Thumb zones (level design rule) 🔒
 On 16:9 phones the thumbs cover the bottom-left and bottom-right corners of the level. **The bottom-left and bottom-right 4 × 4 tile areas of every level contain no gems, buttons, levers, doors or hazard edges**: only solid wall or simple floor.
 
 ## 6. Controls 🔒
@@ -189,9 +189,9 @@ Measured in tiles (1 tile ≈ the character's width).
 |---|---|
 | Coyote time 🔒 | Jump a split second after leaving a ledge |
 | Jump buffer 🔒 | A jump pressed just before landing still happens |
-| Ledge nudge | If you miss a ledge top by a few pixels, you get pushed up onto it instead of sliding down |
-| Head nudge | If you jump and clip a ceiling corner by a few pixels, you slide around it instead of stopping dead |
-| Small step-up | Tiny bumps (less than ¼ tile) are walked over automatically |
+| Ledge nudge 🔒 | If you miss a ledge top by a few pixels, you get pushed up onto it instead of sliding down |
+| Head nudge 🔒 | If you jump and clip a ceiling corner by a few pixels, you slide around it instead of stopping dead |
+| Small step-up 🔒 | Tiny bumps (less than ¼ tile) are walked over automatically |
 
 ### 7.7 Level metrics: the map matches the jump 🔒
 *Decided 2026-10-17.* Levels are built from a small set of **standard sizes** that exactly match what the characters can do. Players learn these sizes without noticing, and then they can *read* a level at a glance: "I can make that jump" or "that's a wall" (P2, P3).
@@ -376,9 +376,50 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 - No coins, shop or ads (P5).
 - *Later idea:* cosmetic rewards for stars (hats, trail colors) that never change gameplay.
 
+## 13. Online rules 💬
+
+### 13.1 Who is in charge of what
+| Thing | Who decides | Why |
+|---|---|---|
+| **Your own character** (moving, jumping) | **Your phone** | It responds instantly, with no waiting for the network (P6) |
+| **Your own death** | **Your phone** | You only die where *you* saw yourself touch the hazard, so deaths always feel fair (P2, P3) |
+| **Your own gems** | **Your phone** | Gems are colored per player, so two phones can never fight over one |
+| **Shared world**: buttons, levers, platforms, gates, boxes, shared gems, the timer, level start and finish | **The host's phone** (the "referee") | One phone must be the final word, so both screens always agree |
+
+In simple words: **each player is the boss of their own character, and the host is the referee of the world.**
+
+### 13.2 Staying in sync
+- Each phone sends its character's position about **30 times per second**.
+- Your partner is shown about **0.1 s in the past**, smoothly blended. That's invisible in a co-op game and removes jitter.
+- **Things you touch react instantly on your screen.** If you step on a button, it presses right away; the host confirms it a moment later and corrects in the rare case of a disagreement.
+- Moving platforms run on both phones from the same timing, and the host gently corrects any drift.
+- The connection is **direct phone-to-phone** when possible. On strict networks (some mobile data), it goes through a free **relay server** instead.
+
+### 13.3 Deaths and restarts
+- When anyone dies, **both** phones play the death effect and the level **restarts for both** about 1 s later.
+- **Either player can restart** from the pause menu at any time. The button must be **held for 1 s** to avoid accidents, and the partner sees "Cool Girl restarted the level".
+
+### 13.4 Pause and leaving the app
+- The pause menu **doesn't freeze** the game. The partner sees a small "in menu" icon over that character.
+- If a player switches apps, gets a call, or locks the phone, their character stands still and the partner sees an "away" icon.
+
+### 13.5 Disconnects
+- If the connection drops, the remaining player sees **"Waiting for partner…"** and the level pauses.
+- The **room code stays the same** for the whole session. When the missing player comes back (same link or code), they reconnect automatically and the **level restarts**.
+- After **2 minutes** of waiting, the remaining player gets a button to go back to Home.
+
+### 13.6 Room rules
+- A room holds **exactly 2 players**. A third person sees "This room is full".
+- **Same version check:** both phones must run the same game version. If not, the older one sees "Your friend has a newer version, tap to update" (important, because updates auto-deploy).
+- **No anti-cheat.** You only play with friends; we don't spend effort on it.
+- **No chat or voice** in the game; friends use a phone call or Discord. *Later idea:* 4 quick signals over your character (👋 "Here!", ✋ "Wait", 👉 "Go!", 😅 "Oops").
+
+### 13.7 Connection indicator
+A small signal icon in the corner: 🟢 good (under 100 ms), 🟡 OK (100–200 ms), 🔴 laggy (over 200 ms). Tapping it shows the ping and whether you're connected directly or through the relay.
+
 ---
 
-## 13. Topics still to design ❓
+## 14. Topics still to design ❓
 We'll go through these in order and fill in a section for each.
 
 1. ~~Color rules~~ ✅
@@ -390,14 +431,14 @@ We'll go through these in order and fill in a section for each.
 7. ~~Level building blocks~~ ✅ (section 10)
 8. ~~The game flow~~ ✅ (section 11)
 9. ~~Scoring and progress~~ ✅ (section 12)
-10. **Online rules**: who hosts, disconnects, restarting, dying
+10. **Online rules**: drafted (section 13)
 11. **Art style**: character design, temple look, lighting (depth notes in section 9)
 12. **Sound and music**
 13. **Level design rules** and the first 5 levels
 
 ---
 
-## 14. Decision log
+## 15. Decision log
 | Date | Decision |
 |---|---|
 | 2026-10-17 | Name: **Hot Boy & Cool Girl**, set in an ancient jungle temple. |
@@ -414,3 +455,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Level building blocks locked: Set 1 (first levels), Set 2 (later), Set 3 (someday); linked mechanisms share a gold rune symbol. |
 | 2026-10-17 | Game feel catalog, layered-depth art direction and game flow locked. |
 | 2026-10-17 | Scoring and progress locked: 3 team stars per level, no death penalty, finish to unlock, saves on both phones. |
+| 2026-10-17 | Level size (32×18 grid), thumb zones, and ledge nudge, head nudge and small step-up locked. |
