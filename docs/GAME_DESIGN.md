@@ -552,7 +552,8 @@ Many people play on their phone **with the sound off** (and on iPhone the silent
 - Your partner's sounds play slightly quieter than your own.
 - **Settings:** music volume, sound volume, vibration on or off.
 
-## 16. Level design 💬
+## 16. Level design 🔒
+*Locked 2026-10-17.*
 
 ### 16.1 Level design rules
 Every level must follow all of these, plus the pillars, the level metrics (7.7) and the thumb zones (5.3).
@@ -587,7 +588,7 @@ These sketches are a starting point. The real levels are built and tuned in the 
 
 ---
 
-## 17. Topics still to design ❓
+## 17. Design topics ✅
 We'll go through these in order and fill in a section for each.
 
 1. ~~Color rules~~ ✅
@@ -602,7 +603,9 @@ We'll go through these in order and fill in a section for each.
 10. ~~Online rules~~ ✅ (section 13)
 11. ~~Art style~~ ✅ (section 14)
 12. ~~Sound and music~~ ✅ (section 15)
-13. **Level design rules and the first 5 levels**: drafted (section 16)
+13. ~~Level design rules and the first 5 levels~~ ✅ (section 16)
+
+**All design topics are locked. The design phase is complete; next is building, starting with the Feel Lab (section 8.1).**
 
 ---
 
@@ -628,3 +631,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Character personality: hot-headed Hot Boy vs. cool-headed Cool Girl, stylish not cute (art style locked). |
 | 2026-10-17 | Art style locked: characters drawn in code, world in SVG, shader liquids, dynamic lighting. |
 | 2026-10-17 | Sound and music locked: sound is never required, code-made sounds, the music is a reacting duet, menu music added; recorded voices planned for later. |
+| 2026-10-17 | Level design rules D1–D12 and Chapter 1 (5 levels) locked. **Design phase complete.** |
