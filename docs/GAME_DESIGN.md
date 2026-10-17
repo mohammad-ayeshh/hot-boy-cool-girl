@@ -487,6 +487,12 @@ Stylized slim figures with a **big head (about half head, half body)**, arms and
 
 **Reactions to each other** at the end of a level: a high-five at the doors, or her shaking her head when he celebrates too much.
 
+**Trailing hair and footstep fire** *(added 2026-10-17, owner's request)*:
+- **Cool Girl's long water hair streams behind her** like a ribbon when she moves, with a little physics so fast moves leave a flowing streak, and drops fall from its tip.
+- **Hot Boy has a flame tail** rising from the back of his mohawk that trails behind him the same way and sheds embers.
+- **Hot Boy leaves small flames in his footsteps** (and a few when he lands) that flicker and go out after about half a second.
+All three can be switched off in the Feel Lab.
+
 ### 14.6 The temple world
 - **Stone tiles:** carved blocks with soft rounded corners, a light top edge (light from above), dark cracks. Edges join automatically ("autotiling"), so walls never look like a grid.
 - **Moss and vines** on top edges and hanging down, in muted green only.
@@ -596,6 +602,9 @@ Sketches drawn on the real 32 × 18 grid: [`docs/levels/chapter1-sketch.png`](le
 
 These sketches are a starting point. The real levels are built and tuned in the game and playtested (D12).
 
+### 16.3 Level editor ("design your own level") 💬
+*Proposed 2026-10-17, not decided yet.* See the discussion in the conversation; to be locked before building.
+
 ---
 
 ## 17. Design topics ✅
@@ -644,3 +653,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Level design rules D1–D12 and Chapter 1 (5 levels) locked. **Design phase complete.** |
 | 2026-10-17 | **Feel Lab built.** Building it showed that the first jump numbers broke the level metrics (6-tile gaps were jumpable), so the jump starting values changed: 0.30 s to the top (was 0.38) and falling 2× faster (was 1.6×). Max gap is now 4.9 tiles. |
 | 2026-10-17 | **First playable slice built:** online play of Chapter 1 levels 1–2 (no mechanisms needed), with home, share link, lobby, results with stars, saving, and the online rules in 13 (host as referee, deaths restart both, hold-to-restart, pause and away icons, waiting and rejoin with the same code, version check, connection dot). For now the lobby and the level map are one screen. Levels 3–5 show "soon" until the mechanisms exist. Music is not in yet. |
+| 2026-10-17 | **Chapter 1 complete (levels 3–5):** pressure buttons, levers, moving platforms and gates are in, all linked by gold runes. Both phones run them; your own touches react instantly, and the host corrects platforms and levers 5× a second. Riding a platform looks glued on the partner's screen too. **Lobby and level map are now separate screens** (characters first, then a temple map with a path of level stones). **The duet music is in**: drone and pad, Hot Boy's drums and plucks, and Cool Girl's chimes and arpeggios, each louder while that character moves, plus title, lobby (your own layer until your friend joins), map and results-jingle variations. **Trailing hair and footstep fire added (14.5).** "Design your own level" opened as a new topic (16.3). |

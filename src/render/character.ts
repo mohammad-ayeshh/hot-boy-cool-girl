@@ -40,6 +40,8 @@ export class CharacterView extends Container {
   sx = 1;
   sy = 1;
   facing: -1 | 1 = 1;
+  /** The long hair is drawn by the stage as a trailing chain (render/hair.ts) instead of here. */
+  trailHair = false;
 
   private readonly back = new Graphics();
   private readonly body = new Graphics();
@@ -54,6 +56,17 @@ export class CharacterView extends Container {
     this.upper.addChild(this.upperG, this.head);
     this.head.addChild(this.headG);
     this.addChild(this.back, this.body, this.upper);
+  }
+
+  /** A point given in head space (origin = middle of the head), in the parent's (world) space. */
+  headPoint(px: number, py: number): { x: number; y: number } {
+    const hr = this.head.rotation;
+    const x1 = this.head.x + px * Math.cos(hr) - py * Math.sin(hr);
+    const y1 = this.head.y + px * Math.sin(hr) + py * Math.cos(hr);
+    const ur = this.upper.rotation;
+    const x2 = this.upper.x + x1 * Math.cos(ur) - y1 * Math.sin(ur);
+    const y2 = this.upper.y + x1 * Math.sin(ur) + y1 * Math.cos(ur);
+    return { x: this.x + x2 * this.scale.x, y: this.y + y2 * this.scale.y };
   }
 
   draw(p: Pose): void {
@@ -214,7 +227,8 @@ export class CharacterView extends Container {
       hx -= Math.sin(dir) * 2.7;
       hy += Math.cos(dir) * 2.7;
     }
-    h.poly([4, -10, -3, -11, ...top, ...bot, -9, 4, -10.5, -1]).fill(hairCol);
+    if (this.trailHair) h.poly([4, -10, -3, -11, -10, -4, -9.5, 5, -10.5, -1]).fill(hairCol); // root only
+    else h.poly([4, -10, -3, -11, ...top, ...bot, -9, 4, -10.5, -1]).fill(hairCol);
     h.circle(0, 0, 10.2).fill(C(COOL.light)); // head
     h.ellipse(3, 1.5, 6.5, 6.5).fill({ color: C(COOL.core), alpha: 0.5 });
     // hair cap swept over one eye

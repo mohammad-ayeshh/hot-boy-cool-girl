@@ -72,6 +72,8 @@ export const DEFS = {
   animations: t('Character', 'Animations (run, idle, jump)', true, { effect: true }),
   nudgeFx: t('Character', 'Puff when a helper saves you', true, { effect: true }),
   trails: t('Character', 'Trails (scorch / wet)', true, { effect: true }),
+  hairTrail: t('Character', 'Hair trails behind (her ribbon, his flame tail)', true, { effect: true }),
+  stepFire: t('Character', 'Small flames in his footsteps', true, { effect: true }),
   nearDanger: t('Character', 'Near-danger reaction', true, { effect: true, hint: 'His flame sputters, she starts to boil' }),
   aura: t('Character', 'Floating embers / droplets', true, { effect: true }),
 
@@ -103,6 +105,8 @@ export const DEFS = {
   // ---- Sound & haptics ----
   sound: t('Sound & haptics', 'Sound', true, { effect: true }),
   volume: s('Sound & haptics', 'Volume', 0.7, 0, 1, 0.05),
+  music: t('Sound & haptics', 'Music (the duet)', true, { effect: true }),
+  musicVolume: s('Sound & haptics', 'Music volume', 0.5, 0, 1, 0.05),
   haptics: t('Sound & haptics', 'Vibration (Android)', true, { effect: true }),
 
   // ---- Debug ----

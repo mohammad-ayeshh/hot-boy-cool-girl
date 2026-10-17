@@ -3,6 +3,7 @@
 // it starts levels, restarts them after a death and decides when the level is complete.
 import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
+import { music } from '../engine/music';
 import type { Elem, Liquid } from '../game/level';
 import { CHAPTER_1, findLevel, levelData, nextLevel, type LevelDef } from '../game/levels';
 import { isUnlocked, loadName, loadProgress, recordResult, saveName, starsFor } from '../game/progress';
@@ -11,7 +12,7 @@ import { Session, type SessionStatus } from '../net/session';
 import { normalizeRoomCode } from '../net/room';
 import { Stage, createApp, type HeroEvent, type Snapshot } from '../play/stage';
 
-type Screen = 'home' | 'invite' | 'lobby' | 'play' | 'results';
+type Screen = 'home' | 'invite' | 'lobby' | 'map' | 'play' | 'results';
 type Choice = 'next' | 'retry' | 'map';
 interface Finish { time: number; got: number; total: number; deaths: number }
 
@@ -51,9 +52,10 @@ export async function startGame(): Promise<void> {
   const stage = new Stage(app, settings, levelData(CHAPTER_1[0]), {
     sandbox: false,
     hooks: {
-      localDeath: (_e, cause) => { send({ t: 'die', n: round, cause }); if (session.isHost) scheduleRestart(); },
+      localDeath: (_e, cause) => { music.duck(); send({ t: 'die', n: round, cause }); if (session.isHost) scheduleRestart(); },
       localGem: (_e, i) => { collected.add(i); send({ t: 'gem', n: round, i }); },
       localEvent: (_e, ev) => send({ t: 'ev', n: round, e: ev }),
+      localLever: (i, on) => send({ t: 'lever', n: round, i, on }),
     },
   });
   stage.controlled = null;
@@ -98,6 +100,9 @@ export async function startGame(): Promise<void> {
     unlocked = true;
     device.unlock();
     sfx.configure(settings.sound, settings.volume);
+    music.start();
+    music.configure(settings.music, settings.musicVolume);
+    updateMusic();
     if (device.canFullscreen() && !device.isStandalone() && matchMedia('(pointer: coarse)').matches) device.enterFullscreenLandscape().catch(() => {});
   }, { capture: true });
   // Taps on menus must not leave a stuck touch on the game.
@@ -112,12 +117,22 @@ export async function startGame(): Promise<void> {
     netDot.classList.toggle('hidden', s === 'home');
     if (!playing) { closeMenu(); stage.showHints = false; }
     render();
+    updateMusic();
+  }
+
+  /** Menu music (15.4b): title on home, your own layer in the lobby until your friend arrives. */
+  function updateMusic(): void {
+    if (screen === 'home') { music.setPresence(null, false); music.setMode('title'); }
+    else if (screen === 'invite' || screen === 'lobby') { music.setPresence(myElem, session.connected); music.setMode('lobby'); }
+    else if (screen === 'map' || screen === 'results') music.setMode('map');
+    else music.setMode('level');
   }
 
   function render(): void {
     if (screen === 'home') scr.innerHTML = homeHtml();
     else if (screen === 'invite') scr.innerHTML = inviteHtml();
     else if (screen === 'lobby') scr.innerHTML = lobbyHtml();
+    else if (screen === 'map') scr.innerHTML = mapHtml();
     else if (screen === 'results') scr.innerHTML = resultsHtml();
   }
 
@@ -152,31 +167,44 @@ export async function startGame(): Promise<void> {
   }
 
   function lobbyHtml(): string {
-    const progress = loadProgress();
-    const mine = Object.keys(progress);
     const card = (e: Elem) => {
       const me = e === myElem;
-      const who = me ? `You${myName ? ` (${esc(myName)})` : ''}` : partnerName ? esc(partnerName) : 'Friend';
+      const who = me ? `You${myName ? ` (${esc(myName)})` : ''}` : session.connected ? (partnerName ? esc(partnerName) : 'Your friend') : 'waiting…';
       return `<div class="char-card ${e === 'fire' ? 'hot' : 'cool'} ${me ? 'me' : ''}"><b>${NAMES[e]}</b><span>${who}</span></div>`;
     };
-    const levels = CHAPTER_1.map((l, i) => {
+    return `<div class="panel wide">
+      <h2>Who plays who?</h2>
+      <div class="duo">${card('fire')}<button data-act="swap" title="Swap characters">⇄ Swap</button>${card('water')}</div>
+      <p class="small">Either of you can swap. Hot Boy walks through lava, Cool Girl through water.</p>
+      <button class="primary big" data-act="tomap">Level map →</button>
+      ${versionProblem ? `<div class="status err">${versionProblem}</div>` : ''}
+      <div class="row small-row"><span class="small">Room ${session.code}</span><button data-act="leave">Leave room</button></div>
+    </div>`;
+  }
+
+  /** The temple map (11.1): a path of level stones; either player picks, both tap Ready. */
+  function mapHtml(): string {
+    const progress = loadProgress();
+    const mine = Object.keys(progress);
+    const spots = [[9, 60], [29, 27], [50, 57], [71, 25], [91, 52]];
+    const path = spots.map(([x, y], i) => (i ? 'L' : 'M') + x + ' ' + y).join(' ');
+    const nodes = CHAPTER_1.map((l, i) => {
       const open = l.rows !== null && isUnlocked(l.id, mine, partnerDone);
       const stars = progress[l.id]?.stars ?? 0;
-      const label = l.rows === null ? 'soon' : open ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : '🔒';
-      return `<button class="level ${l.id === picked ? 'picked' : ''}" data-act="pick" data-id="${l.id}" ${open ? '' : 'disabled'}>
-        <b>${i + 1}</b><span>${l.name}</span><small>${label}</small></button>`;
+      const label = l.rows === null ? 'soon' : open ? `<span class="on">${'★'.repeat(stars)}</span><span class="off">${'★'.repeat(3 - stars)}</span>` : '🔒';
+      const [x, y] = spots[i];
+      return `<button class="map-node ${l.id === picked ? 'picked' : ''} ${progress[l.id] ? 'done' : ''}" style="left:${x}%;top:${y}%" data-act="pick" data-id="${l.id}" ${open ? '' : 'disabled'}>
+        <b>${i + 1}</b><span class="map-name">${l.name}</span><small>${label}</small></button>`;
     }).join('');
     const pl = findLevel(picked);
-    return `<div class="panel wide">
-      <div class="duo">${card('fire')}<button data-act="swap" title="Swap characters">⇄ Swap</button>${card('water')}</div>
-      <h2>Chapter 1 · The Temple Gate</h2>
-      <div class="levels">${levels}</div>
+    return `<div class="panel wide map-panel">
+      <div class="map-head"><button data-act="tolobby">← Characters</button><h2>Chapter 1 · The Temple Gate</h2><span class="small">Room ${session.code}</span></div>
+      <div class="temple-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>
       <div class="row">
         <button class="${readyMe ? 'secondary' : 'primary'} big" data-act="ready">${readyMe ? 'Ready ✓ (tap to undo)' : `Ready: ${pl?.name ?? ''}`}</button>
       </div>
-      <div class="status">${readyPartner ? 'Your friend is ready ✅' : 'Waiting for your friend to tap Ready…'}</div>
+      <div class="status">${!session.connected ? 'Waiting for your friend…' : readyPartner ? 'Your friend is ready ✅' : 'Both tap Ready to start. Either of you can pick the level.'}</div>
       ${versionProblem ? `<div class="status err">${versionProblem}</div>` : ''}
-      <div class="row small-row"><span class="small">Room ${session.code}</span><button data-act="leave">Leave room</button></div>
     </div>`;
   }
 
@@ -214,6 +242,8 @@ export async function startGame(): Promise<void> {
     else if (act === 'copy') void copyLink();
     else if (act === 'leave') leaveRoom();
     else if (act === 'swap') swapRoles();
+    else if (act === 'tomap') show('map');
+    else if (act === 'tolobby') { if (readyMe) toggleReady(); show('lobby'); }
     else if (act === 'pick') pickLevel(el.dataset.id!, true);
     else if (act === 'ready') toggleReady();
     else if (act === 'choice') choose(el.dataset.c as Choice);
@@ -311,7 +341,7 @@ export async function startGame(): Promise<void> {
     picked = id;
     readyMe = readyPartner = false;
     if (tell) send({ t: 'pick', id });
-    if (screen === 'lobby') render();
+    if (screen === 'lobby' || screen === 'map') render();
   }
 
   function toggleReady(): void {
@@ -401,6 +431,7 @@ export async function startGame(): Promise<void> {
   function doFinish(data: Finish): void {
     finish = data;
     stage.celebrate();
+    music.swell();
     const stars = starsFor(data.got === data.total, data.time, level.targetTime);
     recordResult(level.id, stars, data.time); // saved on both phones (12.3)
     const n = round;
@@ -408,6 +439,7 @@ export async function startGame(): Promise<void> {
       if (round !== n || screen !== 'play') return;
       myChoice = partnerChoice = null;
       show('results');
+      music.jingle(stars);
       // stars count up with three rising notes
       for (let i = 0; i < stars; i++) setTimeout(() => sfx.chime([523.25 * Math.pow(1.26, i)], 0, 0.14), 300 + i * 350);
     }, 1800);
@@ -424,15 +456,15 @@ export async function startGame(): Promise<void> {
     if (!session.isHost || !myChoice || myChoice !== partnerChoice) return;
     if (myChoice === 'retry') startLevel(level.id);
     else if (myChoice === 'next') { const nx = nextLevel(level.id); if (nx?.rows) startLevel(nx.id); }
-    else { send({ t: 'lobby' }); goLobby(); }
+    else { send({ t: 'lobby' }); goMap(); }
   }
 
-  function goLobby(): void {
+  function goMap(): void {
     readyMe = readyPartner = false;
     const nx = nextLevel(level.id);
     if (finish && nx?.rows) picked = nx.id;
     goHomeStage();
-    show('lobby');
+    show('map');
   }
 
   // ---------------------------------------------------------------- pause menu (13.3, 13.4)
@@ -502,8 +534,10 @@ export async function startGame(): Promise<void> {
       sfx.chime([523.25, 783.99]); // "partner joined" (15.5)
       device.haptic(30);
       if (screen === 'home' || screen === 'invite') show('lobby');
+      else updateMusic();
     } else if (s === 'lost') {
       showLost();
+      updateMusic();
     } else if (s === 'idle' && info) {
       goHomeStage();
       show('home');
@@ -542,13 +576,13 @@ export async function startGame(): Promise<void> {
           // Back after a drop in the middle of a level: the level restarts (13.5).
           if (screen === 'play' || screen === 'results') startLevel(level.id);
         }
-        if (screen === 'lobby') render();
+        if (screen === 'lobby' || screen === 'map') render();
         break;
       }
       case 'roles':
         if (m.host === 'fire' || m.host === 'water') myElem = other(m.host);
         readyMe = readyPartner = false;
-        if (screen === 'lobby') render();
+        if (screen === 'lobby' || screen === 'map') render();
         break;
       case 'swap':
         if (session.isHost) swapRoles();
@@ -559,7 +593,7 @@ export async function startGame(): Promise<void> {
       case 'ready':
         readyPartner = !!m.on && m.id === picked;
         if (readyPartner) sfx.chime([783.99]);
-        if (screen === 'lobby') render();
+        if (screen === 'lobby' || screen === 'map') render();
         maybeStart();
         break;
       case 'start':
@@ -577,6 +611,7 @@ export async function startGame(): Promise<void> {
       case 'die':
         if (n === round && screen === 'play') {
           stage.remoteDeath(partner, m.cause as Liquid);
+          music.duck();
           if (session.isHost) scheduleRestart();
         }
         break;
@@ -587,6 +622,12 @@ export async function startGame(): Promise<void> {
         round = Number(m.n);
         deaths = Number(m.deaths) || 0;
         if (screen === 'play') doRestart(m.by as Elem | undefined);
+        break;
+      case 'lever':
+        if (n === round) stage.remoteLever(Number(m.i), !!m.on);
+        break;
+      case 'w':
+        if (n === round && !session.isHost) stage.correctMech(m as { lv?: number[]; pl?: number[] });
         break;
       case 'reqRestart':
         if (session.isHost && screen === 'play') {
@@ -604,7 +645,7 @@ export async function startGame(): Promise<void> {
         resolveChoice();
         break;
       case 'lobby':
-        goLobby();
+        goMap();
         break;
       case 'status':
         stage.setPartnerStatus(partner, m.s === 'menu' || m.s === 'away' ? m.s : '');
@@ -624,6 +665,12 @@ export async function startGame(): Promise<void> {
     lostEl.classList.remove('hidden');
   }
 
+  // Host: the shared world's state, so the guest's buttons/levers/platforms never drift apart (13.1, 13.2).
+  setInterval(() => {
+    if (screen !== 'play' || !session.connected || !session.isHost || !stage.mech.levers.length && !stage.mech.platforms.length) return;
+    send({ t: 'w', n: round, ...stage.mechState() });
+  }, 200);
+
   // Send my character ~30×/s while playing (13.2).
   setInterval(() => {
     if (screen !== 'play' || !session.connected) return;
@@ -639,6 +686,7 @@ export async function startGame(): Promise<void> {
   setInterval(() => {
     checkFinish();
     if (screen === 'play') {
+      music.setMovement(stage.movement('fire'), stage.movement('water'));
       const g = gemTotals();
       hudInfo.textContent = `⏱ ${stage.levelTime.toFixed(1)}   🔥 ${g.fire[0]}/${g.fire[1]}   💧 ${g.water[0]}/${g.water[1]}`;
     }

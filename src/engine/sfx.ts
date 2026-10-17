@@ -208,3 +208,37 @@ export function chime(notes: number[], gap = 0.09, vol = 0.12): void {
   const o = out(ac, 0, 1);
   notes.forEach((f, i) => tone(ac, o, 'sine', f, f, 0.35, vol, i * gap));
 }
+
+// ---- mechanisms (15.5): brass clicks, stone rumbles ----
+
+export function button(down: boolean, pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  tone(ac, o, 'square', down ? 1200 : 900, down ? 700 : 600, 0.03, 0.06); // click
+  if (down) hiss(ac, o, 'lowpass', 300, 120, 1, 0.25, 0.16, 0.02); // stone rumble
+}
+
+export function lever(pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  tone(ac, o, 'triangle', 220, 110, 0.12, 0.18); // clunk
+  tone(ac, o, 'square', 1500, 900, 0.025, 0.05, 0.08);
+}
+
+export function grind(start: boolean, pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  hiss(ac, o, 'bandpass', start ? 180 : 260, start ? 260 : 140, 3, start ? 0.35 : 0.2, 0.14);
+  tone(ac, o, 'sawtooth', start ? 55 : 70, start ? 70 : 50, 0.25, 0.04);
+}
+
+export function gate(opening: boolean, pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  hiss(ac, o, 'bandpass', opening ? 400 : 600, opening ? 900 : 300, 2, 0.4, 0.12);
+  tone(ac, o, 'triangle', opening ? 90 : 120, opening ? 130 : 70, 0.4, 0.06);
+}

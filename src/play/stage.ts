@@ -7,11 +7,13 @@ import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
 import { Controls } from '../engine/input';
 import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, type JumpStats, type Phys } from '../game/body';
-import { COLS, ROWS, Level, type Elem, type Gem, type LevelData, type Liquid } from '../game/level';
+import { COLS, ROWS, Level, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
+import { Mechanisms, type Feet, type MechEvent, type Rune } from '../game/mechanisms';
 import type { Settings } from '../game/settings';
 import { ParticleSystem, makeGlowTexture } from '../render/particles';
 import { CharacterView, type Pose } from '../render/character';
-import { Pools, T, drawBackground, drawTiles } from '../render/world';
+import { Pools, T, drawBackground, drawTiles, lerpColor } from '../render/world';
+import { COOL_HAIR, HOT_FLAME, HairChain } from '../render/hair';
 
 const FIRE_FX = [0xfff0c2, 0xffb02e, 0xff6a1a];
 const WATER_FX = [0xe4faff, 0x7adfff, 0x1fa3ff];
@@ -27,8 +29,8 @@ const PARTNER_GAIN = 0.6;
 
 export type HeroEvent = { k: 'jump' } | { k: 'land'; v: number } | { k: 'turn' };
 
-/** What the network sends ~30×/s about one character. */
-export interface Snapshot { x: number; y: number; vx: number; vy: number; g: 0 | 1; f: -1 | 1 }
+/** What the network sends ~30×/s about one character. p = platform stood on (-1 = none), rx/ry = position on it. */
+export interface Snapshot { x: number; y: number; vx: number; vy: number; g: 0 | 1; f: -1 | 1; p?: number; rx?: number; ry?: number }
 
 export interface StageHooks {
   /** A character simulated on this phone died. */
@@ -37,6 +39,8 @@ export interface StageHooks {
   localGem?(elem: Elem, index: number): void;
   /** Movement events to mirror on the partner's phone. */
   localEvent?(elem: Elem, ev: HeroEvent): void;
+  /** A character simulated on this phone flipped lever `i`. */
+  localLever?(i: number, on: boolean): void;
 }
 
 export interface StageOptions {
@@ -51,6 +55,9 @@ interface Hero {
   view: CharacterView;
   light: Sprite;
   status: Text;
+  hair: HairChain;
+  hairG: Graphics;
+  hairReset: boolean;
   local: boolean;
   alive: boolean;
   dying: Liquid | null;
@@ -78,6 +85,26 @@ interface GemState extends Gem { alive: boolean; respawn: number; glow: Sprite; 
 interface DoorState { elem: Elem; x: number; y: number; glow: Sprite; near: number; open: number }
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const PLAT_H = 0.5;
+const feetOf = (b: Body): Feet => ({ left: b.left, right: b.right, y: b.y, vx: b.vx, grounded: b.grounded });
+
+function drawRune(g: Graphics, rune: Rune, x: number, y: number, r: number, color: number, alpha: number): void {
+  const st = { width: 1.6, color, alpha };
+  if (rune === 'circle') {
+    g.circle(x, y, r).stroke(st);
+    g.circle(x, y, r * 0.3).fill({ color, alpha });
+  } else if (rune === 'triangle') g.poly([x, y - r, x + r * 0.95, y + r * 0.7, x - r * 0.95, y + r * 0.7]).stroke(st);
+  else if (rune === 'square') g.rect(x - r * 0.8, y - r * 0.8, r * 1.6, r * 1.6).stroke(st);
+  else {
+    const pts: number[] = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const rr = i % 2 ? r * 0.45 : r;
+      pts.push(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    g.poly(pts).stroke(st);
+  }
+}
 
 export async function createApp(): Promise<Application> {
   const app = new Application();
@@ -117,6 +144,10 @@ export class Stage {
   private readonly levelLights = new Container();
   private readonly trails = new ParticleSystem(this.glowTex, 1500);
   private readonly doorsG = new Graphics();
+  private readonly mechG = new Graphics();
+  mech: Mechanisms = new Mechanisms([]);
+  private readonly flamesG = new Graphics();
+  private flames: { x: number; y: number; age: number; life: number; seed: number }[] = [];
   private readonly gemsG = new Graphics();
   private readonly heroesLayer = new Container();
   private readonly dust = new ParticleSystem(this.glowTex, 800, 'normal');
@@ -152,7 +183,7 @@ export class Stage {
   constructor(readonly app: Application, readonly settings: Settings, level: LevelData, private readonly opts: StageOptions) {
     this.controls = new Controls(app.canvas, { deadZone: settings.deadZone, anchorFollows: settings.anchorFollows, anchorLeash: settings.anchorLeash });
     this.lights.addChild(this.levelLights);
-    this.world.addChild(this.bg, this.tiles, this.lights, this.trails.view, this.doorsG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.fx.view, this.debug);
+    this.world.addChild(this.bg, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.fx.view, this.debug);
     app.stage.addChild(this.margins, this.world, this.screenFx, this.hints);
     drawBackground(this.bg);
     this.heroes = { water: this.makeHero('water'), fire: this.makeHero('fire') };
@@ -167,6 +198,8 @@ export class Stage {
 
   setLevel(data: LevelData): void {
     this.level = new Level(data);
+    this.mech = new Mechanisms(data.mechs);
+    this.level.dynamic = this.mech.solids;
     drawTiles(this.tiles, this.level);
     this.pools = new Pools(this.level, this.poolsG);
     for (const c of this.levelLights.removeChildren()) c.destroy();
@@ -205,8 +238,9 @@ export class Stage {
   }
 
   private makeHero(elem: Elem): Hero {
+    const hairG = new Graphics();
     const view = new CharacterView(elem);
-    this.heroesLayer.addChild(view);
+    this.heroesLayer.addChild(hairG, view);
     const light = new Sprite({ texture: this.glowTex, anchor: 0.5, blendMode: 'add' });
     light.tint = elem === 'fire' ? 0xff8a2a : 0x3fb8ff;
     this.lights.addChild(light);
@@ -214,7 +248,7 @@ export class Stage {
     status.anchor.set(0.5, 1);
     this.heroesLayer.addChild(status);
     const h: Hero = {
-      elem, body: new Body(), view, light, status, local: true, alive: true, dying: null, deadT: 0,
+      elem, body: new Body(), view, light, status, hair: new HairChain(elem === 'water' ? COOL_HAIR : HOT_FLAME), hairG, hairReset: true, local: true, alive: true, dying: null, deadT: 0,
       sx: 1, sy: 1, vsx: 0, vsy: 0, whiten: 0, excite: 0, danger: 0, runPhase: 0, idle: 0, time: Math.random() * 10,
       ownPrev: 0, auraT: 0, lastGemT: -10, combo: 0, arcFull: [], arcTap: [], victory: -1, buf: [], queue: [],
     };
@@ -254,6 +288,7 @@ export class Stage {
       const h = this.heroes[e];
       const sp = this.level.data.spawn[e];
       h.body.place(sp.x, sp.y);
+      h.hairReset = true;
       h.alive = true;
       h.dying = null;
       h.sx = h.sy = 1;
@@ -269,6 +304,8 @@ export class Stage {
     }
     for (const g of this.gems) g.alive = true;
     for (const d of this.doors) d.open = 0;
+    this.mech.reset();
+    this.level.dynamic = this.mech.solids;
     this.trails.clear();
     this.levelTime = 0;
     this.completed = false;
@@ -332,7 +369,36 @@ export class Stage {
   snapshot(elem: Elem): Snapshot {
     const b = this.heroes[elem].body;
     const r = (v: number) => Math.round(v * 1000) / 1000;
-    return { x: r(b.x), y: r(b.y), vx: r(b.vx), vy: r(b.vy), g: b.grounded ? 1 : 0, f: b.facing };
+    const snap: Snapshot = { x: r(b.x), y: r(b.y), vx: r(b.vx), vy: r(b.vy), g: b.grounded ? 1 : 0, f: b.facing };
+    const p = this.mech.platformUnder(feetOf(b));
+    if (p >= 0) {
+      // Riding a platform: send the position on it, so the partner sees us glued to it (13.2).
+      const rect = this.mech.platforms[p].rect;
+      snap.p = p;
+      snap.rx = r(b.x - rect.x0);
+      snap.ry = r(b.y - rect.y0);
+    }
+    return snap;
+  }
+
+  /** Partner's phone flipped a lever. */
+  remoteLever(i: number, on: boolean): void {
+    if (this.mech.setLever(i, on)) sfx.lever(this.panX(this.mech.levers[i].def.x));
+  }
+
+  mechState(): { lv: number[]; pl: number[] } {
+    return this.mech.state();
+  }
+
+  correctMech(s: { lv?: number[]; pl?: number[] }): void {
+    this.mech.correct(s, performance.now());
+  }
+
+  /** 0..1 how much a character is moving (drives their music layer). */
+  movement(elem: Elem): number {
+    const h = this.heroes[elem];
+    if (!this.isAlive(elem)) return 0;
+    return h.body.grounded ? Math.min(1, Math.abs(h.body.vx) / this.phys.run) : 1;
   }
 
   isAlive(elem: Elem): boolean {
@@ -428,6 +494,7 @@ export class Stage {
         else this.fx.emit({ x, y: y - 2, count: 3 + Math.round(6 * n), colors: WATER_FX, speed: [50, 120 + 120 * n], life: [0.25, 0.5], size: [3, 6], angle: dir + (dir ? 0.6 : -0.6), spread: 0.3, gravity: 700 });
       }
     }
+    if (h.elem === 'fire' && s.stepFire && !onOwnLiquid) for (let i = 0; i < 2 + Math.round(n * 3); i++) this.addFlame(x + (Math.random() - 0.5) * 22, y);
     sfx.land(h.elem, n, this.pan(h), this.gain(h));
     if (this.mine(h)) {
       this.haptic(Math.round(6 + 16 * n));
@@ -472,6 +539,7 @@ export class Stage {
     }
     if (!s.trails) return;
     if (h.elem === 'fire') {
+      if (s.stepFire) this.addFlame(x + (Math.random() - 0.5) * 6, y);
       this.trails.emit({ x: x + (Math.random() - 0.5) * 6, y: y - 1, count: 1, colors: [0xff6a1a, 0xb8320c], speed: [0, 0], life: [1.2, 1.8], size: [10, 14], alpha: 0.7 }); // scorch mark
       this.fx.emit({ x, y: y - 2, count: 1, colors: FIRE_FX, speed: [20, 60], life: [0.3, 0.6], size: [3, 5], angle: -Math.PI / 2, spread: 0.6, gravity: -80 });
     } else {
@@ -531,6 +599,7 @@ export class Stage {
   private respawnOne(h: Hero): void {
     const sp = this.level.data.spawn[h.elem];
     h.body.place(sp.x, sp.y);
+    h.hairReset = true;
     h.alive = true;
     h.ownPrev = 0;
     h.danger = 0;
@@ -566,6 +635,7 @@ export class Stage {
     if (!this.completed) this.levelTime += STEP;
     const jumpPressed = this.controls.consumeJump();
     const now = performance.now();
+    this.stepMechanisms();
     for (const e of ELEMS) {
       const h = this.heroes[e];
       h.time += STEP;
@@ -638,6 +708,10 @@ export class Stage {
       const excite = h.victory >= 0 ? 1 : b.grounded ? Math.min(1, sp / this.phys.run) * 0.8 : 1;
       h.excite += (excite - h.excite) * Math.min(1, STEP * 6);
     }
+    // levers: flipped by characters on this phone walking into them
+    const events: MechEvent[] = [];
+    this.mech.updateLevers(ELEMS.filter((e) => this.heroes[e].local && this.isAlive(e)).map((e) => feetOf(this.heroes[e].body)), now, events);
+    this.mechEvents(events);
     if (this.opts.sandbox) {
       for (const gem of this.gems) {
         if (gem.alive) continue;
@@ -646,6 +720,64 @@ export class Stage {
           gem.alive = true;
           if (this.settings.gemFx) this.fx.emit({ x: gem.x * T, y: gem.y * T, count: 8, colors: [0xffffff], speed: [20, 60], life: [0.2, 0.4], size: [3, 6], spread: Math.PI });
         }
+      }
+    }
+  }
+
+  /** Buttons, platforms and gates move; riders are carried; nobody gets stuck inside a platform. */
+  private stepMechanisms(): void {
+    const m = this.mech;
+    if (!m.buttons.length && !m.platforms.length && !m.gates.length) return;
+    const events: MechEvent[] = [];
+    const alive = ELEMS.filter((e) => this.isAlive(e)).map((e) => this.heroes[e]);
+    m.updateButtons(alive.map((h) => feetOf(h.body)), events);
+    const locals = alive.filter((h) => h.local);
+    const riding = locals.map((h) => m.platformUnder(feetOf(h.body)));
+    const overlaps = (r: Rect) => locals.some((h) => r.x0 < h.body.right && r.x1 > h.body.left && r.y0 < h.body.y && r.y1 > h.body.top);
+    m.update(STEP, overlaps, events);
+    locals.forEach((h, i) => {
+      const b = h.body;
+      const pi = riding[i];
+      if (pi >= 0) {
+        const pl = m.platforms[pi];
+        if ((pl.dx || pl.dy) && this.level.free(b.left + pl.dx, b.top + pl.dy, b.right + pl.dx, pl.rect.y0 - 1e-4)) {
+          b.x += pl.dx;
+          b.prevX += pl.dx;
+          b.y = pl.rect.y0 - 1e-4;
+          b.prevY += pl.dy;
+        }
+      }
+      // pushed by a platform it isn't riding: move out of the way (up onto it, or down below it)
+      for (const pl of m.platforms) {
+        const r = pl.rect;
+        if (!(r.x0 < b.right && r.x1 > b.left && r.y0 < b.y && r.y1 > b.top)) continue;
+        if (b.y - HITBOX_H / 2 < (r.y0 + r.y1) / 2) b.y = r.y0 - 1e-4;
+        else b.y = r.y1 + HITBOX_H + 1e-4;
+        b.prevY = b.y;
+      }
+    });
+    this.mechEvents(events);
+  }
+
+  private panX(xTiles: number): number {
+    return (xTiles / COLS) * 1.4 - 0.7;
+  }
+
+  private mechEvents(events: MechEvent[]): void {
+    for (const ev of events) {
+      if (ev.k === 'button') {
+        const d = this.mech.buttons[ev.i].def;
+        sfx.button(ev.down, this.panX(d.x));
+        const me = this.controlled ? this.heroes[this.controlled] : null;
+        if (ev.down && me?.local && Math.abs(me.body.x - (d.x + 0.5)) < 0.9) this.haptic(15);
+      } else if (ev.k === 'lever') {
+        sfx.lever(this.panX(this.mech.levers[ev.i].def.x));
+        this.haptic(20);
+        if (ev.local) this.opts.hooks?.localLever?.(ev.i, ev.on);
+      } else if (ev.k === 'platform') {
+        sfx.grind(ev.start, this.panX(this.mech.platforms[ev.i].rect.x0));
+      } else {
+        sfx.gate(ev.opening, this.panX(this.mech.gates[ev.i].def.x));
       }
     }
   }
@@ -664,6 +796,15 @@ export class Stage {
       s = { ...b.s, x: a.s.x + (b.s.x - a.s.x) * k, y: a.s.y + (b.s.y - a.s.y) * k, vx: a.s.vx + (b.s.vx - a.s.vx) * k, vy: a.s.vy + (b.s.vy - a.s.vy) * k };
       if (k < 0.5) s = { ...s, g: a.s.g, f: a.s.f };
     }
+    const onPlat = s.p !== undefined && s.p >= 0 ? this.mech.platforms[s.p] : undefined;
+    if (onPlat) {
+      // glued to the platform as it is on this phone right now
+      const same = b && a.s.p === b.s.p;
+      const k = same ? clamp((t - a.t) / Math.max(1, b.t - a.t), 0, 1) : 0;
+      const src = same ? a.s : s;
+      const dst = same ? b.s : s;
+      s = { ...s, x: onPlat.rect.x0 + (src.rx ?? 0) + ((dst.rx ?? 0) - (src.rx ?? 0)) * k, y: onPlat.rect.y0 + (src.ry ?? 0) + ((dst.ry ?? 0) - (src.ry ?? 0)) * k };
+    }
     b0.prevX = b0.x = s.x;
     b0.prevY = b0.y = s.y;
     b0.vx = s.vx;
@@ -681,6 +822,7 @@ export class Stage {
     h.view.visible = show;
     h.light.visible = show && s.lighting;
     h.status.visible = show && h.status.text !== '';
+    h.hairG.visible = show;
     if (!show) return;
     const x = (b.prevX + (b.x - b.prevX) * alpha) * T;
     const y = (b.prevY + (b.y - b.prevY) * alpha) * T;
@@ -693,7 +835,9 @@ export class Stage {
       time: h.time, speed: Math.min(1, Math.abs(b.vx) / this.phys.run), grounded: b.grounded, vy: b.vy, runPhase: h.runPhase,
       idle: h.idle, animate: s.animations, danger: h.danger, whiten: h.whiten, excite: h.excite, victory: h.victory,
     };
+    h.view.trailHair = s.hairTrail;
     h.view.draw(pose);
+    this.drawHair(h, dt, pose);
 
     // own light: he pulses with excitement, she shimmers steadily (14.5)
     const r = (4.6 * T * s.lightRadius) / 64;
@@ -712,18 +856,66 @@ export class Stage {
     h.auraT -= dt;
     if (h.auraT > 0) return;
     const hx = x - b.facing * 4, hy = y - 1.35 * T;
+    const tip = s.hairTrail ? h.hair.tip() : null; // the trailing hair sheds embers / drops
     if (h.elem === 'fire') {
       h.auraT = 0.13 - h.excite * 0.08;
-      if (s.aura && h.danger < 0.6) this.fx.emit({ x: hx + (Math.random() - 0.5) * 14, y: hy, count: 1, colors: FIRE_FX, speed: [20, 50], life: [0.4, 0.9], size: [3, 6], angle: -Math.PI / 2, spread: 0.5, gravity: -60 });
+      if (s.aura && h.danger < 0.6) this.fx.emit({ x: tip ? tip.x : hx + (Math.random() - 0.5) * 14, y: tip ? tip.y : hy, count: 1, colors: FIRE_FX, speed: [20, 50], life: [0.4, 0.9], size: [3, 6], angle: -Math.PI / 2, spread: 0.5, gravity: -60 });
       if (s.nearDanger && h.danger > 0.25) this.dust.emit({ x: hx, y: hy, count: 1, colors: [0x7d8b8f, 0x5a6669], speed: [15, 40], life: [0.5, 0.9], size: [6, 11], angle: -Math.PI / 2, spread: 0.4, gravity: -50, alpha: 0.45 * h.danger }); // sputter smoke
       if (h.victory >= 0) this.fx.emit({ x: hx, y: hy - 6, count: 3, colors: FIRE_FX, speed: [80, 200], life: [0.3, 0.7], size: [3, 7], angle: -Math.PI / 2, spread: 0.7, gravity: 200 }); // his fireworks
     } else {
-      h.auraT = 0.16;
-      if (s.aura) this.fx.emit({ x: x - b.facing * (10 + Math.random() * 14), y: hy + 8 + Math.random() * 10, count: 1, colors: WATER_FX, speed: [5, 20], life: [0.4, 0.8], size: [2, 4], angle: Math.PI / 2, spread: 0.6, gravity: 140, alpha: 0.8 });
+      h.auraT = tip && h.excite > 0.3 ? 0.07 : 0.16;
+      if (s.aura) this.fx.emit({ x: tip ? tip.x : x - b.facing * (10 + Math.random() * 14), y: tip ? tip.y : hy + 8 + Math.random() * 10, count: 1, colors: WATER_FX, speed: [5, 20], life: [0.4, 0.8], size: [2, 4], angle: Math.PI / 2, spread: 0.6, gravity: 140, alpha: 0.8 });
       if (s.nearDanger && h.danger > 0.25) {
         this.fx.emit({ x: x + (Math.random() - 0.5) * 16, y: hy, count: 1 + Math.round(h.danger * 2), colors: STEAM, speed: [20, 60], life: [0.4, 0.8], size: [5, 10], angle: -Math.PI / 2, spread: 0.5, gravity: -80, alpha: 0.35 * h.danger }); // steam
         this.fx.emit({ x: x + (Math.random() - 0.5) * 18, y: y - Math.random() * 30, count: 1, colors: [0xe4faff], speed: [10, 30], life: [0.2, 0.4], size: [2, 4], angle: -Math.PI / 2, spread: 0.6, gravity: -100 }); // bubbles
       }
+    }
+  }
+
+  /** Trailing hair (render/hair.ts): her long water ribbon, his flame tail. */
+  private drawHair(h: Hero, dt: number, p: Pose): void {
+    const g = h.hairG.clear();
+    if (!this.settings.hairTrail) return;
+    const v = h.view;
+    const root = h.elem === 'water' ? v.headPoint(-7.5, -2.5) : v.headPoint(-7.5, -5);
+    if (h.hairReset) {
+      h.hair.reset(root.x, root.y, v.facing);
+      h.hairReset = false;
+    }
+    h.hair.update(root.x, root.y, v.facing, dt, h.time, p.speed);
+    const C = (c: number) => lerpColor(c, 0xffffff, h.whiten);
+    if (h.elem === 'water') {
+      h.hair.ribbon(g, 7.5, 1.6, C(0x1fa3ff));
+      h.hair.ribbon(g, 3, 0.6, C(0x7adfff), 0.55);
+      h.hair.line(g, 1, 8, 1.1, C(0xe4faff), 0.7, 1.5);
+    } else {
+      const size = Math.max(0.35, 1 + h.excite * 0.35 - h.danger * 0.6) * (p.victory >= 0 ? 1.4 : 1);
+      const flick = (i: number) => 0.8 + 0.35 * Math.sin(h.time * (17 + i * 3) + i * 1.9);
+      h.hair.ribbon(g, 9 * size, 0, C(0xff6a1a), 0.95, flick);
+      h.hair.ribbon(g, 5.5 * size, 0, C(0xffb02e), 0.95, flick);
+      h.hair.ribbon(g, 2.4 * size, 0, C(0xfff0c2), 0.9, flick);
+    }
+  }
+
+  private addFlame(x: number, y: number): void {
+    if (this.flames.length > 40) this.flames.shift();
+    this.flames.push({ x, y, age: 0, life: 0.55 + Math.random() * 0.35, seed: Math.random() * 10 });
+  }
+
+  /** Small fires left behind in Hot Boy's footsteps: they flicker, shrink and go out. */
+  private drawFlames(dt: number): void {
+    const g = this.flamesG.clear();
+    this.flames = this.flames.filter((f) => (f.age += dt) < f.life);
+    for (const f of this.flames) {
+      const k = 1 - f.age / f.life;
+      const flick = 0.85 + 0.25 * Math.sin(this.simTime * 30 + f.seed) + 0.1 * Math.sin(this.simTime * 47 + f.seed * 2);
+      const hgt = (6 + 5 * Math.sqrt(k)) * Math.sqrt(k) * flick;
+      const w = 3.6 * Math.sqrt(k);
+      const sway = Math.sin(this.simTime * 9 + f.seed) * 1.2;
+      const shape = (hh: number, ww: number) => [f.x + sway, f.y - hh, f.x + ww, f.y - hh * 0.4, f.x + ww * 0.55, f.y, f.x - ww * 0.55, f.y, f.x - ww, f.y - hh * 0.4];
+      g.poly(shape(hgt, w)).fill({ color: 0xff6a1a, alpha: 0.85 * Math.min(1, k * 2) });
+      g.poly(shape(hgt * 0.62, w * 0.6)).fill({ color: 0xffb02e, alpha: 0.9 * Math.min(1, k * 2) });
+      g.poly(shape(hgt * 0.3, w * 0.3)).fill({ color: 0xfff0c2, alpha: Math.min(1, k * 2) });
     }
   }
 
@@ -787,6 +979,55 @@ export class Stage {
       else g.poly([x, sy - 9 * pulse, x + 5 * pulse, sy, x + 5 * pulse, sy + 4, x, sy + 7 * pulse, x - 5 * pulse, sy + 4, x - 5 * pulse, sy]).fill({ color: mid, alpha: sa });
       d.glow.visible = this.settings.lighting;
       d.glow.alpha = 0.12 + d.near * 0.25 + d.open * 0.35;
+    }
+  }
+
+  /** Brass and gold mechanisms with their linking rune (10.1, 14.6). */
+  private drawMechs(): void {
+    const g = this.mechG.clear();
+    const m = this.mech;
+    const GOLD = 0xe3b04b, BRASS = 0x8a6a2a, IVORY = 0xf1e6c8;
+    const lit = (rune: Rune) => (m.powered(rune) ? 1 : 0);
+    for (const pl of m.platforms) {
+      const d = pl.def;
+      // dotted guide: where it goes
+      const sx = (d.x + d.w / 2) * T, sy = (d.y + PLAT_H / 2) * T, ex = (d.to[0] + d.w / 2) * T, ey = (d.to[1] + PLAT_H / 2) * T;
+      const len = Math.hypot(ex - sx, ey - sy);
+      for (let t = 0; t <= len; t += 10) g.circle(sx + ((ex - sx) * t) / len, sy + ((ey - sy) * t) / len, 1.3).fill({ color: GOLD, alpha: 0.22 });
+      const r = pl.rect;
+      const x = r.x0 * T, y = r.y0 * T, w = (r.x1 - r.x0) * T, h = (r.y1 - r.y0) * T;
+      g.roundRect(x, y, w, h, 4).fill(0x3a4a45);
+      g.rect(x + 2, y, w - 4, 3).fill(GOLD);
+      g.rect(x + 2, y + h - 3, w - 4, 2).fill({ color: BRASS, alpha: 0.8 });
+      drawRune(g, d.rune, x + w / 2, y + h / 2 + 1, 4.5, lit(d.rune) ? IVORY : GOLD, 0.6 + 0.4 * lit(d.rune));
+    }
+    for (const gt of m.gates) {
+      const d = gt.def;
+      const x = d.x * T, y = d.y * T, w = d.w * T, bottom = gt.rect.y1 * T;
+      g.rect(x, y - 4, w, 6).fill(BRASS); // lintel
+      if (bottom > y + 1) {
+        for (let bx = x + 5; bx < x + w - 2; bx += 8) g.rect(bx, y, 4, bottom - y).fill(0x9a7a38);
+        g.rect(x, bottom - 5, w, 5).fill(GOLD);
+        for (let bx = x + 3; bx < x + w - 2; bx += 8) g.poly([bx, bottom, bx + 4, bottom, bx + 2, bottom + 4]).fill(GOLD);
+        drawRune(g, d.rune, x + w / 2, Math.min(bottom - 14, y + 14), 6, lit(d.rune) ? IVORY : GOLD, 0.85);
+      } else drawRune(g, d.rune, x + w / 2, y - 12, 5, IVORY, 0.9);
+    }
+    for (const b of m.buttons) {
+      const x = b.def.x * T, floor = (b.def.y + 1) * T;
+      g.roundRect(x + 3, floor - 4, T - 6, 4, 1.5).fill(BRASS);
+      const top = floor - 8 + b.sink * 4;
+      g.roundRect(x + 6, top, T - 12, floor - 4 - top + 1, 2).fill(b.pressed ? IVORY : GOLD);
+      drawRune(g, b.def.rune, x + T / 2, floor - 0.75 * T, 4.5, b.pressed ? IVORY : GOLD, 0.45 + 0.55 * b.sink);
+    }
+    for (const l of m.levers) {
+      const cx = (l.def.x + 0.5) * T, floor = (l.def.y + 1) * T;
+      const ang = l.angle * 0.65; // tilted left (off) or right (on)
+      const px = cx, py = floor - 6;
+      g.moveTo(px, py).lineTo(px + Math.sin(ang) * 20, py - Math.cos(ang) * 20).stroke({ width: 3, color: 0x9a7a38, cap: 'round' });
+      g.circle(px + Math.sin(ang) * 20, py - Math.cos(ang) * 20, 3.6).fill(l.on ? IVORY : GOLD);
+      g.ellipse(cx, floor - 2, 10, 6).fill(0x3a4a45);
+      g.rect(cx - 10, floor - 3, 20, 3).fill(BRASS);
+      drawRune(g, l.def.rune, cx, floor - 0.95 * T - 4, 4.5, l.on ? IVORY : GOLD, l.on ? 1 : 0.6);
     }
   }
 
@@ -917,8 +1158,10 @@ export class Stage {
 
     this.pools.update(simDt, this.simTime);
     this.drawDoors(simDt);
+    this.drawMechs();
     this.drawGems();
     for (const e of ELEMS) this.drawHero(this.heroes[e], alpha, simDt);
+    this.drawFlames(simDt);
     this.trails.update(simDt);
     this.dust.update(simDt);
     this.fx.update(simDt);

@@ -1,14 +1,16 @@
 // Chapter 1: The Temple Gate (design doc 16.2). Maps come from the sketches in
 // docs/levels/chapter1-sketch.png (tools/level_sketch.py). Legend: see parseLevel() in level.ts.
 import { parseLevel, type LevelData } from './level';
+import type { MechDef } from './mechanisms';
 
 export interface LevelDef {
   id: string;
   name: string;
   /** ⭐⭐⭐ needs all gems and a time under this (12.1). First guesses: tune after playtests. */
   targetTime: number;
-  /** null = designed but not built yet (needs mechanisms). */
+  /** null = designed but not built yet. */
   rows: readonly string[] | null;
+  mechs?: MechDef[];
 }
 
 export const CHAPTER_1: LevelDef[] = [
@@ -62,11 +64,101 @@ export const CHAPTER_1: LevelDef[] = [
       '################################',
     ],
   },
-  { id: '1-3', name: 'Hold the Button', targetTime: 30, rows: null },
-  { id: '1-4', name: 'Going Up', targetTime: 35, rows: null },
-  { id: '1-5', name: 'Crossing Together', targetTime: 45, rows: null },
+  {
+    id: '1-3',
+    name: 'Hold the Button',
+    targetTime: 30,
+    rows: [
+      '################################',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#..............##..............#',
+      '#...r.b........##..........H.C.#',
+      '#...###...........r....b..######',
+      '#...###...................######',
+      '#...###.h.c...............######',
+      '##################WW###LL#######',
+      '################################',
+    ],
+    mechs: [
+      { kind: 'button', x: 12, y: 15, rune: 'circle' },
+      { kind: 'button', x: 21, y: 15, rune: 'circle' },
+      { kind: 'gate', x: 15, y: 13, w: 2, h: 3, rune: 'circle' },
+    ],
+  },
+  {
+    id: '1-4',
+    name: 'Going Up',
+    targetTime: 35,
+    rows: [
+      '################################',
+      '#..............................#',
+      '#..............................#',
+      '#..............................#',
+      '#..............................#',
+      '#...................b..r.......#',
+      '#.........................H.C..#',
+      '#.............######LL#WW#######',
+      '#.............##################',
+      '#.............##################',
+      '#........b..r.##################',
+      '#.............##################',
+      '#.............##################',
+      '#.............##################',
+      '#.............##################',
+      '#...hc........##################',
+      '#######PP#######################',
+      '################################',
+    ],
+    mechs: [
+      { kind: 'button', x: 6, y: 15, rune: 'triangle' },
+      { kind: 'platform', x: 12, y: 15, w: 2, to: [12, 7], rune: 'triangle' },
+      { kind: 'lever', x: 16, y: 6, rune: 'circle' },
+      { kind: 'platform', x: 9, y: 15, w: 2, to: [9, 7], rune: 'circle' },
+    ],
+  },
+  {
+    id: '1-5',
+    name: 'Crossing Together',
+    targetTime: 45,
+    rows: [
+      '################################',
+      '#........................#######',
+      '#........................#######',
+      '#........................#######',
+      '#........................#######',
+      '#........................#######',
+      '#..............................#',
+      '#..............................#',
+      '#..............................#',
+      '#........................H.C...#',
+      '#........................###...#',
+      '#..............r.b.......###.r.#',
+      '#........................###...#',
+      '#.......................b...####',
+      '#...........................####',
+      '#.....h.c...................####',
+      '##########PPPPPPPPPPPP##WW######',
+      '################################',
+    ],
+    mechs: [
+      { kind: 'button', x: 4, y: 15, rune: 'circle' },
+      { kind: 'button', x: 27, y: 15, rune: 'circle' },
+      { kind: 'platform', x: 10, y: 14, w: 3, to: [19, 14], rune: 'circle' },
+      { kind: 'lever', x: 22, y: 15, rune: 'triangle' },
+      { kind: 'gate', x: 28, y: 6, w: 1, h: 7, rune: 'triangle' },
+    ],
+  },
 ];
 
 export const findLevel = (id: string): LevelDef | undefined => CHAPTER_1.find((l) => l.id === id);
-export const levelData = (def: LevelDef): LevelData => parseLevel(def.rows!);
+export const levelData = (def: LevelDef): LevelData => parseLevel(def.rows!, def.mechs ?? []);
 export const nextLevel = (id: string): LevelDef | undefined => CHAPTER_1[CHAPTER_1.findIndex((l) => l.id === id) + 1];

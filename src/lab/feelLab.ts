@@ -3,6 +3,7 @@
 // one character at a time and can swap. Values found here go back into the design doc.
 import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
+import { music } from '../engine/music';
 import type { Phys, JumpStats } from '../game/body';
 import type { Elem } from '../game/level';
 import { labLevel } from '../game/labLevel';
@@ -50,6 +51,7 @@ export async function startFeelLab(): Promise<void> {
   let saveTimer = 0;
   function apply(k: Key | null): void {
     stage.applySettings();
+    music.configure(settings.music, settings.musicVolume);
     statsEl.classList.toggle('hidden', !settings.stats);
     if (k === 'showZones') stage.hintZones();
     panel.setReadout(readout(stage.stats, stage.phys));
@@ -74,6 +76,9 @@ export async function startFeelLab(): Promise<void> {
   $('lab-go').addEventListener('click', () => {
     device.unlock();
     sfx.configure(settings.sound, settings.volume);
+    music.start();
+    music.configure(settings.music, settings.musicVolume);
+    music.setMode('level');
     $('lab-start').classList.add('hidden');
     if (device.canFullscreen() && !device.isStandalone() && matchMedia('(pointer: coarse)').matches) device.enterFullscreenLandscape().catch(() => {});
   });
@@ -85,6 +90,7 @@ export async function startFeelLab(): Promise<void> {
   });
   // Tapping the UI must not leave a stuck touch.
   ui.addEventListener('pointerdown', () => stage.controls.reset());
+  setInterval(() => music.setMovement(stage.movement('fire'), stage.movement('water')), 100);
   setInterval(() => { statsEl.textContent = `${Math.round(stage.fps)} fps · ${stage.particleCount} particles`; }, 500);
 
   apply(null);

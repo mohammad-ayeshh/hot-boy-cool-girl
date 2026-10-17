@@ -10,7 +10,10 @@ export type Elem = 'fire' | 'water';
 /** Liquids sit a little lower than the floor, so feet visibly dip in (and stepping out uses the step-up helper). */
 export const LIQUID_DEPTH = 0.2;
 
+import type { MechDef } from './mechanisms';
+
 export interface Gem { x: number; y: number; elem: Elem }
+export interface Rect { x0: number; y0: number; x1: number; y1: number }
 export interface Point { x: number; y: number }
 export interface LevelData {
   tiles: Tile[][]; // [row][col]
@@ -18,6 +21,8 @@ export interface LevelData {
   /** Exit doors: x = middle, y = the floor they stand on. Absent in test rooms. */
   doors: Partial<Record<Elem, Point>>;
   gems: Gem[];
+  /** Buttons, levers, platforms, gates (see mechanisms.ts). */
+  mechs: MechDef[];
 }
 
 const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P: 'poison' };
@@ -27,7 +32,7 @@ const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P
  * `h`/`c` Hot Boy / Cool Girl start (feet on the bottom of that cell), `H`/`C` their exit doors
  * (standing on the bottom of that cell), `r`/`b` fire/water gem.
  */
-export function parseLevel(rows: readonly string[]): LevelData {
+export function parseLevel(rows: readonly string[], mechs: MechDef[] = []): LevelData {
   if (rows.length !== ROWS) throw new Error(`Level must have ${ROWS} rows, got ${rows.length}`);
   const tiles: Tile[][] = [];
   const spawn = { fire: { x: 2, y: ROWS - 3 }, water: { x: 3, y: ROWS - 3 } };
@@ -47,11 +52,13 @@ export function parseLevel(rows: readonly string[]): LevelData {
     });
     tiles.push(row);
   });
-  return { tiles, spawn, doors, gems };
+  return { tiles, spawn, doors, gems, mechs };
 }
 
 export class Level {
   readonly data: LevelData;
+  /** Moving solids (platforms, gates), kept up to date by the mechanisms. */
+  dynamic: Rect[] = [];
   constructor(data: LevelData) {
     this.data = data;
   }
@@ -87,6 +94,16 @@ export class Level {
           res.top = Math.min(res.top, ry0);
           res.bottom = Math.max(res.bottom, ty + 1);
         }
+      }
+    }
+    for (const r of this.dynamic) {
+      if (r.x0 >= x1 || r.x1 <= x0 || r.y0 >= y1 || r.y1 <= y0) continue;
+      if (!res) res = { left: r.x0, right: r.x1, top: r.y0, bottom: r.y1 };
+      else {
+        res.left = Math.min(res.left, r.x0);
+        res.right = Math.max(res.right, r.x1);
+        res.top = Math.min(res.top, r.y0);
+        res.bottom = Math.max(res.bottom, r.y1);
       }
     }
     return res;
