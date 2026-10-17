@@ -217,7 +217,8 @@ How we keep it true:
 - A debug overlay can draw the **jump arc** from the character, to check levels.
 - If the movement numbers ever change, this table and every level are re-checked. Later, a level checker can flag any 4-tile ledge or 5-tile gap automatically.
 
-## 8. Game feel ("juice") 💬
+## 8. Game feel ("juice") 🔒
+*Locked 2026-10-17. Values are tuned in the Feel Lab.*
 Game feel is built **from the first prototype**. It isn't left for the end. Inspired by Sébastien Bénard's (deepnight) *Game Feel* demo, https://deepnight.net/games/game-feel/ (source: https://github.com/deepnight/gamefeel).
 
 ### 8.1 The Feel Lab
@@ -265,8 +266,9 @@ Like that demo, the first thing we build is a **Feel Lab**: one test room with b
 
 ---
 
-## 9. Art direction: layered depth 💬
-*Early notes; the full art topic comes later.* Goal: a background with **many layers of depth**, like *Hollow Knight: Silksong*, while the gameplay layer stays the clearest thing on screen (P2).
+## 9. Art direction: layered depth 🔒
+*Locked 2026-10-17.*
+*The full art topic comes later.* Goal: a background with **many layers of depth**, like *Hollow Knight: Silksong*, while the gameplay layer stays the clearest thing on screen (P2).
 
 ### 9.1 Layers (back to front)
 | Layer | Content | Motion |
@@ -319,7 +321,8 @@ Every button or lever and the thing it controls show the **same gold rune symbol
 ### 10.4 Set 3: later ideas
 Light beams and mirrors, wind fans, ice floors, portals, timed switches, falling blocks.
 
-## 11. Game flow 💬
+## 11. Game flow 🔒
+*Locked 2026-10-17.*
 The path from opening the link to playing must take **under 30 seconds** (P5).
 
 ### 11.1 Screens
@@ -338,9 +341,43 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 - **Pause doesn't freeze the game** (it's online). Your partner sees a small "partner is in the menu" icon.
 - **If a player disconnects**, the other sees "Waiting for partner…", and the same room code works to rejoin. The details come in the online rules topic.
 
+## 12. Scoring and progress 💬
+
+### 12.1 Three stars per level, earned as a team
+| Star | How to earn it |
+|---|---|
+| ⭐ | Finish the level |
+| ⭐⭐ | Finish with **all gems** collected (both players' gems) |
+| ⭐⭐⭐ | Finish with all gems **and** under the target time |
+
+- Stars belong to the **team**, never to one player (P1). Getting all the gems needs both of you.
+- Each level remembers your **best** result. Stars are never lost.
+- The **target time** is set by us when we design each level: our own good run plus a small margin.
+- **Deaths cost nothing.** Results show a fun death counter ("💀 7"), but no penalty, because dying is part of learning a puzzle (P3, P5).
+
+### 12.2 Unlocking levels
+- Levels are grouped into **chapters** of about 8 levels each (different parts of the temple).
+- **Finishing a level unlocks the next one**, with any number of stars. You never get stuck because you can't get 3 stars.
+- A few **bonus levels** unlock with stars, as a reward for players who want more challenge.
+
+### 12.3 Playing with different friends
+- Each phone keeps **its own save**.
+- When two players meet, a level is open if **either** player has unlocked it, so you can always play together straight away (P5).
+- When a level is finished, the result is saved on **both** phones.
+
+### 12.4 Saving
+- Progress is saved on the phone. No accounts, no server (L2).
+- ⚠️ iPhone Safari can erase a website's saved data after about 7 days without visiting. **Added to Home Screen**, the game is protected from this, so the game gently suggests installing it.
+- Later: a **backup code** you can copy to move your progress to another phone.
+
+### 12.5 Not included (on purpose)
+- No online leaderboards: they need a server (L2).
+- No coins, shop or ads (P5).
+- *Later idea:* cosmetic rewards for stars (hats, trail colors) that never change gameplay.
+
 ---
 
-## 12. Topics still to design ❓
+## 13. Topics still to design ❓
 We'll go through these in order and fill in a section for each.
 
 1. ~~Color rules~~ ✅
@@ -348,10 +385,10 @@ We'll go through these in order and fill in a section for each.
 3. ~~Screen and camera~~ ✅ (section 5)
 4. ~~Controls~~ ✅ (section 6)
 5. ~~Characters, movement and level metrics~~ ✅ (section 7)
-6. **Game feel catalog**: drafted (section 8)
+6. ~~Game feel catalog~~ ✅ (section 8)
 7. ~~Level building blocks~~ ✅ (section 10)
-8. **The game flow**: drafted (section 11)
-9. **Scoring and progress**: time, gems, stars, unlocking levels
+8. ~~The game flow~~ ✅ (section 11)
+9. **Scoring and progress**: drafted (section 12)
 10. **Online rules**: who hosts, disconnects, restarting, dying
 11. **Art style**: character design, temple look, lighting (depth notes in section 9)
 12. **Sound and music**
@@ -359,7 +396,7 @@ We'll go through these in order and fill in a section for each.
 
 ---
 
-## 13. Decision log
+## 14. Decision log
 | Date | Decision |
 |---|---|
 | 2026-10-17 | Name: **Hot Boy & Cool Girl**, set in an ancient jungle temple. |
@@ -372,5 +409,6 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | Game feel is built from the first prototype, starting with a Feel Lab (toggle panel, inspired by deepnight's demo). |
 | 2026-10-17 | Characters locked: identical movement, run + jump only, walk through each other, forgiving hitboxes. |
 | 2026-10-17 | Level metrics locked: levels use standard sizes matched to the jump; every jump is clearly possible or clearly impossible. |
-| 2026-10-17 | Art direction: Silksong-style layered depth background (draft). |
+| 2026-10-17 | Art direction: Silksong-style layered depth background. |
 | 2026-10-17 | Level building blocks locked: Set 1 (first levels), Set 2 (later), Set 3 (someday); linked mechanisms share a gold rune symbol. |
+| 2026-10-17 | Game feel catalog, layered-depth art direction and game flow locked. |
