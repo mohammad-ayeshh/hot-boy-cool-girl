@@ -10,6 +10,10 @@ export function unlock(): void {
   void keepAwake();
 }
 
+export function audioContext(): AudioContext | null {
+  return audio;
+}
+
 export function haptic(ms = 12): void {
   navigator.vibrate?.(ms); // Android only; iOS Safari has no vibration API
 }

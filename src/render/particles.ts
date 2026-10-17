@@ -1,4 +1,4 @@
-import { Particle, ParticleContainer, Texture } from 'pixi.js';
+import { Particle, ParticleContainer, Texture, type BLEND_MODES } from 'pixi.js';
 
 /** Soft white radial blob; tinted per particle and drawn additively it reads as glow. */
 export function makeGlowTexture(size = 64): Texture {
@@ -65,11 +65,11 @@ export class ParticleSystem {
   private readonly texSize: number;
   private born = false;
 
-  constructor(private readonly texture: Texture, private readonly maxParticles = 5000) {
+  constructor(private readonly texture: Texture, private readonly maxParticles = 5000, blendMode: BLEND_MODES = 'add') {
     this.texSize = texture.width;
     this.view = new ParticleContainer({
       texture,
-      blendMode: 'add',
+      blendMode,
       dynamicProperties: { position: true, vertex: true, color: true, rotation: false, uvs: false },
     });
   }
@@ -105,6 +105,12 @@ export class ParticleSystem {
         dragPerSec: o.drag ?? 1,
       });
     }
+  }
+
+  clear(): void {
+    for (const l of this.live) this.pool.push(l.p);
+    this.live.length = 0;
+    this.born = true;
   }
 
   update(dt: number): void {

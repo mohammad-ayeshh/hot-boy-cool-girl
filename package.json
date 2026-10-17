@@ -8,7 +8,8 @@
     "dev:http": "vite --mode http --port 5174",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:metrics": "node tools/metrics_check.ts"
   },
   "dependencies": {
     "peerjs": "^1.5.5",

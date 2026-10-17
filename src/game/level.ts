@@ -1,0 +1,135 @@
+// Tile grid for one 32 × 18 screen (design doc 5.2). Coordinates are in tiles, y points down.
+
+export const COLS = 32;
+export const ROWS = 18;
+
+export type Liquid = 'lava' | 'water' | 'poison';
+export type Tile = 'empty' | 'stone' | Liquid;
+export type Elem = 'fire' | 'water';
+
+/** Liquids sit a little lower than the floor, so feet visibly dip in (and stepping out uses the step-up helper). */
+export const LIQUID_DEPTH = 0.2;
+
+export interface Gem { x: number; y: number; elem: Elem }
+export interface LevelData {
+  tiles: Tile[][]; // [row][col]
+  spawn: Record<Elem, { x: number; y: number }>;
+  gems: Gem[];
+}
+
+const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P: 'poison' };
+
+/**
+ * Parse an ASCII map. `#` stone, `L` lava, `W` water, `P` poison,
+ * `h`/`c` Hot Boy / Cool Girl start (feet on the bottom of that cell), `r`/`b` fire/water gem.
+ */
+export function parseLevel(rows: readonly string[]): LevelData {
+  if (rows.length !== ROWS) throw new Error(`Level must have ${ROWS} rows, got ${rows.length}`);
+  const tiles: Tile[][] = [];
+  const spawn = { fire: { x: 2, y: ROWS - 3 }, water: { x: 3, y: ROWS - 3 } };
+  const gems: Gem[] = [];
+  rows.forEach((line, y) => {
+    if (line.length !== COLS) throw new Error(`Row ${y} must have ${COLS} columns, got ${line.length}`);
+    const row: Tile[] = [];
+    [...line].forEach((ch, x) => {
+      row.push(CHAR_TILE[ch] ?? 'empty');
+      if (ch === 'h') spawn.fire = { x: x + 0.5, y: y + 1 };
+      else if (ch === 'c') spawn.water = { x: x + 0.5, y: y + 1 };
+      else if (ch === 'r') gems.push({ x: x + 0.5, y: y + 0.5, elem: 'fire' });
+      else if (ch === 'b') gems.push({ x: x + 0.5, y: y + 0.5, elem: 'water' });
+    });
+    tiles.push(row);
+  });
+  return { tiles, spawn, gems };
+}
+
+export class Level {
+  readonly data: LevelData;
+  constructor(data: LevelData) {
+    this.data = data;
+  }
+
+  tile(tx: number, ty: number): Tile {
+    if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) return 'stone';
+    return this.data.tiles[ty][tx];
+  }
+
+  /** Top of the solid part of a tile (in tile units from the tile's top), or null if not solid. */
+  solidTop(tx: number, ty: number): number | null {
+    const t = this.tile(tx, ty);
+    if (t === 'empty') return null;
+    return t === 'stone' ? 0 : LIQUID_DEPTH;
+  }
+
+  /**
+   * Does the box overlap anything solid? Returns the blocking extents (the union of solid rects hit)
+   * so movement can be resolved, or null if the box is free.
+   */
+  hit(x0: number, y0: number, x1: number, y1: number): { left: number; right: number; top: number; bottom: number } | null {
+    let res: { left: number; right: number; top: number; bottom: number } | null = null;
+    for (let ty = Math.floor(y0); ty <= Math.floor(y1 - 1e-9); ty++) {
+      for (let tx = Math.floor(x0); tx <= Math.floor(x1 - 1e-9); tx++) {
+        const top = this.solidTop(tx, ty);
+        if (top === null) continue;
+        const ry0 = ty + top;
+        if (ry0 >= y1 || ty + 1 <= y0) continue;
+        if (!res) res = { left: tx, right: tx + 1, top: ry0, bottom: ty + 1 };
+        else {
+          res.left = Math.min(res.left, tx);
+          res.right = Math.max(res.right, tx + 1);
+          res.top = Math.min(res.top, ry0);
+          res.bottom = Math.max(res.bottom, ty + 1);
+        }
+      }
+    }
+    return res;
+  }
+
+  free(x0: number, y0: number, x1: number, y1: number): boolean {
+    return this.hit(x0, y0, x1, y1) === null;
+  }
+
+  /** Width of the [x0,x1] span standing on each liquid in the row just below the feet at y. */
+  liquidUnder(x0: number, x1: number, feetY: number): Record<Liquid, number> {
+    const out: Record<Liquid, number> = { lava: 0, water: 0, poison: 0 };
+    const ty = Math.floor(feetY - LIQUID_DEPTH + 0.02);
+    for (let tx = Math.floor(x0); tx <= Math.floor(x1 - 1e-9); tx++) {
+      const t = this.tile(tx, ty);
+      if (t === 'lava' || t === 'water' || t === 'poison') out[t] += Math.min(x1, tx + 1) - Math.max(x0, tx);
+    }
+    return out;
+  }
+
+  /** Distance from a point to the nearest tile of one of the given liquids (Infinity if none nearby). */
+  distanceToLiquid(px: number, py: number, kinds: readonly Liquid[], radius: number): number {
+    let best = Infinity;
+    for (let ty = Math.floor(py - radius); ty <= Math.floor(py + radius); ty++) {
+      for (let tx = Math.floor(px - radius); tx <= Math.floor(px + radius); tx++) {
+        const t = this.tile(tx, ty);
+        if (!(kinds as readonly Tile[]).includes(t)) continue;
+        const dx = Math.max(tx - px, 0, px - (tx + 1));
+        const dy = Math.max(ty + LIQUID_DEPTH - py, 0, py - (ty + 1));
+        best = Math.min(best, Math.hypot(dx, dy));
+      }
+    }
+    return best;
+  }
+
+  /** Horizontal runs of the same liquid, for drawing pools. */
+  pools(): { kind: Liquid; x0: number; x1: number; y: number }[] {
+    const out: { kind: Liquid; x0: number; x1: number; y: number }[] = [];
+    this.data.tiles.forEach((row, y) => {
+      let x = 0;
+      while (x < COLS) {
+        const t = row[x];
+        if (t === 'lava' || t === 'water' || t === 'poison') {
+          let e = x;
+          while (e + 1 < COLS && row[e + 1] === t) e++;
+          out.push({ kind: t, x0: x, x1: e + 1, y });
+          x = e + 1;
+        } else x++;
+      }
+    });
+    return out;
+  }
+}
