@@ -5,14 +5,19 @@ import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
 import type { Elem, Liquid } from '../game/level';
-import { CHAPTER_1, findLevel, levelData, nextLevel, type LevelDef } from '../game/levels';
+import { CHAPTER_1, getLevel, levelData, nextLevel, type LevelDef } from '../game/levels';
+import { blankLevel, decodeLink, encodeLink, isCustomId, isVerified, levelHash, markVerified, newId, sanitize, type CustomLevel } from '../game/custom';
+import { checkLevel, hasErrors } from '../game/levelCheck';
+import { deleteLevel, forgetRoomLevels, getMyLevel, listLevels, rememberRoomLevel, roomLevel, roomLevels, saveLevel } from '../game/myLevels';
+import { openEditor } from '../editor/editor';
+import { thumb } from '../editor/thumb';
 import { isUnlocked, loadName, loadProgress, recordResult, saveName, starsFor } from '../game/progress';
 import { defaults } from '../game/settings';
 import { Session, type SessionStatus } from '../net/session';
 import { normalizeRoomCode } from '../net/room';
 import { Stage, createApp, type HeroEvent, type Snapshot } from '../play/stage';
 
-type Screen = 'home' | 'invite' | 'lobby' | 'map' | 'play' | 'results';
+type Screen = 'home' | 'invite' | 'lobby' | 'map' | 'play' | 'results' | 'designer' | 'editor' | 'import';
 type Choice = 'next' | 'retry' | 'map';
 interface Finish { time: number; got: number; total: number; deaths: number }
 
@@ -48,11 +53,18 @@ export async function startGame(): Promise<void> {
   let menuOpen = false;
   let lostAt = 0;
   let versionProblem = '';
+  // level designer (16.3)
+  let mapTab: 'chapter' | 'mine' = 'chapter';
+  let editor: { close(): void } | null = null;
+  let importLevel: CustomLevel | null = null;
+  let pendingDelete = '';
+  let verifiedNow = false;
+  let gemElems: Elem[] = [];
 
   const stage = new Stage(app, settings, levelData(CHAPTER_1[0]), {
     sandbox: false,
     hooks: {
-      localDeath: (_e, cause) => { music.duck(); send({ t: 'die', n: round, cause }); if (session.isHost) scheduleRestart(); },
+      localDeath: (_e, cause) => { if (screen !== 'play') return; music.duck(); send({ t: 'die', n: round, cause }); if (session.isHost) scheduleRestart(); },
       localGem: (_e, i) => { collected.add(i); send({ t: 'gem', n: round, i }); },
       localEvent: (_e, ev) => send({ t: 'ev', n: round, e: ev }),
       localLever: (i, on) => send({ t: 'lever', n: round, i, on }),
@@ -116,7 +128,7 @@ export async function startGame(): Promise<void> {
   const fsLabel = () => device.isFullscreen() ? '⛶ Exit full screen' : '⛶ Full screen';
   function updateFsButton(): void {
     fsBtn.textContent = fsLabel();
-    fsBtn.classList.toggle('hidden', device.isStandalone() || screen === 'play');
+    fsBtn.classList.toggle('hidden', device.isStandalone() || screen === 'play' || screen === 'editor');
     const menuFs = menuEl.querySelector<HTMLElement>('[data-act="fullscreen"]');
     if (menuFs) menuFs.textContent = fsLabel();
   }
@@ -133,9 +145,11 @@ export async function startGame(): Promise<void> {
   function show(s: Screen): void {
     screen = s;
     const playing = s === 'play';
-    scr.classList.toggle('hidden', playing);
+    if (s !== 'editor' && editor) { editor.close(); editor = null; goHomeStage(); }
+    if (s !== 'designer') pendingDelete = '';
+    scr.classList.toggle('hidden', playing || s === 'editor');
     hud.classList.toggle('hidden', !playing);
-    netDot.classList.toggle('hidden', s === 'home');
+    netDot.classList.toggle('hidden', s === 'home' || s === 'designer' || s === 'editor' || s === 'import');
     if (!playing) { closeMenu(); stage.showHints = false; }
     render();
     updateFsButton();
@@ -146,7 +160,7 @@ export async function startGame(): Promise<void> {
   function updateMusic(): void {
     if (screen === 'home') { music.setPresence(null, false); music.setMode('title'); }
     else if (screen === 'invite' || screen === 'lobby') { music.setPresence(myElem, session.connected); music.setMode('lobby'); }
-    else if (screen === 'map' || screen === 'results') music.setMode('map');
+    else if (screen === 'map' || screen === 'results' || screen === 'designer' || screen === 'editor' || screen === 'import') music.setMode('map');
     else music.setMode('level');
   }
 
@@ -156,6 +170,8 @@ export async function startGame(): Promise<void> {
     else if (screen === 'lobby') scr.innerHTML = lobbyHtml();
     else if (screen === 'map') scr.innerHTML = mapHtml();
     else if (screen === 'results') scr.innerHTML = resultsHtml();
+    else if (screen === 'designer') scr.innerHTML = designerHtml();
+    else if (screen === 'import') scr.innerHTML = importHtml();
   }
 
   function homeHtml(): string {
@@ -168,6 +184,7 @@ export async function startGame(): Promise<void> {
         <input class="code-input" id="code" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" />
         <button class="secondary" data-act="join">Join room</button>
       </div>
+      <button data-act="designer">🛠 Level designer</button>
       <div class="status" id="status"></div>
       ${ios ? '<p class="small">Tip: Share → “Add to Home Screen” plays fullscreen and keeps your progress safe.</p>' : ''}
       <p class="small"><a href="?lab">Feel Lab</a></p>
@@ -218,22 +235,49 @@ export async function startGame(): Promise<void> {
       return `<button class="map-node ${l.id === picked ? 'picked' : ''} ${progress[l.id] ? 'done' : ''}" style="left:${x}%;top:${y}%" data-act="pick" data-id="${l.id}" ${open ? '' : 'disabled'}>
         <b>${i + 1}</b><span class="map-name">${l.name}</span><small>${label}</small></button>`;
     }).join('');
-    const pl = findLevel(picked);
+    const pl = getLevel(picked);
+    const tab = (t: typeof mapTab, text: string) => `<button class="${mapTab === t ? 'on' : ''}" data-act="tab" data-tab="${t}">${text}</button>`;
+    const custom = isCustomId(picked);
+    const hint = custom && pl && !isVerified(pl as CustomLevel) ? ' Finish it together to give it its ✅.' : '';
     return `<div class="panel wide map-panel">
-      <div class="map-head"><button data-act="tolobby">← Characters</button><h2>Chapter 1 · The Temple Gate</h2><span class="small">Room ${session.code}</span></div>
-      <div class="temple-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>
+      <div class="map-head"><button data-act="tolobby">← Characters</button><div class="tabs">${tab('chapter', 'Chapter 1 · The Temple Gate')}${tab('mine', '🛠 My levels')}</div><span class="small">Room ${session.code}</span></div>
+      ${mapTab === 'chapter'
+        ? `<div class="temple-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>`
+        : mineHtml()}
       <div class="row">
         <button class="${readyMe ? 'secondary' : 'primary'} big" data-act="ready">${readyMe ? 'Ready ✓ (tap to undo)' : `Ready: ${pl?.name ?? ''}`}</button>
       </div>
-      <div class="status">${!session.connected ? 'Waiting for your friend…' : readyPartner ? 'Your friend is ready ✅' : 'Both tap Ready to start. Either of you can pick the level.'}</div>
+      <div class="status">${!session.connected ? 'Waiting for your friend…' : readyPartner ? 'Your friend is ready ✅' : `Both tap Ready to start. Either of you can pick the level.${hint}`}</div>
       ${versionProblem ? `<div class="status err">${versionProblem}</div>` : ''}
     </div>`;
+  }
+
+  /** Homemade levels on the temple map: mine, plus any your friend picked in this room. */
+  function mineHtml(): string {
+    const mine = listLevels();
+    const ids = new Set(mine.map((l) => l.id));
+    const all = [...mine, ...roomLevels().filter((l) => !ids.has(l.id))];
+    if (!all.length) return '<div class="mine-empty"><p>No homemade levels yet. Make one in the 🛠 Level designer on the home screen, then come back here to play it together.</p></div>';
+    return `<div class="mine-list">${all.map((l) => {
+      const bad = hasErrors(checkLevel(l));
+      const from = ids.has(l.id) ? (l.copy ? `by ${esc(l.author || 'a friend')} · ` : '') : `from ${esc(partnerName || 'your friend')} · `;
+      return `<button class="mine-card ${l.id === picked ? 'picked' : ''}" data-act="pick" data-id="${l.id}" ${bad ? 'disabled' : ''}>
+        <img src="${thumb(l)}" alt="" /><b>${esc(l.name)}</b>
+        <small>${from}${bad ? '⛔ fix it in the designer' : isVerified(l) ? '✅ verified' : '⚠ not verified yet'}</small></button>`;
+    }).join('')}</div>`;
+  }
+
+  /** Can the friend still save this homemade level (or a newer version of it)? */
+  function canKeep(l: CustomLevel): boolean {
+    const saved = getMyLevel(l.id);
+    return !saved || (!!saved.copy && (levelHash(saved) !== levelHash(l) || isVerified(saved) !== isVerified(l)));
   }
 
   function resultsHtml(): string {
     if (!finish) return '';
     const stars = starsFor(finish.got === finish.total, finish.time, level.targetTime);
-    const nx = nextLevel(level.id);
+    const custom = isCustomId(level.id) ? (level as CustomLevel) : null;
+    const nx = custom ? undefined : nextLevel(level.id);
     const pc = partnerChoice ? `Your friend picked: <b>${{ next: 'Next level', retry: 'Retry', map: 'Level map' }[partnerChoice]}</b>` : 'Both tap the same choice to continue.';
     const btn = (c: Choice, text: string, cls = '') => `<button class="${cls} ${myChoice === c ? 'chosen' : ''}" data-act="choice" data-c="${c}">${text}</button>`;
     return `<div class="panel">
@@ -244,6 +288,8 @@ export async function startGame(): Promise<void> {
         <span>💎 ${finish.got}/${finish.total}</span>
         <span>💀 ${finish.deaths}</span>
       </div>
+      ${custom && verifiedNow ? `<div class="status ok">✅ Level verified with ${esc(partnerName || 'your friend')}! It can be shared by link now.</div>` : ''}
+      ${custom && canKeep(custom) ? `<button data-act="keep">💾 ${getMyLevel(custom.id) ? 'Update my copy' : 'Keep a copy of this level'}</button>` : ''}
       <div class="row">
         ${nx?.rows ? btn('next', 'Next level', 'primary') : ''}
         ${btn('retry', 'Retry')}
@@ -251,6 +297,88 @@ export async function startGame(): Promise<void> {
       </div>
       <div class="status">${pc}</div>
     </div>`;
+  }
+
+  // ---------------------------------------------------------------- level designer (16.3)
+  function designerHtml(): string {
+    const items = listLevels().map((l) => {
+      const v = isVerified(l);
+      const status = v ? `✅ Verified with ${esc(l.verified!.with || 'a friend')}` : hasErrors(checkLevel(l)) ? '⛔ Has problems to fix' : '⚠ Not verified yet';
+      const by = l.copy ? `by ${esc(l.author || 'a friend')}` : l.basedOn ? `based on ${esc(l.basedOn)}’s level` : 'made by you';
+      const del = pendingDelete === l.id;
+      return `<div class="lvl-item">
+        <img class="lvl-thumb" src="${thumb(l)}" alt="" />
+        <div class="lvl-info"><b>${esc(l.name)}</b><small>${by} · ${status}</small></div>
+        <div class="lvl-acts">
+          ${l.copy ? `<button data-act="owncopy" data-id="${l.id}">Make my own copy</button>` : `<button class="secondary" data-act="edit" data-id="${l.id}">✎ Edit</button>`}
+          ${v ? `<button data-act="sharelvl" data-id="${l.id}">Share</button>` : ''}
+          <button class="${del ? 'danger' : ''}" data-act="dellvl" data-id="${l.id}" aria-label="Delete">${del ? 'Tap again to delete' : '🗑'}</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="panel wide designer">
+      <div class="map-head"><button data-act="tohome">← Home</button><h2>🛠 Level designer</h2><span></span></div>
+      <button class="primary big" data-act="newlevel">+ New level</button>
+      <div class="lvl-list">${items || '<p>No levels yet. Make your first one!</p>'}</div>
+      <p class="small">A level gets its ✅ when you and a friend <b>finish it together</b>: create a room, open <b>🛠 My levels</b> on the temple map and play it.
+      Only ✅ levels can be shared by link, and the link is also your backup. Levels are saved on this phone only.</p>
+    </div>`;
+  }
+
+  function importHtml(): string {
+    const l = importLevel;
+    if (!l) return '';
+    const saved = getMyLevel(l.id);
+    const own = !!saved && !saved.copy;
+    const v = isVerified(l);
+    return `<div class="panel">
+      <h2>${esc(l.name)}</h2>
+      <img class="lvl-preview" src="${thumb(l, 8)}" alt="" />
+      <p>by ${esc(l.author || 'someone')} · ${v ? `✅ verified (finished together with ${esc(l.verified!.with || 'a friend')})` : '⚠ not verified: nobody has proved it can be beaten yet'}</p>
+      ${own ? '<p>This is your own level: it’s already in your levels.</p>' : ''}
+      <div class="row">
+        ${own ? '' : `<button class="primary big" data-act="savelvl">💾 ${saved ? 'Update my copy' : 'Save to My levels'}</button>`}
+        <button data-act="tohome">${own ? 'OK' : 'Not now'}</button>
+      </div>
+      <p class="small">To play it: create a room with a friend and open 🛠 My levels on the temple map.</p>
+    </div>`;
+  }
+
+  function openEdit(l: CustomLevel): void {
+    if (editor) { editor.close(); editor = null; }
+    show('editor');
+    editor = openEditor({ stage, root: ui, toast, exit: () => show('designer') }, l);
+  }
+
+  const clone = (l: CustomLevel): CustomLevel => JSON.parse(JSON.stringify(l));
+
+  function makeOwnCopy(src: CustomLevel): void {
+    const now = Date.now();
+    const l: CustomLevel = { ...clone(src), id: newId(), name: `${src.name} (my copy)`.slice(0, 24), author: myName, basedOn: src.author || 'a friend', created: now, updated: now };
+    delete l.copy;
+    delete l.verified;
+    saveLevel(l);
+    toast('Copy made: it starts without a ✅.');
+    render();
+  }
+
+  async function shareLevel(l: CustomLevel | undefined): Promise<void> {
+    if (!l || !isVerified(l)) return;
+    const url = `${location.origin}${location.pathname}?level=${encodeLink(l)}`;
+    try {
+      if (navigator.share) await navigator.share({ title: l.name, text: `Play my level “${l.name}” in Hot Boy & Cool Girl!`, url });
+      else { await navigator.clipboard.writeText(url); toast('Level link copied'); }
+    } catch {
+      // share sheet closed
+    }
+  }
+
+  function keepCopy(): void {
+    const l = roomLevel(level.id);
+    if (!l) return;
+    const ok = saveLevel({ ...clone(l), copy: true, updated: Date.now() });
+    toast(ok ? 'Saved to My levels 💾' : 'Couldn’t save on this phone.');
+    render();
   }
 
   // ---------------------------------------------------------------- button actions
@@ -275,6 +403,30 @@ export async function startGame(): Promise<void> {
     else if (act === 'update') location.reload();
     else if (act === 'net') toast(netText());
     else if (act === 'fullscreen') fullscreenTapped();
+    else if (act === 'designer') show('designer');
+    else if (act === 'tohome') { importLevel = null; show('home'); }
+    else if (act === 'newlevel') {
+      const l = blankLevel(`Level ${listLevels().length + 1}`, myName);
+      if (saveLevel(l)) openEdit(l);
+      else toast('Couldn’t save on this phone (storage is full or blocked).', 4000);
+    }
+    else if (act === 'edit') { const l = getMyLevel(el.dataset.id!); if (l && !l.copy) openEdit(l); }
+    else if (act === 'owncopy') { const l = getMyLevel(el.dataset.id!); if (l) makeOwnCopy(l); }
+    else if (act === 'sharelvl') void shareLevel(getMyLevel(el.dataset.id!));
+    else if (act === 'dellvl') {
+      const id = el.dataset.id!;
+      if (pendingDelete === id) { deleteLevel(id); pendingDelete = ''; toast('Level deleted'); }
+      else pendingDelete = id;
+      render();
+    }
+    else if (act === 'tab') { mapTab = el.dataset.tab === 'mine' ? 'mine' : 'chapter'; render(); }
+    else if (act === 'keep') keepCopy();
+    else if (act === 'savelvl' && importLevel) {
+      const ok = saveLevel({ ...importLevel, copy: true });
+      importLevel = null;
+      toast(ok ? 'Saved to My levels 💾' : 'Couldn’t save on this phone.');
+      show('designer');
+    }
   });
   ui.addEventListener('input', (ev) => {
     const t = ev.target as HTMLInputElement;
@@ -338,6 +490,9 @@ export async function startGame(): Promise<void> {
 
   function leaveRoom(): void {
     session.leave();
+    forgetRoomLevels();
+    if (isCustomId(picked)) picked = CHAPTER_1[0].id;
+    mapTab = 'chapter';
     history.replaceState(null, '', location.pathname);
     goHomeStage();
     show('home');
@@ -360,11 +515,29 @@ export async function startGame(): Promise<void> {
   }
 
   function pickLevel(id: string, tell: boolean): void {
-    if (!findLevel(id)?.rows) return;
+    if (tell && isCustomId(id)) {
+      // My own level: share my latest saved version with my friend (16.3).
+      const l = getMyLevel(id) ?? roomLevel(id);
+      if (!l || hasErrors(checkLevel(l))) return;
+      rememberRoomLevel(l);
+    }
+    if (!getLevel(id)?.rows) return;
     picked = id;
+    mapTab = isCustomId(id) ? 'mine' : 'chapter';
     readyMe = readyPartner = false;
-    if (tell) send({ t: 'pick', id });
+    if (tell) sendPick(id);
     if (screen === 'lobby' || screen === 'map') render();
+  }
+
+  /** Tell my friend which level is picked; a homemade level travels along with it (about 1 KB). */
+  function sendPick(id: string): void {
+    if (isCustomId(id)) {
+      const l = roomLevel(id) ?? getMyLevel(id);
+      if (!l) return;
+      rememberRoomLevel(l);
+      send({ t: 'lvl', def: l });
+    }
+    send({ t: 'pick', id });
   }
 
   function toggleReady(): void {
@@ -387,15 +560,19 @@ export async function startGame(): Promise<void> {
   }
 
   function doStart(id: string, n: number): void {
-    const def = findLevel(id);
+    const def = getLevel(id);
     if (!def?.rows) return;
+    if (isCustomId(id) && !roomLevel(id)) rememberRoomLevel(def as CustomLevel);
     level = def;
+    verifiedNow = false;
     round = n;
     deaths = 0;
     readyMe = readyPartner = false;
     myChoice = partnerChoice = null;
     finish = null;
-    stage.setLevel(levelData(def));
+    const data = levelData(def);
+    gemElems = data.gems.map((g) => g.elem);
+    stage.setLevel(data);
     stage.setLocal({ fire: myElem === 'fire', water: myElem === 'water' });
     stage.controlled = myElem;
     stage.inputEnabled = !menuOpen;
@@ -455,6 +632,7 @@ export async function startGame(): Promise<void> {
     finish = data;
     stage.celebrate();
     music.swell();
+    if (isCustomId(level.id)) verifyTogether(level as CustomLevel, data.time);
     const stars = starsFor(data.got === data.total, data.time, level.targetTime);
     recordResult(level.id, stars, data.time); // saved on both phones (12.3)
     const n = round;
@@ -466,6 +644,20 @@ export async function startGame(): Promise<void> {
       // stars count up with three rising notes
       for (let i = 0; i < stars; i++) setTimeout(() => sfx.chime([523.25 * Math.pow(1.26, i)], 0, 0.14), 300 + i * 350);
     }, 1800);
+  }
+
+  /**
+   * THE rule of the level designer (16.3): a homemade level gets its ✅ only here, when both
+   * players reached their doors in a real online game. Both phones mark this exact version.
+   */
+  function verifyTogether(l: CustomLevel, time: number): void {
+    verifiedNow = markVerified(l, time, partnerName || 'a friend');
+    const saved = getMyLevel(l.id);
+    if (saved && levelHash(saved) === levelHash(l) && !isVerified(saved)) {
+      saved.verified = { ...l.verified! };
+      saved.targetTime = l.targetTime;
+      saveLevel(saved);
+    }
   }
 
   function choose(c: Choice): void {
@@ -563,6 +755,7 @@ export async function startGame(): Promise<void> {
       showLost();
       updateMusic();
     } else if (s === 'idle' && info) {
+      forgetRoomLevels();
       goHomeStage();
       show('home');
       setStatus(info, true);
@@ -596,7 +789,7 @@ export async function startGame(): Promise<void> {
         if (v > __BUILD__) showUpdate();
         if (session.isHost) {
           send({ t: 'roles', host: myElem });
-          send({ t: 'pick', id: picked });
+          sendPick(picked);
           // Back after a drop in the middle of a level: the level restarts (13.5).
           if (screen === 'play' || screen === 'results') startLevel(level.id);
         }
@@ -611,6 +804,11 @@ export async function startGame(): Promise<void> {
       case 'swap':
         if (session.isHost) swapRoles();
         break;
+      case 'lvl': {
+        const l = sanitize(m.def); // never trust a level from another phone as-is
+        if (l) rememberRoomLevel(l);
+        break;
+      }
       case 'pick':
         pickLevel(String(m.id), false);
         break;
@@ -704,7 +902,7 @@ export async function startGame(): Promise<void> {
   // HUD, connection dot, finish check, waiting timeout.
   const gemTotals = () => {
     const out = { fire: [0, 0], water: [0, 0] } as Record<Elem, [number, number]>;
-    levelData(level).gems.forEach((g, i) => { out[g.elem][1]++; if (collected.has(i)) out[g.elem][0]++; });
+    gemElems.forEach((e, i) => { out[e][1]++; if (collected.has(i)) out[e][0]++; });
     return out;
   };
   setInterval(() => {
@@ -731,6 +929,13 @@ export async function startGame(): Promise<void> {
 
   // ---------------------------------------------------------------- go
   show('home');
+  const linkLevel = new URLSearchParams(location.search).get('level');
+  if (linkLevel !== null) {
+    history.replaceState(null, '', location.pathname);
+    importLevel = decodeLink(linkLevel);
+    if (importLevel) show('import');
+    else setStatus('This level link is broken or cut off. Ask your friend to send it again.', true);
+  }
   const linkCode = normalizeRoomCode(new URLSearchParams(location.search).get('room') ?? '');
   if (linkCode.length === 4) {
     setStatus(`Joining room ${linkCode}…`);

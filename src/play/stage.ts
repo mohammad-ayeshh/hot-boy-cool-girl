@@ -130,6 +130,14 @@ export class Stage {
   /** False while a menu is open or the app is in the background: your character stands still. */
   inputEnabled = true;
   showHints = false;
+  /** Level designer: physics stops, characters wait at their start spots. */
+  paused = false;
+  /** Level designer: room kept free on the left/right for toolbars (CSS px). */
+  insets = { left: 0, right: 0 };
+  /** Level designer: zoom (1 = whole level) and pan offset in screen px. */
+  view = { zoom: 1, panX: 0, panY: 0 };
+  /** Drawn on top of the level, in world coordinates (T px per tile). */
+  readonly overlay = new Graphics();
   /** Seconds since the level (re)started; stops when it's completed. */
   levelTime = 0;
   completed = false;
@@ -180,10 +188,10 @@ export class Stage {
   private frames = 0;
   private fpsT = performance.now();
 
-  constructor(readonly app: Application, readonly settings: Settings, level: LevelData, private readonly opts: StageOptions) {
+  constructor(readonly app: Application, readonly settings: Settings, level: LevelData, private opts: StageOptions) {
     this.controls = new Controls(app.canvas, { deadZone: settings.deadZone, anchorFollows: settings.anchorFollows, anchorLeash: settings.anchorLeash });
     this.lights.addChild(this.levelLights);
-    this.world.addChild(this.bg, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.fx.view, this.debug);
+    this.world.addChild(this.bg, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.fx.view, this.debug, this.overlay);
     app.stage.addChild(this.margins, this.world, this.screenFx, this.hints);
     drawBackground(this.bg);
     this.heroes = { water: this.makeHero('water'), fire: this.makeHero('fire') };
@@ -196,7 +204,29 @@ export class Stage {
 
   // ================================================================ setup
 
-  setLevel(data: LevelData): void {
+  /** Sandbox: dead characters come back by themselves (Feel Lab, trying a level alone). */
+  setSandbox(on: boolean): void {
+    this.opts = { ...this.opts, sandbox: on };
+  }
+
+  /** Screen point (CSS px) → tile coordinates. */
+  toTile(px: number, py: number): { x: number; y: number } {
+    const k = this.world.scale.x * T;
+    return { x: (px - this.world.position.x) / k, y: (py - this.world.position.y) / k };
+  }
+
+  /** Size of one tile on screen (CSS px). */
+  get tilePx(): number {
+    return this.scale * T * this.view.zoom;
+  }
+
+  relayout(): void {
+    this.layout();
+  }
+
+  /** `quiet`: no spawn sparkle (the level designer redraws on every brush stroke). */
+  setLevel(data: LevelData, quiet = false): void {
+    this.quiet = quiet;
     this.level = new Level(data);
     this.mech = new Mechanisms(data.mechs);
     this.level.dynamic = this.mech.solids;
@@ -227,7 +257,9 @@ export class Stage {
     this.fx.clear();
     this.dust.clear();
     this.restart();
+    this.quiet = false;
   }
+  private quiet = false;
 
   private glow(tint: number, sizeTiles: number): Sprite {
     const s = new Sprite({ texture: this.glowTex, anchor: 0.5, blendMode: 'add' });
@@ -300,7 +332,7 @@ export class Stage {
       h.buf = [];
       h.queue = [];
       if (this.settings.blink) h.whiten = 0.6;
-      if (this.settings.jumpFx) this.burst(sp.x * T, (sp.y - 0.7) * T, e === 'fire' ? FIRE_FX : WATER_FX);
+      if (this.settings.jumpFx && !this.quiet) this.burst(sp.x * T, (sp.y - 0.7) * T, e === 'fire' ? FIRE_FX : WATER_FX);
     }
     for (const g of this.gems) g.alive = true;
     for (const d of this.doors) d.open = 0;
@@ -1114,8 +1146,9 @@ export class Stage {
 
   private layout = (): void => {
     const W = this.app.screen.width, H = this.app.screen.height;
-    this.scale = Math.min(W / (COLS * T), H / (ROWS * T));
-    this.baseX = (W - COLS * T * this.scale) / 2;
+    const { left, right } = this.insets;
+    this.scale = Math.min((W - left - right) / (COLS * T), H / (ROWS * T));
+    this.baseX = left + (W - left - right - COLS * T * this.scale) / 2;
     this.baseY = (H - ROWS * T * this.scale) / 2;
     const m = this.margins.clear().rect(0, 0, W, H).fill(0x050a09);
     // simple temple columns in the side margins (where the thumbs rest)
@@ -1148,6 +1181,7 @@ export class Stage {
     }
     this.acc += simDt;
     let steps = 0;
+    if (this.paused) this.acc = 0;
     while (this.acc >= STEP && steps < 12) {
       this.stepSim();
       this.acc -= STEP;
@@ -1185,6 +1219,11 @@ export class Stage {
     const z = 1 + this.zoomK;
     this.world.scale.set(this.scale * z);
     this.world.position.set(this.baseX - (COLS * T * this.scale * (z - 1)) / 2 + ox, this.baseY - (ROWS * T * this.scale * (z - 1)) / 2 + oy + this.bumpY);
+    if (this.view.zoom !== 1 || this.view.panX || this.view.panY) {
+      const zs = this.scale * this.view.zoom;
+      this.world.scale.set(zs);
+      this.world.position.set(this.baseX - (COLS * T * this.scale * (this.view.zoom - 1)) / 2 + this.view.panX, this.baseY - (ROWS * T * this.scale * (this.view.zoom - 1)) / 2 + this.view.panY);
+    }
     if (s.closeup && this.controlled) {
       // debug only: 4× zoom centered on your character
       const me = this.heroes[this.controlled].view;

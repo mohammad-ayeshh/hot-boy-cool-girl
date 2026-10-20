@@ -1,6 +1,8 @@
 // Chapter 1: The Temple Gate (design doc 16.2). Maps come from the sketches in
 // docs/levels/chapter1-sketch.png (tools/level_sketch.py). Legend: see parseLevel() in level.ts.
-import { parseLevel, type LevelData } from './level';
+import { parseLevel, type LevelData } from './level.ts';
+import { getMyLevel, roomLevel } from './myLevels.ts';
+import type { CustomLevel } from './custom.ts';
 import type { MechDef } from './mechanisms';
 
 export interface LevelDef {
@@ -160,5 +162,10 @@ export const CHAPTER_1: LevelDef[] = [
 ];
 
 export const findLevel = (id: string): LevelDef | undefined => CHAPTER_1.find((l) => l.id === id);
+/** Any playable level: Chapter 1, a homemade level shared in this room, or one saved on this phone. */
+export const getLevel = (id: string): LevelDef | CustomLevel | undefined => findLevel(id) ?? roomLevel(id) ?? getMyLevel(id);
 export const levelData = (def: LevelDef): LevelData => parseLevel(def.rows!, def.mechs ?? []);
-export const nextLevel = (id: string): LevelDef | undefined => CHAPTER_1[CHAPTER_1.findIndex((l) => l.id === id) + 1];
+export const nextLevel = (id: string): LevelDef | undefined => {
+  const i = CHAPTER_1.findIndex((l) => l.id === id);
+  return i < 0 ? undefined : CHAPTER_1[i + 1];
+};

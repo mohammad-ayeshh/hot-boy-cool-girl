@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "check:metrics": "node tools/metrics_check.ts"
+    "check:metrics": "node tools/metrics_check.ts",
+    "check:custom": "node tools/custom_check.ts"
   },
   "dependencies": {
     "peerjs": "^1.5.5",
