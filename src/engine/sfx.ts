@@ -1,7 +1,7 @@
 // Code-made sound effects (design doc 15.2, 15.3). Every sound varies slightly each time.
 // Hot Boy = crackly, warm, punchy. Cool Girl = soft, glassy, airy.
 import { audioContext } from './device';
-import type { Elem, Liquid } from '../game/level';
+import type { DeathCause, Elem, Liquid } from '../game/level';
 
 let master: GainNode | null = null;
 let noise: AudioBuffer | null = null;
@@ -145,11 +145,15 @@ export function splash(kind: Liquid, pan: number, gain = 1): void {
   }
 }
 
-export function death(e: Elem, cause: Liquid, pan: number, gain = 1): void {
+export function death(e: Elem, cause: DeathCause, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
   const o = out(ac, pan, gain);
-  if (cause === 'poison') {
+  if (cause === 'crush') {
+    tone(ac, o, 'sine', 110, 38, 0.35, 0.22); // heavy stone thud
+    hiss(ac, o, 'lowpass', 1400, 200, 1, 0.3, 0.3); // crunch
+    tone(ac, o, e === 'fire' ? 'sawtooth' : 'sine', e === 'fire' ? 260 : 620, e === 'fire' ? 90 : 220, 0.2, 0.06, 0.04); // a squeak in their own voice
+  } else if (cause === 'poison') {
     hiss(ac, o, 'bandpass', 1200, 300, 4, 0.4, 0.3);
     tone(ac, o, 'square', 300, 70, 0.35, 0.08);
   } else if (e === 'fire') {

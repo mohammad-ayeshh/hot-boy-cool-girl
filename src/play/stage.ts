@@ -7,7 +7,7 @@ import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
 import { Controls } from '../engine/input';
 import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, type JumpStats, type Phys } from '../game/body';
-import { COLS, ROWS, Level, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
+import { COLS, ROWS, Level, type DeathCause, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
 import { Mechanisms, type Feet, type MechEvent, type Rune } from '../game/mechanisms';
 import type { Settings } from '../game/settings';
 import { ParticleSystem, makeGlowTexture } from '../render/particles';
@@ -19,6 +19,7 @@ const FIRE_FX = [0xfff0c2, 0xffb02e, 0xff6a1a];
 const WATER_FX = [0xe4faff, 0x7adfff, 0x1fa3ff];
 const VIOLET_FX = [0xf2d4ff, 0xd17bff, 0xa23be8];
 const DUST = [0x55695f, 0x3a4a45, 0x7d8f86];
+const STONE_DUST = [0xb7c4bc, 0x8a9a90, 0x55695f];
 const STEAM = [0xffffff, 0xd8e4e8, 0xa9bac0];
 export const OWN_LIQUID: Record<Elem, Liquid> = { fire: 'lava', water: 'water' };
 const DEADLY: Record<Elem, Liquid[]> = { fire: ['water', 'poison'], water: ['lava', 'poison'] };
@@ -34,7 +35,7 @@ export interface Snapshot { x: number; y: number; vx: number; vy: number; g: 0 |
 
 export interface StageHooks {
   /** A character simulated on this phone died. */
-  localDeath?(elem: Elem, cause: Liquid): void;
+  localDeath?(elem: Elem, cause: DeathCause): void;
   /** A character simulated on this phone picked up gem number `index`. */
   localGem?(elem: Elem, index: number): void;
   /** Movement events to mirror on the partner's phone. */
@@ -60,7 +61,7 @@ interface Hero {
   hairReset: boolean;
   local: boolean;
   alive: boolean;
-  dying: Liquid | null;
+  dying: DeathCause | null;
   deadT: number;
   sx: number; sy: number; vsx: number; vsy: number;
   whiten: number;
@@ -377,7 +378,7 @@ export class Stage {
     });
   }
 
-  remoteDeath(elem: Elem, cause: Liquid): void {
+  remoteDeath(elem: Elem, cause: DeathCause): void {
     const h = this.heroes[elem];
     this.later(h, () => this.die(h, cause));
   }
@@ -587,11 +588,12 @@ export class Stage {
     sfx.splash(OWN_LIQUID[h.elem], this.pan(h), this.gain(h));
   }
 
-  private die(h: Hero, cause: Liquid): void {
+  private die(h: Hero, cause: DeathCause): void {
     if (!h.alive || h.dying || this.completed) return;
     const s = this.settings;
     h.dying = cause;
     h.body.vx = h.body.vy = 0;
+    if (cause === 'crush') { h.sy = 0.35; h.sx = 1.6; h.vsx = h.vsy = 0; } // flattened by the gate
     if (s.blink) h.whiten = 1;
     if (s.hitStop) this.hitStop = s.hitStopMs / 1000;
     if (s.flash) this.flashA = 0.32;
@@ -602,13 +604,19 @@ export class Stage {
     if (h.local) this.opts.hooks?.localDeath?.(h.elem, cause);
   }
 
-  private explode(h: Hero, cause: Liquid): void {
+  private explode(h: Hero, cause: DeathCause): void {
     const s = this.settings;
     const x = h.body.x * T, y = (h.body.y - 0.6) * T;
-    if (s.splash) this.pools.splash(h.body.x, 1.6);
+    if (s.splash && cause !== 'crush') this.pools.splash(h.body.x, 1.6);
     if (s.deathFx) {
       const fx = this.fx;
-      if (cause === 'poison') {
+      if (cause === 'crush') {
+        // squashed by a gate: stone dust bursts out sideways, plus a puff of the character's own color
+        const fy = h.body.y * T - 4;
+        fx.emit({ x, y: fy, count: 40, colors: STONE_DUST, speed: [60, 260], life: [0.4, 0.9], size: [4, 10], angle: 0, spread: 0.5, gravity: 200, drag: 0.2, alpha: 0.7 });
+        fx.emit({ x, y: fy, count: 40, colors: STONE_DUST, speed: [60, 260], life: [0.4, 0.9], size: [4, 10], angle: Math.PI, spread: 0.5, gravity: 200, drag: 0.2, alpha: 0.7 });
+        fx.emit({ x, y: fy, count: 24, colors: h.elem === 'fire' ? FIRE_FX : WATER_FX, speed: [80, 240], life: [0.3, 0.7], size: [3, 8], angle: -Math.PI / 2, spread: 1.4, gravity: 500 });
+      } else if (cause === 'poison') {
         fx.emit({ x, y, count: 60, colors: VIOLET_FX, speed: [40, 320], life: [0.4, 1.0], size: [4, 11], spread: Math.PI, gravity: 120, drag: 0.15 });
       } else if (h.elem === 'fire') {
         // Hot Boy hisses into steam in the water
@@ -765,9 +773,16 @@ export class Stage {
     m.updateButtons(alive.map((h) => feetOf(h.body)), events);
     const locals = alive.filter((h) => h.local);
     const riding = locals.map((h) => m.platformUnder(feetOf(h.body)));
-    const overlaps = (r: Rect) => locals.some((h) => r.x0 < h.body.right && r.x1 > h.body.left && r.y0 < h.body.y && r.y1 > h.body.top);
-    m.update(STEP, overlaps, events);
+    // A closing gate crushes whoever is under it the moment it reaches their head (brushing its side is forgiven, 7.4).
+    const crushed = new Set<Hero>();
+    const crush = (r: Rect) => {
+      if (this.completed) return;
+      for (const h of locals) if (r.x0 < h.body.right - 0.12 && r.x1 > h.body.left + 0.12 && r.y0 < h.body.y && r.y1 > h.body.top + 0.04) crushed.add(h);
+    };
+    m.update(STEP, crush, events);
+    for (const h of crushed) this.die(h, 'crush');
     locals.forEach((h, i) => {
+      if (crushed.has(h)) return;
       const b = h.body;
       const pi = riding[i];
       if (pi >= 0) {

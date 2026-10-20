@@ -4,7 +4,7 @@
 import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
-import type { Elem, Liquid } from '../game/level';
+import type { DeathCause, Elem } from '../game/level';
 import { CHAPTER_1, getLevel, levelData, nextLevel, type LevelDef } from '../game/levels';
 import { blankLevel, decodeLink, encodeLink, isCustomId, isVerified, levelHash, markVerified, newId, sanitize, type CustomLevel } from '../game/custom';
 import { checkLevel, hasErrors } from '../game/levelCheck';
@@ -832,7 +832,7 @@ export async function startGame(): Promise<void> {
         break;
       case 'die':
         if (n === round && screen === 'play') {
-          stage.remoteDeath(partner, m.cause as Liquid);
+          stage.remoteDeath(partner, m.cause as DeathCause);
           music.duck();
           if (session.isHost) scheduleRestart();
         }

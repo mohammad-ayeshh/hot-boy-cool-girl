@@ -6,6 +6,8 @@ export const ROWS = 18;
 export type Liquid = 'lava' | 'water' | 'poison';
 export type Tile = 'empty' | 'stone' | Liquid;
 export type Elem = 'fire' | 'water';
+/** What killed a character: a deadly liquid, or a closing gate. */
+export type DeathCause = Liquid | 'crush';
 
 /** Liquids sit a little lower than the floor, so feet visibly dip in (and stepping out uses the step-up helper). */
 export const LIQUID_DEPTH = 0.2;

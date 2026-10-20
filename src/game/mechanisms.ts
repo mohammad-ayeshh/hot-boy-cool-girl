@@ -109,9 +109,9 @@ export class Mechanisms {
 
   /**
    * Move platforms and gates toward their powered / unpowered positions.
-   * `blocked(rect)` says whether a closing gate would shut on a character (then it waits).
+   * `closing(rect)` is told the solid part of every gate that is closing: whoever is under it gets crushed.
    */
-  update(dt: number, blocked: (r: Rect) => boolean, events: MechEvent[]): void {
+  update(dt: number, closing: (r: Rect) => void, events: MechEvent[]): void {
     for (const b of this.buttons) b.sink += ((b.pressed ? 1 : 0) - b.sink) * Math.min(1, dt * 20);
     for (const l of this.levers) l.angle += ((l.on ? 1 : -1) - l.angle) * Math.min(1, dt * 14);
     this.platforms.forEach((pl, i) => {
@@ -132,12 +132,9 @@ export class Mechanisms {
     this.gates.forEach((g, i) => {
       const target = this.powered(g.def.rune) ? 1 : 0;
       const old = g.open;
-      let open = target > g.open ? Math.min(1, g.open + GATE_SPEED * dt) : Math.max(0, g.open - GATE_SPEED * dt);
-      if (open < old) {
-        // Never close on someone standing in the gateway.
-        const r = { x0: g.def.x, y0: g.def.y, x1: g.def.x + g.def.w, y1: g.def.y + g.def.h * (1 - open) };
-        if (blocked(r)) open = old;
-      }
+      const open = target > g.open ? Math.min(1, g.open + GATE_SPEED * dt) : Math.max(0, g.open - GATE_SPEED * dt);
+      // A closing gate doesn't stop for anyone (10.2): standing in the gateway is deadly.
+      if (open < old) closing({ x0: g.def.x, y0: g.def.y, x1: g.def.x + g.def.w, y1: g.def.y + g.def.h * (1 - open) });
       const moving = open !== old;
       if (moving && !g.moving) events.push({ k: 'gate', i, opening: open > old });
       g.moving = moving;

@@ -318,7 +318,7 @@ Every button or lever and the thing it controls show the **same gold rune symbol
 | Pressure button 🟨 | Active **only while someone stands on it**: the classic "you hold it, I go" co-op move (P1) |
 | Lever 🟨 | Pushed left or right by walking into it; it stays where you left it |
 | Moving platform / elevator 🟨 | Moves while its linked button is held, or by lever position |
-| Stone gate 🟨 | Slides open or closed, linked to a button or lever |
+| Stone gate 🟨 | Slides open or closed, linked to a button or lever. **A closing gate never stops: anyone standing under it is crushed** (dies, and the level restarts for both). Brushing its side is forgiven |
 
 ### 10.3 Set 2: once the basics work
 | Block | Why later |
@@ -685,3 +685,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-17 | **Chapter 1 complete (levels 3–5):** pressure buttons, levers, moving platforms and gates are in, all linked by gold runes. Both phones run them; your own touches react instantly, and the host corrects platforms and levers 5× a second. Riding a platform looks glued on the partner's screen too. **Lobby and level map are now separate screens** (characters first, then a temple map with a path of level stones). **The duet music is in**: drone and pad, Hot Boy's drums and plucks, and Cool Girl's chimes and arpeggios, each louder while that character moves, plus title, lobby (your own layer until your friend joins), map and results-jingle variations. **Trailing hair and footstep fire added (14.5).** "Design your own level" opened as a new topic (16.3). |
 | 2026-10-17 | Level editor **parked for later**; its ideas (sharing in the room and by link, saved on the phone, built-in checks, beat it to share it) are saved in 16.3. |
 | 2026-10-20 | **Level designer locked (16.3):** levels are saved on the phone and travel to the friend through the room or a link. A level is **✅ Verified only after two players finish it together online**; the ✅ is tied to the level's fingerprint, so any edit removes it. Only verified levels can be shared by link. |
+| 2026-10-20 | **Gates crush:** a closing gate no longer waits for someone standing in the gateway; it crushes them (stone-dust death and a heavy thud), and the level restarts for both like any death. Holding a button for your friend now really matters. |
