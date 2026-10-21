@@ -132,7 +132,9 @@ export class Mechanisms {
     this.gates.forEach((g, i) => {
       const target = this.powered(g.def.rune) ? 1 : 0;
       const old = g.open;
-      const open = target > g.open ? Math.min(1, g.open + GATE_SPEED * dt) : Math.max(0, g.open - GATE_SPEED * dt);
+      // Clamp to the target, not to 0..1: a fully open gate must stay put, not twitch shut a little every step
+      // (that twitch counted as "closing" and could crush someone jumping through an open trapdoor).
+      const open = target > g.open ? Math.min(target, g.open + GATE_SPEED * dt) : Math.max(target, g.open - GATE_SPEED * dt);
       // A closing gate doesn't stop for anyone (10.2): standing in the gateway is deadly.
       if (open < old) closing({ x0: g.def.x, y0: g.def.y, x1: g.def.x + g.def.w, y1: g.def.y + g.def.h * (1 - open) });
       const moving = open !== old;

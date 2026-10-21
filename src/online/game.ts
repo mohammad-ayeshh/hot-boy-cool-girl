@@ -5,7 +5,7 @@ import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
 import type { DeathCause, Elem } from '../game/level';
-import { CHAPTER_1, getLevel, levelData, nextLevel, type LevelDef } from '../game/levels';
+import { ALL_LEVELS, CHAPTERS, chapterOf, getLevel, levelData, nextLevel, type LevelDef } from '../game/levels';
 import { blankLevel, decodeLink, encodeLink, isCustomId, isVerified, levelHash, markVerified, newId, sanitize, type CustomLevel } from '../game/custom';
 import { checkLevel, hasErrors } from '../game/levelCheck';
 import { deleteLevel, forgetRoomLevels, getMyLevel, listLevels, rememberRoomLevel, roomLevel, roomLevels, saveLevel } from '../game/myLevels';
@@ -40,9 +40,9 @@ export async function startGame(): Promise<void> {
   let myName = loadName();
   let partnerName = '';
   let partnerDone: string[] = [];
-  let picked = CHAPTER_1[0].id;
+  let picked = ALL_LEVELS[0].id;
   let readyMe = false, readyPartner = false;
-  let level: LevelDef = CHAPTER_1[0];
+  let level: LevelDef = ALL_LEVELS[0];
   let round = 0;
   let deaths = 0;
   let restartPending = false;
@@ -54,14 +54,14 @@ export async function startGame(): Promise<void> {
   let lostAt = 0;
   let versionProblem = '';
   // level designer (16.3)
-  let mapTab: 'chapter' | 'mine' = 'chapter';
+  let mapTab: number | 'mine' = 1; // a chapter number, or the homemade levels
   let editor: { close(): void } | null = null;
   let importLevel: CustomLevel | null = null;
   let pendingDelete = '';
   let verifiedNow = false;
   let gemElems: Elem[] = [];
 
-  const stage = new Stage(app, settings, levelData(CHAPTER_1[0]), {
+  const stage = new Stage(app, settings, levelData(ALL_LEVELS[0]), {
     sandbox: false,
     hooks: {
       localDeath: (_e, cause) => { if (screen !== 'play') return; music.duck(); send({ t: 'die', n: round, cause }); if (session.isHost) scheduleRestart(); },
@@ -225,9 +225,11 @@ export async function startGame(): Promise<void> {
   function mapHtml(): string {
     const progress = loadProgress();
     const mine = Object.keys(progress);
-    const spots = [[9, 60], [29, 27], [50, 57], [71, 25], [91, 52]];
+    const ch = CHAPTERS.find((c) => c.n === mapTab) ?? CHAPTERS[0];
+    // the path zigzags the other way in even chapters, so each chapter's map looks a little different
+    const spots = [[9, 60], [29, 27], [50, 57], [71, 25], [91, 52]].map(([x, y]) => [x, ch.n % 2 ? y : 85 - y]);
     const path = spots.map(([x, y], i) => (i ? 'L' : 'M') + x + ' ' + y).join(' ');
-    const nodes = CHAPTER_1.map((l, i) => {
+    const nodes = ch.levels.map((l, i) => {
       const open = l.rows !== null && isUnlocked(l.id, mine, partnerDone);
       const stars = progress[l.id]?.stars ?? 0;
       const label = l.rows === null ? 'soon' : open ? `<span class="on">${'★'.repeat(stars)}</span><span class="off">${'★'.repeat(3 - stars)}</span>` : '🔒';
@@ -238,11 +240,12 @@ export async function startGame(): Promise<void> {
     const pl = getLevel(picked);
     const tab = (t: typeof mapTab, text: string) => `<button class="${mapTab === t ? 'on' : ''}" data-act="tab" data-tab="${t}">${text}</button>`;
     const custom = isCustomId(picked);
-    const hint = custom && pl && !isVerified(pl as CustomLevel) ? ' Finish it together to give it its ✅.' : '';
+    const idea = !custom && pl && 'idea' in pl && pl.idea ? ` New here: ${pl.idea}.` : '';
+    const hint = custom && pl && !isVerified(pl as CustomLevel) ? ' Finish it together to give it its ✅.' : idea;
     return `<div class="panel wide map-panel">
-      <div class="map-head"><button data-act="tolobby">← Characters</button><div class="tabs">${tab('chapter', 'Chapter 1 · The Temple Gate')}${tab('mine', '🛠 My levels')}</div><span class="small">Room ${session.code}</span></div>
-      ${mapTab === 'chapter'
-        ? `<div class="temple-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>`
+      <div class="map-head"><button data-act="tolobby">← Characters</button><div class="tabs">${CHAPTERS.map((c) => tab(c.n, `Ch ${c.n}`)).join('')}${tab('mine', '🛠 Mine')}</div><span class="small">Room ${session.code}</span></div>
+      ${mapTab !== 'mine'
+        ? `<div class="map-chapter">Chapter ${ch.n} · ${ch.name}</div><div class="temple-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>`
         : mineHtml()}
       <div class="row">
         <button class="${readyMe ? 'secondary' : 'primary'} big" data-act="ready">${readyMe ? 'Ready ✓ (tap to undo)' : `Ready: ${pl?.name ?? ''}`}</button>
@@ -419,7 +422,7 @@ export async function startGame(): Promise<void> {
       else pendingDelete = id;
       render();
     }
-    else if (act === 'tab') { mapTab = el.dataset.tab === 'mine' ? 'mine' : 'chapter'; render(); }
+    else if (act === 'tab') { mapTab = el.dataset.tab === 'mine' ? 'mine' : Number(el.dataset.tab) || 1; render(); }
     else if (act === 'keep') keepCopy();
     else if (act === 'savelvl' && importLevel) {
       const ok = saveLevel({ ...importLevel, copy: true });
@@ -491,15 +494,15 @@ export async function startGame(): Promise<void> {
   function leaveRoom(): void {
     session.leave();
     forgetRoomLevels();
-    if (isCustomId(picked)) picked = CHAPTER_1[0].id;
-    mapTab = 'chapter';
+    if (isCustomId(picked)) picked = ALL_LEVELS[0].id;
+    mapTab = chapterOf(picked)?.n ?? 1;
     history.replaceState(null, '', location.pathname);
     goHomeStage();
     show('home');
   }
 
   function goHomeStage(): void {
-    stage.setLevel(levelData(CHAPTER_1[0]));
+    stage.setLevel(levelData(ALL_LEVELS[0]));
     stage.setLocal({ fire: true, water: true });
     stage.controlled = null;
   }
@@ -523,7 +526,7 @@ export async function startGame(): Promise<void> {
     }
     if (!getLevel(id)?.rows) return;
     picked = id;
-    mapTab = isCustomId(id) ? 'mine' : 'chapter';
+    mapTab = isCustomId(id) ? 'mine' : chapterOf(id)?.n ?? 1;
     readyMe = readyPartner = false;
     if (tell) sendPick(id);
     if (screen === 'lobby' || screen === 'map') render();
@@ -577,7 +580,7 @@ export async function startGame(): Promise<void> {
     stage.controlled = myElem;
     stage.inputEnabled = !menuOpen;
     stage.showMarker();
-    if (id === CHAPTER_1[0].id) stage.hintZones(); // zone hints on the first level only (6.3)
+    if (id === ALL_LEVELS[0].id) stage.hintZones(); // zone hints on the first level only (6.3)
     resetRound();
     show('play');
   }
@@ -678,6 +681,7 @@ export async function startGame(): Promise<void> {
     readyMe = readyPartner = false;
     const nx = nextLevel(level.id);
     if (finish && nx?.rows) picked = nx.id;
+    if (!isCustomId(picked)) mapTab = chapterOf(picked)?.n ?? 1; // open the map on the chapter you're playing
     goHomeStage();
     show('map');
   }

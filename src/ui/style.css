@@ -412,6 +412,7 @@ button.chosen { outline: 3px solid var(--gold); outline-offset: 2px; }
 .map-head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
 .map-head h2 { margin: 0; }
 .map-head .small { color: var(--muted); font-size: 12px; }
+.map-chapter { margin: 8px 0 4px; text-align: center; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--gold); }
 .temple-map {
   position: relative;
   height: clamp(150px, 36vh, 230px);

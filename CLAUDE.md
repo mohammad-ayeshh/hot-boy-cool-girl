@@ -11,6 +11,7 @@ Online 2-player co-op puzzle platformer for phone browsers (TypeScript + Vite + 
 ## Code notes
 - Keep `src/game/` free of TypeScript-only runtime syntax (no parameter properties or enums), so Node can run it directly for `tools/` checks.
 - New Feel Lab settings go in the `DEFS` list in `src/game/settings.ts`; the panel builds itself from it.
+- Official levels: Chapter 1 is in `src/game/levels.ts`, Chapters 2–4 in `src/game/chapterN.ts`; register a new chapter in `CHAPTERS`. Draw a chapter for the doc with `python tools/level_sheet.py <n> docs/levels/chapter<n>.png`.
 - Level designer (doc 16.3): a homemade level's ✅ is set **only** in `verifyTogether()` in `src/online/game.ts` (an online 2-player finish). Never add another path that verifies.
 
 ## The owner
@@ -21,5 +22,6 @@ The owner is new to game design and game development: explain choices in plain l
 - `npm run dev:http`: plain HTTP on :5174 for desktop-only testing
 - `npm run build`: typecheck and production build
 - `npm run check:metrics`: movement vs. level metrics (run after changing movement defaults in `src/game/settings.ts`)
-- `npm run check:custom`: level designer data (share links, fingerprint, level checker; Chapter 1 must pass the checker)
+- `npm run check:custom`: level designer data (share links, fingerprint, level checker; every official level must pass the checker)
+- `npm run check:routes`: plays every official level with its written solution in `tools/routes.ts` using the real physics (`tools/sim.ts`). A new or changed level needs a solution that passes (doc 16.1 D13). `npm run check:routes -- 2-3 -v` traces one level
 - Pushing to `main` deploys to https://mohammad-ayeshh.github.io/hot-boy-cool-girl/

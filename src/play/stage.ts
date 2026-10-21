@@ -1051,7 +1051,9 @@ export class Stage {
     for (const gt of m.gates) {
       const d = gt.def;
       const x = d.x * T, y = d.y * T, w = d.w * T, bottom = gt.rect.y1 * T;
-      g.rect(x, y - 4, w, 6).fill(BRASS); // lintel
+      // lintel; a flat gate (trapdoor) gets only end posts, so its open hole doesn't look bridged
+      if (d.w > d.h) g.rect(x - 2, y - 4, 6, 10).fill(BRASS).rect(x + w - 4, y - 4, 6, 10).fill(BRASS);
+      else g.rect(x, y - 4, w, 6).fill(BRASS);
       if (bottom > y + 1) {
         for (let bx = x + 5; bx < x + w - 2; bx += 8) g.rect(bx, y, 4, bottom - y).fill(0x9a7a38);
         g.rect(x, bottom - 5, w, 5).fill(GOLD);

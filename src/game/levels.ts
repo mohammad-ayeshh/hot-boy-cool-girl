@@ -4,10 +4,15 @@ import { parseLevel, type LevelData } from './level.ts';
 import { getMyLevel, roomLevel } from './myLevels.ts';
 import type { CustomLevel } from './custom.ts';
 import type { MechDef } from './mechanisms';
+import { CHAPTER_2 } from './chapter2.ts';
+import { CHAPTER_3 } from './chapter3.ts';
+import { CHAPTER_4 } from './chapter4.ts';
 
 export interface LevelDef {
   id: string;
   name: string;
+  /** The one new idea this level teaches (16.1 D2), shown on the map. */
+  idea?: string;
   /** ⭐⭐⭐ needs all gems and a time under this (12.1). First guesses: tune after playtests. */
   targetTime: number;
   /** null = designed but not built yet. */
@@ -19,6 +24,7 @@ export const CHAPTER_1: LevelDef[] = [
   {
     id: '1-1',
     name: 'First Steps',
+    idea: 'move and jump; your own liquid is safe',
     targetTime: 20,
     rows: [
       '################################',
@@ -44,6 +50,7 @@ export const CHAPTER_1: LevelDef[] = [
   {
     id: '1-2',
     name: 'Wrong Pool',
+    idea: 'your partner\'s liquid is deadly; violet kills both',
     targetTime: 18,
     rows: [
       '################################',
@@ -69,6 +76,7 @@ export const CHAPTER_1: LevelDef[] = [
   {
     id: '1-3',
     name: 'Hold the Button',
+    idea: 'a button works only while someone stands on it',
     targetTime: 30,
     rows: [
       '################################',
@@ -99,6 +107,7 @@ export const CHAPTER_1: LevelDef[] = [
   {
     id: '1-4',
     name: 'Going Up',
+    idea: 'lifts; a lever stays where you push it',
     targetTime: 35,
     rows: [
       '################################',
@@ -130,6 +139,7 @@ export const CHAPTER_1: LevelDef[] = [
   {
     id: '1-5',
     name: 'Crossing Together',
+    idea: 'everything from Chapter 1 together',
     targetTime: 45,
     rows: [
       '################################',
@@ -161,11 +171,22 @@ export const CHAPTER_1: LevelDef[] = [
   },
 ];
 
-export const findLevel = (id: string): LevelDef | undefined => CHAPTER_1.find((l) => l.id === id);
-/** Any playable level: Chapter 1, a homemade level shared in this room, or one saved on this phone. */
+export interface Chapter { n: number; name: string; levels: LevelDef[] }
+export const CHAPTERS: Chapter[] = [
+  { n: 1, name: 'The Temple Gate', levels: CHAPTER_1 },
+  { n: 2, name: 'The Flooded Halls', levels: CHAPTER_2 },
+  { n: 3, name: 'The Deep Machine', levels: CHAPTER_3 },
+  { n: 4, name: 'The Summit', levels: CHAPTER_4 },
+];
+/** Every official level in play order: finishing one unlocks the next, across chapters (12.2). */
+export const ALL_LEVELS: LevelDef[] = CHAPTERS.flatMap((c) => c.levels);
+export const chapterOf = (id: string): Chapter | undefined => CHAPTERS.find((c) => c.levels.some((l) => l.id === id));
+
+export const findLevel = (id: string): LevelDef | undefined => ALL_LEVELS.find((l) => l.id === id);
+/** Any playable level: an official one, a homemade level shared in this room, or one saved on this phone. */
 export const getLevel = (id: string): LevelDef | CustomLevel | undefined => findLevel(id) ?? roomLevel(id) ?? getMyLevel(id);
 export const levelData = (def: LevelDef): LevelData => parseLevel(def.rows!, def.mechs ?? []);
 export const nextLevel = (id: string): LevelDef | undefined => {
-  const i = CHAPTER_1.findIndex((l) => l.id === id);
-  return i < 0 ? undefined : CHAPTER_1[i + 1];
+  const i = ALL_LEVELS.findIndex((l) => l.id === id);
+  return i < 0 ? undefined : ALL_LEVELS[i + 1];
 };

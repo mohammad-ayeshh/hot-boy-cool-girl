@@ -367,7 +367,8 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 - **Deaths cost nothing.** Results show a fun death counter ("💀 7"), but no penalty, because dying is part of learning a puzzle (P3, P5).
 
 ### 12.2 Unlocking levels
-- Levels are grouped into **chapters** of about 8 levels each (different parts of the temple).
+- Levels are grouped into **chapters** of 5 levels each (different parts of the temple). *Was "about 8"; changed 2026-10-21 so each chapter fits one map screen.* The map has a tab per chapter.
+- Finishing the last level of a chapter unlocks the first level of the next one.
 - **Finishing a level unlocks the next one**, with any number of stars. You never get stuck because you can't get 3 stars.
 - A few **bonus levels** unlock with stars, as a reward for players who want more challenge.
 
@@ -588,6 +589,13 @@ Every level must follow all of these, plus the pillars, the level metrics (7.7) 
 | D10 | **Doors close together** | The two exit doors are near each other, so the team finishes together. |
 | D11 | **Difficulty is a wave, not a wall** | A hard level is followed by an easier breather. Each chapter ends with a level that combines everything. |
 | D12 | **Playtested by two people on phones** | Before a level is final, two people play it on phones. We watch where they die and fix whatever felt unfair. |
+| D13 | **Proven winnable** | Every level has a written solution (`tools/routes.ts`) that a robot plays with the real game physics. `npm run check:routes` must pass before a level ships. *Added 2026-10-21 after level 1-5 shipped unwinnable.* |
+
+**Lessons learned while building Chapters 2–4** (keep these in mind for new levels):
+- **Levers turn on when pushed right and off when pushed left.** So a lever that must stay on should be the last thing you pass while walking right. Never make players walk back left over it. A dead end that points left works well: walk in, turn around, and the lever flips on as you leave. So does a little shelf you drop off the far end of.
+- **A ferry or lift sent with a lever should leave toward the left.** The second rider then walks left onto it, past the lever, without flipping it on by accident (2-4, 2-5).
+- **No pool or gap right at the mouth of a low tunnel.** You can't jump without headroom, so you'd fall in every time.
+- **Mind the ceiling over a climb.** A 2- or 3-tile climb needs room for your head above the spot you're jumping from (this is what broke 1-5).
 
 ### 16.2 Chapter 1: The Temple Gate (first 5 levels)
 Sketches drawn on the real 32 × 18 grid: [`docs/levels/chapter1-sketch.png`](levels/chapter1-sketch.png) (made with `tools/level_sketch.py`).
@@ -633,6 +641,41 @@ These sketches are a starting point. The real levels are built and tuned in the 
 **Honest limit:** someone technical could fake the ✅ inside a link. That's fine between friends; real protection would need a server.
 
 **Later, not now:** a public online list of everyone's levels (needs a server and accounts).
+
+### 16.4 Chapter 2: The Flooded Halls 🔒
+*Built 2026-10-21.* Sketches drawn from the real levels: [`docs/levels/chapter2.png`](levels/chapter2.png).
+
+| # | Name | New idea | How it works |
+|---|---|---|---|
+| 1 | **Two Keys** | Your lever opens your **partner's** gate | Two lanes, one above the other. Each lane is blocked by a gate, and the lever that opens it is in the other lane. Runes show which is which. |
+| 2 | **Trapdoor** | A gate lying flat is a **bridge**; opening it leaves a **hole** | Hot Boy holds a button so Cool Girl can pass her gate. She crosses the bridge, then a lever turns the bridge into a hole, so he can climb up through it. |
+| 3 | **Don't Let Go** | Closing gates **crush**: hold on until your friend is through | Three rooms with two gates and four buttons. You leapfrog: each holds a button while the other passes, then the one who passed holds the next one. |
+| 4 | **Send It Back** | **Two levers, one rune**: the lift moves while either one is on | A diagonal lift over poison with a lever at the bottom and one at the top. The first rider goes up; then both levers must be off to send the lift back down for the partner. |
+| 5 | **The Flooded Hall** | Exam: everything from Chapter 2 | Swapped lane levers on little shelves, a lever ferry over a poison flood, and a trapdoor to the top that is held open from below, then from above. |
+
+### 16.5 Chapter 3: The Deep Machine 🔒
+*Built 2026-10-21.* Sketches: [`docs/levels/chapter3.png`](levels/chapter3.png).
+
+| # | Name | New idea | How it works |
+|---|---|---|---|
+| 1 | **Going Down** | A lift that **goes down** while powered | You start high. One holds the top button while the other rides down. To bring the partner down, both buttons are released so the lift returns up, then the bottom button brings it down. |
+| 2 | **Stairway** | A **button and a lever with the same rune**: hold it, then lock it | One button raises three platforms into stairs over poison. The climber flips the lever at the top, which keeps the stairs up for the holder. |
+| 3 | **Gem Run** | A breather full of gems, for ⭐⭐⭐ runs | Easy jumps under rows of gems. One holds the gate button; the other locks the gate open with the lever on the far side. |
+| 4 | **Three Seals** | **Flooded tunnels**: only the right element gets through | Three gates seal the doors. A low tunnel full of water hides one lever (only Cool Girl), and a crawlway full of lava hides another (only Hot Boy). The last seal is a button plus a lever. |
+| 5 | **The Deep Machine** | Exam: everything from Chapter 3 | Down a sinking lift (with a lava crawlway at the bottom), two flooded-tunnel levers that open the gates, then up a button-and-lever stairway to the doors. |
+
+### 16.6 Chapter 4: The Summit 🔒
+*Built 2026-10-21.* Sketches: [`docs/levels/chapter4.png`](levels/chapter4.png).
+
+| # | Name | New idea | How it works |
+|---|---|---|---|
+| 1 | **Stepping Stones** | Closed gates are **pillars you stand on**; open them and they're gone | Cool Girl hops across gate pillars over poison. The button that opens Hot Boy's gate also removes the pillars, so she must be across before she presses it. Then he opens her gate. |
+| 2 | **Counterweight** | **One rune moves two lifts in opposite directions** | When the left lift rises, the right one sinks. He rides up while she holds the bottom button. Then he holds the top button, so the right lift waits at the bottom for her, and lets go to bring her up. |
+| 3 | **Twin Falls** | A breather: fall down your own side and collect gems | Each drops down a cascade of ledges. In the door room, each lets the other in with a button. |
+| 4 | **The Tower** | Climb **together through trapdoors** | Two trapdoors, each held open from below by one player, then from above by the other. |
+| 5 | **The Summit** | Final exam: one rune moves the **stepping stones and both lifts** | Pressing the button lifts one player but removes the stones the other needs. Choosing who presses when, and talking about it, is the whole puzzle. |
+
+**Star times** for Chapters 2–4 are first guesses (D12): tune them after real playthroughs.
 
 ---
 
@@ -687,3 +730,5 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-20 | **Level designer locked (16.3):** levels are saved on the phone and travel to the friend through the room or a link. A level is **✅ Verified only after two players finish it together online**; the ✅ is tied to the level's fingerprint, so any edit removes it. Only verified levels can be shared by link. |
 | 2026-10-20 | **Gates crush:** a closing gate no longer waits for someone standing in the gateway; it crushes them (stone-dust death and a heavy thud), and the level restarts for both like any death. Holding a button for your friend now really matters. |
 | 2026-10-21 | **Level 1-5 fixed:** it couldn't be won. The stone block under the doors hung exactly 3 tiles above the floor, a ceiling that made the 3-tile climb next to it impossible. The door ledge is now one tile thick. Lesson: the level checks can't see this; every level needs a route test or a real playthrough (D12). |
+| 2026-10-21 | **15 new levels: Chapters 2–4 (16.4–16.6).** Five levels per chapter; the map has a tab per chapter and finishing a chapter opens the next. Each level teaches one new idea built from the existing blocks: swapped levers, trapdoors, crushing relays, two-lever lifts, sinking lifts, button-plus-lever stairs, flooded tunnels, gate stepping stones, counterweight lifts and a trapdoor tower. |
+| 2026-10-21 | **Every level is now proven winnable (D13).** A robot plays a written solution for each level with the real physics (`npm run check:routes`). It caught two game bugs: a fully open gate twitched shut every frame (that could crush someone jumping through an open trapdoor), and an open gate still blocked as an invisible line. Both are fixed. An open trapdoor now shows only its end posts, so the hole doesn't look bridged. |

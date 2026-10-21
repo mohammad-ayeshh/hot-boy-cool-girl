@@ -212,7 +212,7 @@ def main(out):
             ("Hot Boy start / gem / door", HOT), ("Cool Girl start / gem / door", COOL),
             ("Lava (kills Cool Girl)", HOT_B), ("Water (kills Hot Boy)", COOL_B), ("Poison (kills both)", VIO),
             ("Gold = button, lever, gate, platform", BRASS),
-            ("Same symbol = linked (circle / triangle)", GOLD),
+            ("Same symbol = linked (circle, triangle, square, star)", GOLD),
             ("Thin outline: thumb zones (kept empty)", "#8a9a92"),
             ("Grid: 32 x 18 tiles, 1 tile = character width", "#9BB5A3"),
         ]

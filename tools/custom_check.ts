@@ -1,7 +1,7 @@
 // Checks for homemade levels (design doc 16.3): share links survive the round trip, the fingerprint
-// notices a one-tile edit, broken links are refused, and our own Chapter 1 passes the level checker.
+// notices a one-tile edit, broken links are refused, and all our own levels pass the level checker.
 // Run: npm run check:custom
-import { CHAPTER_1 } from '../src/game/levels.ts';
+import { ALL_LEVELS } from '../src/game/levels.ts';
 import { blankLevel, decodeLink, encodeLink, isVerified, levelHash, markVerified, sanitize, type CustomLevel } from '../src/game/custom.ts';
 import { checkLevel, hasErrors } from '../src/game/levelCheck.ts';
 
@@ -12,15 +12,15 @@ const check = (name: string, ok: boolean, detail = '') => {
 };
 
 const asCustom = (i: number): CustomLevel => {
-  const d = CHAPTER_1[i];
+  const d = ALL_LEVELS[i];
   return { ...blankLevel(d.name, 'test'), rows: [...d.rows!], mechs: d.mechs ?? [] };
 };
 
-// Every Chapter 1 level passes (warnings are fine, errors are not).
-CHAPTER_1.forEach((_, i) => {
+// Every official level passes (warnings are fine, errors are not).
+ALL_LEVELS.forEach((_, i) => {
   const issues = checkLevel(asCustom(i));
   const errs = issues.filter((x) => x.error).map((x) => x.msg);
-  check(`level ${CHAPTER_1[i].id} has no errors`, !hasErrors(issues), errs.join('; ') || `${issues.length} warnings`);
+  check(`level ${ALL_LEVELS[i].id} has no errors`, !hasErrors(issues), errs.join('; ') || `${issues.length} warnings`);
 });
 check('a blank level has no errors', !hasErrors(checkLevel(blankLevel('Blank', 'me'))));
 

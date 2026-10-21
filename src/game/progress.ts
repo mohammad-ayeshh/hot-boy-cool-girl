@@ -1,5 +1,5 @@
 // Saved progress on this phone (design doc 12). No accounts, no server: just localStorage.
-import { CHAPTER_1 } from './levels';
+import { ALL_LEVELS } from './levels';
 
 export interface LevelResult { stars: number; bestTime: number }
 export type Progress = Record<string, LevelResult>;
@@ -29,11 +29,11 @@ export function recordResult(id: string, stars: number, time: number): Progress 
   return p;
 }
 
-/** A level is open if it's the first one or the previous one was finished, on either phone (12.2, 12.3). */
+/** A level is open if it's the first one or the previous one was finished (in any chapter), on either phone (12.2, 12.3). */
 export function isUnlocked(id: string, ...finished: Iterable<string>[]): boolean {
-  const i = CHAPTER_1.findIndex((l) => l.id === id);
+  const i = ALL_LEVELS.findIndex((l) => l.id === id);
   if (i <= 0) return i === 0;
-  const prev = CHAPTER_1[i - 1].id;
+  const prev = ALL_LEVELS[i - 1].id;
   return finished.some((set) => [...set].includes(prev));
 }
 

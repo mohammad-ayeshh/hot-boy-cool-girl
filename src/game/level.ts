@@ -99,7 +99,8 @@ export class Level {
       }
     }
     for (const r of this.dynamic) {
-      if (r.x0 >= x1 || r.x1 <= x0 || r.y0 >= y1 || r.y1 <= y0) continue;
+      // r.y1 <= r.y0: a fully open gate has no height left; it must not block as a thin line (a trapdoor's hole).
+      if (r.x0 >= x1 || r.x1 <= x0 || r.y0 >= y1 || r.y1 <= y0 || r.y1 <= r.y0) continue;
       if (!res) res = { left: r.x0, right: r.x1, top: r.y0, bottom: r.y1 };
       else {
         res.left = Math.min(res.left, r.x0);
