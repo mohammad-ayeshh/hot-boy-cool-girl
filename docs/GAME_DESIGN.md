@@ -387,6 +387,19 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 - No coins, shop or ads (P5).
 - *Later idea:* cosmetic rewards for stars (hats, trail colors) that never change gameplay.
 
+### 12.6 Making money 💬
+*Proposed 2026-10-24, not decided yet.* No ads, in line with P5 and the owner's own wish.
+
+**Recommended: free to try, pay once, and only one friend pays.**
+- Chapter 1 is free for everyone. One purchase (about $3–5) unlocks every chapter, forever.
+- **Friend's pass:** when an owner hosts a room, the friend plays the paid chapters for free. Only one of the two has to buy. This keeps P5 (friends playing in 30 seconds), and every player brings a new player.
+- The payment happens in the app stores (Google Play / App Store) through the Capacitor app. No server is needed, so L2 holds.
+- The website stays as the free demo that leads to the app.
+- **Later:** Steam, where co-op puzzle games sell well. A friend can join through Steam Remote Play Together without owning the game. This needs keyboard/controller support and a $100 Steam fee.
+- **Later:** cosmetics (hats, trail colors) as rewards or small purchases that never change gameplay (12.5).
+
+**Honest note:** most indie games earn little. What sells a co-op game is people inviting friends, so the free first chapter and the friend's pass matter more than the price.
+
 ## 13. Online rules 🔒
 *Locked 2026-10-17.*
 
@@ -677,6 +690,64 @@ These sketches are a starting point. The real levels are built and tuned in the 
 
 **Star times** for Chapters 2–4 are first guesses (D12): tune them after real playthroughs.
 
+
+### 16.7 Ideas for future chapters 💬
+*Proposed 2026-10-24 by the owner; none decided yet.* Rule for all of them: **introduce each new mechanic alone, in its simplest form, before mixing it with others** (D2, D3).
+
+| Idea | What it is | Fits the pillars? | Difficulty to build |
+|---|---|---|---|
+| **Different eyes** | Some things (platforms, buttons, levers, gates, even the exit or your partner) are visible on only one player's screen. You have to tell each other what you see. | ✅ Great for P1: talking becomes the puzzle | Easy: each phone already draws its own screen |
+| **Password gates** | Symbols (letters, numbers, animals, shapes) are hidden through a chapter's levels. A gate at the end opens only if you enter them. | ✅ Works well mixed with "different eyes": each player sees half the code | Easy–medium. The code should change every playthrough, so it can't be looked up online. Players should also be able to note symbols in a journal, in case they come back days later. |
+| **Don't touch** | If the two characters touch, both die. | ⚠️ Risk to P3/P6: online, each phone sees the partner slightly late, so a touch you didn't see on your screen would feel unfair. It needs a forgiving rule (only a clear overlap counts) and a test on two real phones. | Medium |
+| **Chained together** | A chain links the two. One stands as the anchor while the other hangs and swings. | ⚠️ Big risk to P6: your movement would depend on your partner's delayed position over the network, which can cause rubber-banding. It must be prototyped first (Feel Lab, then two phones). | Hard: the hardest idea on this list |
+| **1v1 race** | A mirrored level cut in half; each player races their own half against the clock, and the faster one wins. | ❌ Breaks P1 ("together or not at all") if it is a chapter. It can live as a separate **Versus mode** next to the story. | Medium |
+| **Story and lore** | A short story told through each chapter: why the two are in the temple, what's at the summit. | ✅ Told with pictures and the temple itself, little or no text (D4) | Easy–medium (mostly art and writing) |
+| **A background per chapter** | Each chapter gets its own look (flooded halls, machinery, summit sky), using the same depth layers (9.1). | ✅ | Medium (art) |
+
+**Suggested order:** first different eyes, then password gates (and mixing the two), story and backgrounds alongside, then don't touch. Chained together needs a prototype before it's promised. The 1v1 race becomes a separate Versus mode.
+
+**Owner's plan (2026-10-24):** build all of the above **except chained together** (parked), plus many more chapters and levels, and a deeper but still simple story.
+
+More ideas from the same talk:
+- **Bigger level sizes** (two larger sizes) for harder levels. ⚠️ This breaks 5.1 "one level = one screen": on a phone either everything gets tiny or the camera must scroll. Discuss before building.
+- **Update check:** the game should check for a new version when it opens and offer "New levels available, tap to update". Today it only notices when the two phones have different versions, so an old version can stay open unnoticed. The owner hit this after Chapters 2–4 shipped.
+
+#### Different eyes: design 🔒
+*Designed one question at a time and completed 2026-10-24. The first chapter that uses it is 16.8.*
+
+| # | Question | Decision |
+|---|---|---|
+| E1 | How do players tell each other what they see? | **Voice call only** 🔒. No in-game pointing or signals; the game assumes friends are on a phone call or Discord, as 13.6 already says. Levels must be solvable by **describing** things out loud ("the button is on the top-left ledge"), so hidden things go in easy-to-name places. |
+| E2 | What things can be hidden? | **Helpful things and dangers** 🔒: platforms, ledges, buttons, levers, lifts, gates, gems, **and lava, water and poison**. Both characters are always visible to both. Hidden exits wait for a later chapter. ⚠️ Hidden dangers press on P2 ("never die and think *what killed me?*"), so they need a fairness rule (next question, E3). |
+| E3 | How are hidden dangers kept fair? | **Show only what killed you** 🔒. Nothing hidden is ever hinted while you play. When you die in something you couldn't see, **only that one thing** flashes into view on your screen (true color and shape) before the restart, so P2 holds: you always learn what killed you. The rest of the hidden map is never revealed, and after the restart the killer is hidden again. **Warn space (level rule):** a hidden danger always has walking space before it, never mid-jump or right after a landing, so the partner has time to shout "stop!" |
+| E4 | Does the player who sees something know their partner can't see it? | **No** 🔒. Hidden things look exactly like normal things on the screen of the player who sees them. The two players work out together, by talking, who sees what. |
+| E5 | Is a hidden thing real for the player who can't see it? | **Always real** 🔒. There is one shared world and only the drawing is hidden: you can stand on a platform you can't see, press a button you can't see, and die in lava you can't see. Online sync and the route robot (D13) work as before. |
+| E6 | Who sees what? | **Both patterns, chosen per level, and never told** 🔒. A level can split the hidden things (each player sees some the other doesn't) or give one player everything while the other sees only the plain level. The game never says which; players find out by talking. Who sees what stays the same for the whole level. |
+| E7 | How does the level designer (16.3) mark hidden blocks? | **A "Seen by" setting on each block** 🔒: Both (default), Only Hot Boy, or Only Cool Girl. In the editor, hidden blocks carry a small orange or blue eye badge so the maker can see them. The badge never appears in play (E4). The ✅ rule doesn't change: two players must finish the level together online. |
+
+**How hidden things look and sound (built 2026-10-24):**
+- A hidden **stone** is drawn as empty air, and a hidden **pool** is drawn as plain stone floor, so it looks safe (that's what makes level 5-3 work).
+- A hidden **mechanism or gem** isn't drawn at all, and a hidden mechanism makes **no sound or vibration** for the player who can't see it.
+- Your character's "near danger" reaction (14.4) ignores dangers you can't see.
+- **Death flash (E3):** the whole hidden pool (or the hidden gate that crushed you) appears on your screen with a pulsing white outline, until the restart.
+- In the level designer, the 👁 button on the right picks the "Seen by" brush; tap it again to switch between Only Hot Boy, Only Cool Girl and Both. Start spots and doors can't be hidden (E2).
+- The level checks warn when a hidden pool has less than 2 tiles of floor before it (warn space, E3). `npm run check:custom` makes sure no official level breaks this.
+
+How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
+
+### 16.8 Chapter 5: The Hall of Eyes 🔒
+*Planned and built 2026-10-24.* Sketches: [`docs/levels/chapter5.png`](levels/chapter5.png). Teaches **Different eyes** (16.7, E1–E7): one new idea per level, simplest first. Every hidden danger follows the warn-space rule (E3), and every level has a route-robot solution (D13).
+
+| # | Name | New idea | How it works |
+|---|---|---|---|
+| 1 | **Invisible Bridge** | **Hidden platforms** (the simplest case) | A poison pit splits the room, and the poison is visible to both. Each player sees the stepping stones the *other* one needs. He talks her across ("jump now… one more"), then she talks him across. Nothing hidden can kill yet. |
+| 2 | **The Hidden Rune** | **Hidden buttons** | She drops into the lower hall; he stays on top. His gate's button is down in her hall, and only he can see it: he guides her onto it ("go right… stop there") and walks through. Then her gate's button is on his side, and only she can see it: she guides him onto it and walks to her door. |
+| 3 | **Watch Your Step** | **The first hidden danger** | Two lanes. His floor hides two water pools that only she sees; her floor hides two lava pools that only he sees. To each player the floor looks like plain stone. With walking space before every pool, each shouts "jump now!" for the other. If you die, the pool that got you flashes into view (E3). |
+| 4 | **One Pair of Eyes** | **One player sees everything** | Cool Girl sees the whole hidden layout; Hot Boy sees only bare walls. She talks him along a short path of invisible ledges over poison. At the end he holds a button that opens her door, so both are still needed. |
+| 5 | **Blind Trust** | **Final exam** | Hidden platforms, buttons and dangers for **both** players at once, plus hidden gems for the stars. Each player must guide and be guided. |
+
+**Star times** are first guesses (D12): tune them after real playthroughs.
+
 ---
 
 ## 17. Design topics ✅
@@ -732,3 +803,11 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-21 | **Level 1-5 fixed:** it couldn't be won. The stone block under the doors hung exactly 3 tiles above the floor, a ceiling that made the 3-tile climb next to it impossible. The door ledge is now one tile thick. Lesson: the level checks can't see this; every level needs a route test or a real playthrough (D12). |
 | 2026-10-21 | **15 new levels: Chapters 2–4 (16.4–16.6).** Five levels per chapter; the map has a tab per chapter and finishing a chapter opens the next. Each level teaches one new idea built from the existing blocks: swapped levers, trapdoors, crushing relays, two-lever lifts, sinking lifts, button-plus-lever stairs, flooded tunnels, gate stepping stones, counterweight lifts and a trapdoor tower. |
 | 2026-10-21 | **Every level is now proven winnable (D13).** A robot plays a written solution for each level with the real physics (`npm run check:routes`). It caught two game bugs: a fully open gate twitched shut every frame (that could crush someone jumping through an open trapdoor), and an open gate still blocked as an invisible line. Both are fixed. An open trapdoor now shows only its end posts, so the hole doesn't look bridged. |
+| 2026-10-24 | **Different eyes, E1 (16.7):** players share what only they can see by **voice call only**; no in-game pointing or signals. Hidden things must be easy to describe out loud. |
+| 2026-10-24 | **Different eyes, E2 (16.7):** platforms, mechanisms, gems **and dangers** (lava, water, poison) can be hidden from one player; both characters always stay visible. Hidden dangers need a fairness rule (E3) to protect P2. |
+| 2026-10-24 | **Different eyes, E3 (16.7):** nothing hidden is ever hinted. On a death, only the thing that killed you flashes into view on your screen, then hides again after the restart. P2 stays unchanged. |
+| 2026-10-24 | **Different eyes, warn space and E4 (16.7):** a hidden danger always has walking space before it so the partner can warn in time. Hidden things carry no marking on the seer's screen; players find out who sees what by talking. |
+| 2026-10-24 | **Different eyes, E5 (16.7):** hidden things are always real for both players; only the drawing is hidden on one screen. |
+| 2026-10-24 | **Different eyes, E6–E7 (16.7):** a level can split the hidden things between the players or give one player all of them; the game never says which, and it stays fixed for the level. In the level designer, each block gets a "Seen by" setting (Both / Only Hot Boy / Only Cool Girl), shown as an eye badge in the editor only. |
+| 2026-10-24 | **Different eyes design complete (16.7, E1–E7). Chapter 5 "The Hall of Eyes" planned (16.8):** Invisible Bridge, The Hidden Rune, Watch Your Step, One Pair of Eyes, Blind Trust. Not built yet. |
+| 2026-10-24 | **Different eyes and Chapter 5 built.** Each phone draws the level through its own player's eyes: a hidden stone looks like air, a hidden pool looks like plain floor, hidden mechanisms and gems aren't drawn and make no sound. Dying in something hidden flashes just that thing until the restart. The level designer has a 👁 "Seen by" brush, and hidden things travel in share links and count in the ✅ fingerprint (levels without hidden things keep their old fingerprint). Two levels changed while building: 5-2 uses two hidden buttons (no lever), and 5-3 uses hidden pools in both lanes (no lift). All 25 levels pass the route robot. Star times for Chapter 5 are guesses (D12). |

@@ -7,8 +7,8 @@ import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
 import { Controls } from '../engine/input';
 import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, type JumpStats, type Phys } from '../game/body';
-import { COLS, ROWS, Level, type DeathCause, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
-import { Mechanisms, type Feet, type MechEvent, type Rune } from '../game/mechanisms';
+import { COLS, ROWS, LIQUID_DEPTH, Level, type DeathCause, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
+import { Mechanisms, type Feet, type MechDef, type MechEvent, type Rune } from '../game/mechanisms';
 import type { Settings } from '../game/settings';
 import { ParticleSystem, makeGlowTexture } from '../render/particles';
 import { CharacterView, type Pose } from '../render/character';
@@ -128,6 +128,13 @@ export class Stage {
   stats!: JumpStats;
   /** Which character the thumbs drive on this phone (null = none). */
   controlled: Elem | null = 'fire';
+  /** Whose eyes this phone sees with (Different eyes, 16.7): things only the other player sees aren't drawn. null = see everything. */
+  private viewer: Elem | null = null;
+  /** Cells and gates that killed this phone's player while hidden from them: shown until the restart (E3). */
+  private revealed = new Set<number>();
+  private revealedGates = new Set<number>();
+  private revealT = 0;
+  private revealBox: Rect | null = null;
   /** False while a menu is open or the app is in the background: your character stands still. */
   inputEnabled = true;
   showHints = false;
@@ -161,6 +168,7 @@ export class Stage {
   private readonly heroesLayer = new Container();
   private readonly dust = new ParticleSystem(this.glowTex, 800, 'normal');
   private readonly poolsG = new Graphics();
+  private readonly revealG = new Graphics();
   private readonly fx = new ParticleSystem(this.glowTex, 4000);
   private readonly debug = new Graphics();
   private readonly screenFx = new Graphics();
@@ -192,7 +200,7 @@ export class Stage {
   constructor(readonly app: Application, readonly settings: Settings, level: LevelData, private opts: StageOptions) {
     this.controls = new Controls(app.canvas, { deadZone: settings.deadZone, anchorFollows: settings.anchorFollows, anchorLeash: settings.anchorLeash });
     this.lights.addChild(this.levelLights);
-    this.world.addChild(this.bg, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.fx.view, this.debug, this.overlay);
+    this.world.addChild(this.bg, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.revealG, this.fx.view, this.debug, this.overlay);
     app.stage.addChild(this.margins, this.world, this.screenFx, this.hints);
     drawBackground(this.bg);
     this.heroes = { water: this.makeHero('water'), fire: this.makeHero('fire') };
@@ -231,17 +239,13 @@ export class Stage {
     this.level = new Level(data);
     this.mech = new Mechanisms(data.mechs);
     this.level.dynamic = this.mech.solids;
-    drawTiles(this.tiles, this.level);
-    this.pools = new Pools(this.level, this.poolsG);
+    this.revealed.clear();
+    this.revealedGates.clear();
+    this.revealBox = null;
+    this.pools = new Pools(this.level, this.poolsG, this.sees);
     for (const c of this.levelLights.removeChildren()) c.destroy();
     this.liquidGlows = [];
-    for (const pool of this.level.pools()) {
-      for (let x = pool.x0; x < pool.x1; x++) {
-        const s = this.glow(pool.kind === 'lava' ? 0xff6a1a : pool.kind === 'water' ? 0x1fa3ff : 0xa23be8, 2.6);
-        s.position.set((x + 0.5) * T, (pool.y + 0.1) * T);
-        this.liquidGlows.push({ s, kind: pool.kind, seed: Math.random() * 10 });
-      }
-    }
+    this.drawWorld();
     this.gems = data.gems.map((g, i) => {
       const glow = this.glow(g.elem === 'fire' ? 0xffb02e : 0x7adfff, 1.6);
       glow.position.set(g.x * T, g.y * T);
@@ -261,6 +265,81 @@ export class Stage {
     this.quiet = false;
   }
   private quiet = false;
+
+  /** See the level through one player's eyes (null = everything). */
+  setViewer(v: Elem | null): void {
+    if (v === this.viewer) return;
+    this.viewer = v;
+    this.drawWorld();
+  }
+
+  /** Can this phone's player see the tile at (x, y)? */
+  private sees = (x: number, y: number): boolean => {
+    const who = this.level.seenBy(x, y);
+    return !who || !this.viewer || who === this.viewer || this.revealed.has(y * COLS + x);
+  };
+
+  private seesThing(seen: Elem | undefined): boolean {
+    return !seen || !this.viewer || seen === this.viewer;
+  }
+
+  private seesMech(def: MechDef, gate = -1): boolean {
+    return this.seesThing(def.seen) || (gate >= 0 && this.revealedGates.has(gate));
+  }
+
+  /** Stone and the liquid glows: everything that changes when the viewer (or what's revealed) changes. */
+  private drawWorld(): void {
+    drawTiles(this.tiles, this.level, this.sees);
+    for (const lg of this.liquidGlows) lg.s.destroy();
+    this.liquidGlows = [];
+    for (const pool of this.level.pools(this.sees)) {
+      for (let x = pool.x0; x < pool.x1; x++) {
+        const s = this.glow(pool.kind === 'lava' ? 0xff6a1a : pool.kind === 'water' ? 0x1fa3ff : 0xa23be8, 2.6);
+        s.position.set((x + 0.5) * T, (pool.y + 0.1) * T);
+        this.liquidGlows.push({ s, kind: pool.kind, seed: Math.random() * 10 });
+      }
+    }
+  }
+
+  /**
+   * E3: this phone's player died in something they couldn't see. Only that one thing (the whole pool,
+   * or the gate) flashes into view, and stays until the restart.
+   */
+  private revealKiller(h: Hero, cause: DeathCause, gate: number): void {
+    if (!this.viewer || h.elem !== this.viewer) return;
+    if (cause === 'crush') {
+      const d = this.mech.gates[gate]?.def;
+      if (!d || this.seesMech(d, gate)) return;
+      this.revealedGates.add(gate);
+      this.revealBox = { x0: d.x, y0: d.y, x1: d.x + d.w, y1: d.y + d.h };
+    } else {
+      const b = h.body;
+      const ty = Math.floor(b.y - LIQUID_DEPTH + 0.02);
+      let x0 = -1, x1 = -1;
+      for (let tx = Math.floor(b.left); tx <= Math.floor(b.right - 1e-9); tx++) {
+        if (this.level.tile(tx, ty) === cause && !this.sees(tx, ty)) { if (x0 < 0) x0 = tx; x1 = tx; }
+      }
+      if (x0 < 0) return;
+      // the whole hidden pool, not just the cells under the feet
+      while (this.level.tile(x0 - 1, ty) === cause && !this.sees(x0 - 1, ty)) x0--;
+      while (this.level.tile(x1 + 1, ty) === cause && !this.sees(x1 + 1, ty)) x1++;
+      for (let tx = x0; tx <= x1; tx++) this.revealed.add(ty * COLS + tx);
+      this.revealBox = { x0, y0: ty, x1: x1 + 1, y1: ty + 1 };
+      this.drawWorld();
+    }
+    this.revealT = 1;
+  }
+
+  /** The reveal flash: a bright outline pulses around what killed you, then settles (E3). */
+  private drawReveal(dt: number): void {
+    const g = this.revealG.clear();
+    const r = this.revealBox;
+    if (!r) return;
+    this.revealT = Math.max(0, this.revealT - dt * 0.8);
+    const a = 0.35 + 0.65 * this.revealT * (0.6 + 0.4 * Math.sin(this.simTime * 18));
+    const pad = 3 + this.revealT * 6;
+    g.roundRect(r.x0 * T - pad, r.y0 * T - pad, (r.x1 - r.x0) * T + pad * 2, (r.y1 - r.y0) * T + pad * 2, 6).stroke({ width: 3, color: 0xffffff, alpha: a });
+  }
 
   private glow(tint: number, sizeTiles: number): Sprite {
     const s = new Sprite({ texture: this.glowTex, anchor: 0.5, blendMode: 'add' });
@@ -337,6 +416,13 @@ export class Stage {
     }
     for (const g of this.gems) g.alive = true;
     for (const d of this.doors) d.open = 0;
+    if (this.revealBox) {
+      // the killer hides again (E3)
+      this.revealed.clear();
+      this.revealedGates.clear();
+      this.revealBox = null;
+      this.drawWorld();
+    }
     this.mech.reset();
     this.level.dynamic = this.mech.solids;
     this.trails.clear();
@@ -588,10 +674,11 @@ export class Stage {
     sfx.splash(OWN_LIQUID[h.elem], this.pan(h), this.gain(h));
   }
 
-  private die(h: Hero, cause: DeathCause): void {
+  private die(h: Hero, cause: DeathCause, gate = -1): void {
     if (!h.alive || h.dying || this.completed) return;
     const s = this.settings;
     h.dying = cause;
+    this.revealKiller(h, cause, gate);
     h.body.vx = h.body.vy = 0;
     if (cause === 'crush') { h.sy = 0.35; h.sx = 1.6; h.vsx = h.vsy = 0; } // flattened by the gate
     if (s.blink) h.whiten = 1;
@@ -724,7 +811,7 @@ export class Stage {
       }
 
       // near danger (14.4)
-      const dist = this.settings.nearDanger ? this.level.distanceToLiquid(b.x, b.y - 0.4, DEADLY[e], 2.5) : Infinity;
+      const dist = this.settings.nearDanger ? this.level.distanceToLiquid(b.x, b.y - 0.4, DEADLY[e], 2.5, this.sees) : Infinity; // a hidden danger gives no hint (E3)
       const target = clamp(1 - (dist - 0.3) / 1.7, 0, 1);
       h.danger += (target - h.danger) * Math.min(1, STEP * 8);
 
@@ -774,13 +861,13 @@ export class Stage {
     const locals = alive.filter((h) => h.local);
     const riding = locals.map((h) => m.platformUnder(feetOf(h.body)));
     // A closing gate crushes whoever is under it the moment it reaches their head (brushing its side is forgiven, 7.4).
-    const crushed = new Set<Hero>();
-    const crush = (r: Rect) => {
+    const crushed = new Map<Hero, number>();
+    const crush = (r: Rect, gate: number) => {
       if (this.completed) return;
-      for (const h of locals) if (r.x0 < h.body.right - 0.12 && r.x1 > h.body.left + 0.12 && r.y0 < h.body.y && r.y1 > h.body.top + 0.04) crushed.add(h);
+      for (const h of locals) if (r.x0 < h.body.right - 0.12 && r.x1 > h.body.left + 0.12 && r.y0 < h.body.y && r.y1 > h.body.top + 0.04) crushed.set(h, gate);
     };
     m.update(STEP, crush, events);
-    for (const h of crushed) this.die(h, 'crush');
+    for (const [h, gate] of crushed) this.die(h, 'crush', gate);
     locals.forEach((h, i) => {
       if (crushed.has(h)) return;
       const b = h.body;
@@ -812,18 +899,21 @@ export class Stage {
 
   private mechEvents(events: MechEvent[]): void {
     for (const ev of events) {
+      // A mechanism you can't see makes no sound or buzz for you either (E3: nothing hidden is hinted).
       if (ev.k === 'button') {
         const d = this.mech.buttons[ev.i].def;
+        if (!this.seesMech(d)) continue;
         sfx.button(ev.down, this.panX(d.x));
         const me = this.controlled ? this.heroes[this.controlled] : null;
         if (ev.down && me?.local && Math.abs(me.body.x - (d.x + 0.5)) < 0.9) this.haptic(15);
       } else if (ev.k === 'lever') {
+        if (ev.local) this.opts.hooks?.localLever?.(ev.i, ev.on);
+        if (!this.seesMech(this.mech.levers[ev.i].def)) continue;
         sfx.lever(this.panX(this.mech.levers[ev.i].def.x));
         this.haptic(20);
-        if (ev.local) this.opts.hooks?.localLever?.(ev.i, ev.on);
       } else if (ev.k === 'platform') {
-        sfx.grind(ev.start, this.panX(this.mech.platforms[ev.i].rect.x0));
-      } else {
+        if (this.seesMech(this.mech.platforms[ev.i].def)) sfx.grind(ev.start, this.panX(this.mech.platforms[ev.i].rect.x0));
+      } else if (this.seesMech(this.mech.gates[ev.i].def, ev.i)) {
         sfx.gate(ev.opening, this.panX(this.mech.gates[ev.i].def.x));
       }
     }
@@ -970,8 +1060,9 @@ export class Stage {
     const g = this.gemsG.clear();
     const t = this.simTime;
     for (const gem of this.gems) {
-      gem.glow.visible = gem.alive && this.settings.lighting;
-      if (!gem.alive) continue;
+      const shown = gem.alive && this.seesThing(gem.seen);
+      gem.glow.visible = shown && this.settings.lighting;
+      if (!shown) continue;
       const bob = Math.sin(t * 2.6 + gem.phase) * 2.5;
       const x = gem.x * T, y = gem.y * T + bob;
       gem.glow.y = y;
@@ -1037,6 +1128,7 @@ export class Stage {
     const lit = (rune: Rune) => (m.powered(rune) ? 1 : 0);
     for (const pl of m.platforms) {
       const d = pl.def;
+      if (!this.seesMech(d)) continue;
       // dotted guide: where it goes
       const sx = (d.x + d.w / 2) * T, sy = (d.y + PLAT_H / 2) * T, ex = (d.to[0] + d.w / 2) * T, ey = (d.to[1] + PLAT_H / 2) * T;
       const len = Math.hypot(ex - sx, ey - sy);
@@ -1048,8 +1140,9 @@ export class Stage {
       g.rect(x + 2, y + h - 3, w - 4, 2).fill({ color: BRASS, alpha: 0.8 });
       drawRune(g, d.rune, x + w / 2, y + h / 2 + 1, 4.5, lit(d.rune) ? IVORY : GOLD, 0.6 + 0.4 * lit(d.rune));
     }
-    for (const gt of m.gates) {
+    m.gates.forEach((gt, gi) => {
       const d = gt.def;
+      if (!this.seesMech(d, gi)) return;
       const x = d.x * T, y = d.y * T, w = d.w * T, bottom = gt.rect.y1 * T;
       // lintel; a flat gate (trapdoor) gets only end posts, so its open hole doesn't look bridged
       if (d.w > d.h) g.rect(x - 2, y - 4, 6, 10).fill(BRASS).rect(x + w - 4, y - 4, 6, 10).fill(BRASS);
@@ -1060,8 +1153,9 @@ export class Stage {
         for (let bx = x + 3; bx < x + w - 2; bx += 8) g.poly([bx, bottom, bx + 4, bottom, bx + 2, bottom + 4]).fill(GOLD);
         drawRune(g, d.rune, x + w / 2, Math.min(bottom - 14, y + 14), 6, lit(d.rune) ? IVORY : GOLD, 0.85);
       } else drawRune(g, d.rune, x + w / 2, y - 12, 5, IVORY, 0.9);
-    }
+    });
     for (const b of m.buttons) {
+      if (!this.seesMech(b.def)) continue;
       const x = b.def.x * T, floor = (b.def.y + 1) * T;
       g.roundRect(x + 3, floor - 4, T - 6, 4, 1.5).fill(BRASS);
       const top = floor - 8 + b.sink * 4;
@@ -1069,6 +1163,7 @@ export class Stage {
       drawRune(g, b.def.rune, x + T / 2, floor - 0.75 * T, 4.5, b.pressed ? IVORY : GOLD, 0.45 + 0.55 * b.sink);
     }
     for (const l of m.levers) {
+      if (!this.seesMech(l.def)) continue;
       const cx = (l.def.x + 0.5) * T, floor = (l.def.y + 1) * T;
       const ang = l.angle * 0.65; // tilted left (off) or right (on)
       const px = cx, py = floor - 6;
@@ -1125,7 +1220,7 @@ export class Stage {
         const x = b.prevX + (b.x - b.prevX) * alpha, y = b.prevY + (b.y - b.prevY) * alpha;
         g.rect((x - HITBOX_W / 2) * T, (y - HITBOX_H) * T, HITBOX_W * T, HITBOX_H * T).stroke({ width: 1.5, color: e === 'fire' ? 0xffb02e : 0x7adfff });
       }
-      for (const gem of this.gems) if (gem.alive) g.circle(gem.x * T, gem.y * T, 0.4 * T).stroke({ width: 1, color: 0xffffff, alpha: 0.5 });
+      for (const gem of this.gems) if (gem.alive && this.seesThing(gem.seen)) g.circle(gem.x * T, gem.y * T, 0.4 * T).stroke({ width: 1, color: 0xffffff, alpha: 0.5 });
     }
     // "this one is you": a small arrow over your character for a moment
     this.markerT = Math.max(0, this.markerT - dt);
@@ -1211,6 +1306,7 @@ export class Stage {
     this.drawDoors(simDt);
     this.drawMechs();
     this.drawGems();
+    this.drawReveal(realDt);
     for (const e of ELEMS) this.drawHero(this.heroes[e], alpha, simDt);
     this.drawFlames(simDt);
     this.trails.update(simDt);

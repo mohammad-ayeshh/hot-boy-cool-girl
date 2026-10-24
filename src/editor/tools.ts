@@ -2,12 +2,17 @@
 import { COLS, ROWS } from '../game/level';
 import type { MechDef, Rune } from '../game/mechanisms';
 
-export interface Draft { rows: string[]; mechs: MechDef[] }
+export interface Draft { rows: string[]; mechs: MechDef[]; seen?: string[] }
 
 export type Tool =
   | 'stone' | 'erase' | 'lava' | 'water' | 'poison'
   | 'gemFire' | 'gemWater' | 'startFire' | 'startWater' | 'doorFire' | 'doorWater'
-  | 'button' | 'lever' | 'platform' | 'gate';
+  | 'button' | 'lever' | 'platform' | 'gate' | 'eyes';
+
+/** "Seen by" (Different eyes, 16.7 E7): both, only Hot Boy (h) or only Cool Girl (c). */
+export type Eye = '.' | 'h' | 'c';
+/** Map characters that can be hidden: tiles and gems. Start spots and doors are always seen by both (E2). */
+const HIDEABLE = '#LWPrb';
 
 /** Map character each tool writes. */
 export const TOOL_CHAR: Partial<Record<Tool, string>> = {
@@ -48,6 +53,7 @@ export function paint(d: Draft, tool: Tool, x: number, y: number): boolean {
     if (i >= 0) { d.mechs.splice(i, 1); return true; }
     if (old === '.') return false;
     put(d, x, y, '.');
+    setEye(d, x, y, '.');
     return true;
   }
   // Brushes paint around start spots and doors instead of wiping them out by accident.
@@ -55,9 +61,36 @@ export function paint(d: Draft, tool: Tool, x: number, y: number): boolean {
   if (old === ch) return false;
   if (SINGLE.includes(ch)) {
     d.rows.forEach((r, yy) => { const xx = r.indexOf(ch); if (xx >= 0) put(d, xx, yy, '.'); });
+    setEye(d, x, y, '.');
   }
   put(d, x, y, ch);
   return true;
+}
+
+function setEye(d: Draft, x: number, y: number, eye: Eye): boolean {
+  if (!d.seen) {
+    if (eye === '.') return false;
+    d.seen = d.rows.map((r) => '.'.repeat(r.length));
+  }
+  if (d.seen[y][x] === eye) return false;
+  d.seen[y] = d.seen[y].slice(0, x) + eye + d.seen[y].slice(x + 1);
+  return true;
+}
+
+/** The "Seen by" brush: a mechanism on this tile, or else the tile and its gem. Returns true if anything changed. */
+export function paintEye(d: Draft, x: number, y: number, eye: Eye): boolean {
+  if (!inside(x, y)) return false;
+  const i = mechAt(d, x, y);
+  if (i >= 0) {
+    const m = d.mechs[i];
+    const seen = eye === 'h' ? 'fire' : eye === 'c' ? 'water' : undefined;
+    if (m.seen === seen) return false;
+    if (seen) m.seen = seen;
+    else delete m.seen;
+    return true;
+  }
+  if (isBorder(x, y) || !HIDEABLE.includes(d.rows[y][x])) return false;
+  return setEye(d, x, y, eye);
 }
 
 /** Button or lever: tap to place, tap it again to remove. */

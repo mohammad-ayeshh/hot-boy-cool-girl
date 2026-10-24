@@ -18,7 +18,7 @@ const THUMB = 4; // bottom-left and bottom-right 4 × 4 tiles (5.3)
 const inThumbCorner = (x: number, y: number) => y >= ROWS - THUMB && (x < THUMB || x >= COLS - THUMB);
 const NICE: Record<string, string> = { h: 'Hot Boy start', c: 'Cool Girl start', H: 'Hot Boy door', C: 'Cool Girl door' };
 
-export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs'>): Issue[] {
+export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen'>): Issue[] {
   const out: Issue[] = [];
   const err = (msg: string, x?: number, y?: number) => out.push({ error: true, msg, x, y });
   const warn = (msg: string, x?: number, y?: number) => out.push({ error: false, msg, x, y });
@@ -101,6 +101,22 @@ export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs'>): Issue[] {
       }
     }
   }
+
+  // Different eyes (16.7, E3): a hidden pool that can kill the player who can't see it needs 2 tiles of flat floor
+  // before it, so the partner has time to shout "stop!" (never right after a landing or mid-jump).
+  const BLIND_DEADLY: Record<string, string> = { h: 'LP', c: 'WP' }; // h = only Hot Boy sees it, so it can kill her
+  const wall = (x: number, y: number) => stone(x, y) && stone(x, y - 1);
+  l.seen?.forEach((r, y) => {
+    for (let x = 0; x < COLS; x++) {
+      const eye = r[x], liq = at(x, y);
+      if (!BLIND_DEADLY[eye]?.includes(liq) || (r[x - 1] === eye && at(x - 1, y) === liq)) continue;
+      let x1 = x;
+      while (r[x1 + 1] === eye && at(x1 + 1, y) === liq) x1++;
+      for (const [near, far] of [[x - 1, x - 2], [x1 + 1, x1 + 2]]) {
+        if (!wall(near, y) && !(floor(near, y) && floor(far, y))) once(`w${x},${y}`, () => warn('A hidden pool needs 2 tiles of floor before it, so your partner has time to warn you.', x, y));
+      }
+    }
+  });
 
   if (JSON.stringify(l).length > MAX_BYTES) err('This level is too big to send to your friend.');
   return out;

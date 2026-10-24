@@ -47,9 +47,18 @@ export function drawBackground(g: Graphics): void {
   }
 }
 
-export function drawTiles(g: Graphics, level: Level): void {
+/**
+ * `visible`: the cells this phone's player can see (Different eyes, 16.7). A hidden stone is drawn as air
+ * and a hidden pool as plain stone floor, so it looks safe (16.8, level 3).
+ */
+export function drawTiles(g: Graphics, level: Level, visible: (x: number, y: number) => boolean = () => true): void {
   g.clear();
-  const stone = (x: number, y: number) => level.tile(x, y) === 'stone';
+  const looks = (x: number, y: number) => {
+    const t = level.tile(x, y);
+    return visible(x, y) || t === 'empty' ? t : t === 'stone' ? 'empty' : 'stone';
+  };
+  const stone = (x: number, y: number) => looks(x, y) === 'stone';
+  const air = (x: number, y: number) => looks(x, y) === 'empty';
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       if (!stone(x, y)) continue;
@@ -69,7 +78,7 @@ export function drawTiles(g: Graphics, level: Level): void {
       if (!stone(x, y - 1)) {
         g.rect(px, py, T, 4).fill(WORLD.light);
         g.rect(px, py + 4, T, 2).fill({ color: WORLD.light, alpha: 0.35 });
-        if (level.tile(x, y - 1) === 'empty') {
+        if (air(x, y - 1)) {
           // moss tufts on top edges
           for (let k = 0; k < 3; k++) {
             if (hash(x, y, 10 + k) < 0.55) {
@@ -82,7 +91,7 @@ export function drawTiles(g: Graphics, level: Level): void {
       if (!stone(x, y + 1) && y + 1 < ROWS) {
         g.rect(px, py + T - 4, T, 4).fill({ color: WORLD.deep, alpha: 0.8 });
         // vines hanging from the underside of ledges
-        if (level.tile(x, y + 1) === 'empty' && hash(x, y, 40) < 0.3) {
+        if (air(x, y + 1) && hash(x, y, 40) < 0.3) {
           const vx = px + 6 + hash(x, y, 41) * 20;
           const len = 10 + hash(x, y, 42) * 26;
           g.moveTo(vx, py + T).quadraticCurveTo(vx + 5, py + T + len / 2, vx + 1, py + T + len).stroke({ width: 2, color: WORLD.moss, alpha: 0.9 });
@@ -94,7 +103,7 @@ export function drawTiles(g: Graphics, level: Level): void {
     }
   }
   // the stone under/around each pool, so pools sit in a basin
-  for (const pool of level.pools()) {
+  for (const pool of level.pools(visible)) {
     g.rect(pool.x0 * T, pool.y * T + T * 0.75, (pool.x1 - pool.x0) * T, T * 0.25).fill(WORLD.dark);
   }
 }
@@ -114,7 +123,7 @@ interface Ripple { x: number; age: number; power: number }
 
 export class Pools {
   private ripples: Ripple[] = [];
-  constructor(private readonly level: Level, readonly g: Graphics) {}
+  constructor(private readonly level: Level, readonly g: Graphics, private readonly visible: (x: number, y: number) => boolean = () => true) {}
 
   /** A splash at world x (in tiles). */
   splash(xTiles: number, power = 1): void {
@@ -125,7 +134,7 @@ export class Pools {
     for (const r of this.ripples) r.age += dt;
     this.ripples = this.ripples.filter((r) => r.age < 1.5);
     const g = this.g.clear();
-    for (const pool of this.level.pools()) {
+    for (const pool of this.level.pools(this.visible)) {
       const L = LIQ[pool.kind];
       const x0 = pool.x0 * T, x1 = pool.x1 * T;
       const surfaceY = pool.y * T + T * (LIQUID_DEPTH - 0.1); // a bit above the feet: they dip in

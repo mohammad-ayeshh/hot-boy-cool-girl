@@ -113,4 +113,30 @@ export const ROUTES: Record<string, Route> = {
       jump(14.6, { at: 11.4 }), to(15.4), jump(18.6, { at: 15.4 }), to(19.4), jump(21.5), to(23.4), say('she is across'), platAt(1, 1), jump(24.6),
       say('she is on the right lift'), platAt(1, 0), to(30.5)],
   },
+
+  // ---- Chapter 5: hidden things are real for both, so the robot plays them like any level
+  '5-1': {
+    fire: [to(7.5), jump(9.8, { at: 7.5 }), to(10.4), jump(13.6, { at: 10.4 }), to(14.4), jump(18.6, { at: 14.4 }), to(19.4), jump(22.6, { at: 19.4 }), to(29.5), to(24.5)],
+    water: [to(7.4), jump(10.6, { at: 7.4 }), to(11.4), jump(15.6, { at: 11.4 }), to(16.4), jump(19.6, { at: 16.4 }), to(20.4), jump(22.6, { at: 20.4 }), to(26.5)],
+  },
+  '5-2': {
+    fire: [to(8.4), jump(11.8, { at: 8.4 }), to(19.4), gateOpen(0), to(23.5), say('he holds the button'), until('she is through her gate', (w) => w.body.water.x > 23.4), to(27.5)],
+    water: [to(9.9), to(13.5), until('he is past his gate', (w) => w.body.fire.x > 21.6), heard('he holds the button'), gateOpen(1), to(26.5)],
+  },
+  '5-3': {
+    fire: [to(9.3), jump(13.7, { at: 9.3 }), to(17.3), jump(21.7, { at: 17.3 }), to(29.5), to(24.5)],
+    water: [to(9.3), jump(12.7, { at: 9.3 }), to(16.3), jump(20.7, { at: 16.3 }), to(26.5)],
+  },
+  '5-4': {
+    fire: [to(7.4), jump(10.8, { at: 7.4 }), to(11.5), jump(14.8), to(15.5), jump(18.8), to(19.5), jump(22.8), to(24.5), say('he holds the button'),
+      until('she is in', (w) => w.body.water.x < 3.4), to(27.5)],
+    water: [heard('he holds the button'), gateOpen(0), to(2.5)],
+  },
+  '5-5': {
+    fire: [to(7.4), jump(10.6, { at: 7.4 }), to(11.4), jump(14.6, { at: 11.4 }), to(15.4), jump(18.6, { at: 15.4 }), to(21.3), jump(24.7, { at: 21.3 }),
+      to(29.4), say('he is on the trapdoor'), until('he is down', (w) => w.body.fire.y > 13.9), to(26.5), say('he holds the button'),
+      until('she is at her door', (w) => w.body.water.x > 29.2), to(27.5)],
+    water: [to(7.5), heard('he is on the trapdoor'), until('he is down', (w) => w.body.fire.y > 13.9), to(10.3), jump(13.7, { at: 10.3 }), to(14.4),
+      jump(17.6, { at: 14.4 }), to(18.4), jump(20.6, { at: 18.4 }), to(21.4), jump(23.6, { at: 21.4 }), to(24.4), heard('he holds the button'), gateOpen(1), to(29.5)],
+  },
 };

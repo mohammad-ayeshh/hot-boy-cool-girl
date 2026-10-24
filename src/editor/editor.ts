@@ -8,7 +8,7 @@ import { checkLevel, hasErrors, type Issue } from '../game/levelCheck';
 import { saveLevel } from '../game/myLevels';
 import type { Stage } from '../play/stage';
 import { T } from '../render/world';
-import { BRUSH, MAX_PLATFORM, addGate, addPlatform, box, mechAt, paint, setPlatformTarget, toggleSwitch, type Tool } from './tools';
+import { BRUSH, MAX_PLATFORM, addGate, addPlatform, box, mechAt, paint, paintEye, setPlatformTarget, toggleSwitch, type Eye, type Tool } from './tools';
 
 export interface EditorHost {
   stage: Stage;
@@ -19,6 +19,9 @@ export interface EditorHost {
 }
 
 const RUNE_ICON: Record<Rune, string> = { circle: '○', triangle: '△', square: '□', star: '☆' };
+const EYES: Eye[] = ['.', 'h', 'c'];
+const EYE_NAME: Record<Eye, string> = { '.': 'Both', h: 'Hot Boy', c: 'Cool Girl' };
+const EYE_COLOR = { h: 0xff8a2a, c: 0x3fb8ff };
 const NAMES: Record<Elem, string> = { fire: '🔥 Hot Boy', water: '💧 Cool Girl' };
 const GOLD = 0xf2c35b;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -50,6 +53,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
   const canvas = stage.app.canvas;
   let tool: Tool = 'stone';
   let rune: Rune = 'circle';
+  let eye: Eye = 'h';
   let trying = false;
   let editOk = !isVerified(level); // changing a ✅ level asks first
   const undo: string[] = [];
@@ -66,6 +70,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
       <button class="ed-btn" data-ed="undo">↶<small>Undo</small></button>
       <button class="ed-btn" data-ed="redo">↷<small>Redo</small></button>
       <button class="ed-btn ed-rune" data-ed="rune"></button>
+      <button class="ed-btn ed-eye" data-ed="eye"></button>
       <button class="ed-btn" data-ed="zoom">🔍<small>Zoom</small></button>
       <button class="ed-btn ed-check" data-ed="issues"></button>
       <button class="ed-btn primary" data-ed="try">▶<small>Try</small></button>
@@ -84,7 +89,9 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
 
   function updateUi(): void {
     el.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => b.classList.toggle('on', b.dataset.tool === tool));
+    q<HTMLElement>('.ed-eye').classList.toggle('on', tool === 'eyes');
     q<HTMLElement>('.ed-rune').innerHTML = `<span class="rune">${RUNE_ICON[rune]}</span><small>Rune</small>`;
+    q<HTMLElement>('.ed-eye').innerHTML = `<span class="${eye === 'h' ? 'c-fire' : eye === 'c' ? 'c-water' : ''}">👁</span><small>${EYE_NAME[eye]}</small>`;
     const errs = issues.filter((i) => i.error).length, warns = issues.length - errs;
     const chk = q<HTMLElement>('.ed-check');
     chk.innerHTML = errs ? `⛔${errs}<small>Problems</small>` : warns ? `⚠${warns}<small>Tips</small>` : `✓<small>Checks</small>`;
@@ -116,7 +123,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
     redrawQueued = true;
     requestAnimationFrame(() => {
       redrawQueued = false;
-      stage.setLevel(parseLevel(level.rows, level.mechs), true);
+      stage.setLevel(parseLevel(level.rows, level.mechs, level.seen), true);
       issues = checkLevel(level);
       drawOverlay();
       updateUi();
@@ -143,6 +150,18 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
       }
       if (pending) g.rect(m.x * T - 3, m.y * T - 3, m.w * T + 6, T * 0.5 + 6).stroke({ width: 3, color: 0xffffff, alpha: 0.9 });
     });
+    // "Seen by" badges (E7): an orange or blue eye on everything only one player sees. Only here, never in play (E4).
+    const badge = (x: number, y: number, e: 'h' | 'c') => {
+      const c = EYE_COLOR[e], cx = (x + 0.78) * T, cy = (y + 0.22) * T;
+      g.ellipse(cx, cy, 6, 3.6).fill({ color: 0x050a09, alpha: 0.75 }).stroke({ width: 1.5, color: c });
+      g.circle(cx, cy, 1.8).fill(c);
+    };
+    level.seen?.forEach((r, y) => [...r].forEach((e, x) => {
+      if (e !== 'h' && e !== 'c') return;
+      g.rect(x * T, y * T, T, T).fill({ color: EYE_COLOR[e], alpha: 0.16 });
+      badge(x, y, e);
+    }));
+    for (const m of level.mechs) if (m.seen) badge(m.x, m.y, m.seen === 'fire' ? 'h' : 'c');
     if (preview) g.rect(preview.x * T, preview.y * T, preview.w * T, preview.h * T).fill({ color: GOLD, alpha: 0.3 }).stroke({ width: 2, color: GOLD });
     for (const i of issues) {
       if (i.x === undefined || i.y === undefined) continue;
@@ -151,11 +170,12 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
   }
 
   // ---------------------------------------------------------------- history + saving
-  const snap = () => JSON.stringify({ rows: level.rows, mechs: level.mechs });
+  const snap = () => JSON.stringify({ rows: level.rows, mechs: level.mechs, seen: level.seen });
   function restore(s: string): void {
     const o = JSON.parse(s);
     level.rows = o.rows;
     level.mechs = o.mechs;
+    level.seen = o.seen;
   }
   function save(): void {
     level.updated = Date.now();
@@ -203,6 +223,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
   function apply(x: number, y: number): boolean {
     if (BRUSH.includes(tool) || tool.startsWith('gem') || tool.startsWith('start') || tool.startsWith('door')) return paint(level, tool, x, y);
     if (tool === 'button' || tool === 'lever') return toggleSwitch(level, tool, x, y, rune);
+    if (tool === 'eyes') return paintEye(level, x, y, eye);
     return false;
   }
 
@@ -262,7 +283,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
       stroke.last = c;
       updatePreview();
       drawOverlay();
-    } else if (BRUSH.includes(tool)) {
+    } else if (BRUSH.includes(tool) || tool === 'eyes') {
       // paint every tile between the last point and this one, so fast swipes leave no holes
       const { x: x0, y: y0 } = stroke.last;
       const n = Math.max(Math.abs(c.x - x0), Math.abs(c.y - y0));
@@ -340,7 +361,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
     stage.overlay.clear();
     stage.setSandbox(true);
     stage.paused = false;
-    stage.setLevel(parseLevel(level.rows, level.mechs));
+    stage.setLevel(parseLevel(level.rows, level.mechs, level.seen));
     stage.setLocal({ fire: true, water: true });
     stage.controlled = 'fire';
     stage.inputEnabled = true;
@@ -384,6 +405,17 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
         rune = RUNES[(RUNES.indexOf(rune) + 1) % RUNES.length];
         host.toast(`Rune ${RUNE_ICON[rune]} ${rune}: new buttons, levers, platforms and gates get it. Same rune = linked.`, 3500);
         updateUi();
+        break;
+      case 'eye':
+        // Seen by (E7): the first tap picks the brush, the next ones change who sees what you paint.
+        if (tool === 'eyes') eye = EYES[(EYES.indexOf(eye) + 1) % EYES.length];
+        tool = 'eyes';
+        pendingPlatform = -1;
+        host.toast(eye === '.'
+          ? '👁 Seen by both: drag over hidden things to show them to both players again.'
+          : `👁 Seen only by ${EYE_NAME[eye]}: drag over stone, pools, gems or mechanisms to hide them from the other player. They still work for both. Tap 👁 again to change who.`, 4500);
+        updateUi();
+        drawOverlay();
         break;
       case 'zoom':
         stage.view = stage.view.zoom > 1 ? { zoom: 1, panX: 0, panY: 0 } : { zoom: 2, panX: 0, panY: 0 };

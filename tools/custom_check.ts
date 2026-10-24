@@ -13,7 +13,7 @@ const check = (name: string, ok: boolean, detail = '') => {
 
 const asCustom = (i: number): CustomLevel => {
   const d = ALL_LEVELS[i];
-  return { ...blankLevel(d.name, 'test'), rows: [...d.rows!], mechs: d.mechs ?? [] };
+  return { ...blankLevel(d.name, 'test'), rows: [...d.rows!], mechs: d.mechs ?? [], seen: d.seen ? [...d.seen] : undefined };
 };
 
 // Every official level passes (warnings are fine, errors are not).
@@ -21,6 +21,8 @@ ALL_LEVELS.forEach((_, i) => {
   const issues = checkLevel(asCustom(i));
   const errs = issues.filter((x) => x.error).map((x) => x.msg);
   check(`level ${ALL_LEVELS[i].id} has no errors`, !hasErrors(issues), errs.join('; ') || `${issues.length} warnings`);
+  const noWarnSpace = issues.filter((x) => /hidden pool/.test(x.msg));
+  if (noWarnSpace.length) check(`level ${ALL_LEVELS[i].id} leaves room to warn before hidden pools`, false, noWarnSpace.map((x) => `${x.x},${x.y}`).join(' '));
 });
 check('a blank level has no errors', !hasErrors(checkLevel(blankLevel('Blank', 'me'))));
 
@@ -35,6 +37,27 @@ check('link keeps the map, mechanisms and name', !!back && back.rows.join() === 
   JSON.stringify(back.mechs) === JSON.stringify(lvl.mechs) && back.name === lvl.name, `${link.length} characters`);
 check('link keeps the ✅', !!back && isVerified(back));
 check('link is short enough for a chat message', link.length < 2000, `${link.length}`);
+
+// Different eyes (16.7): hidden things survive the link and count in the fingerprint.
+const eyes = asCustom(ALL_LEVELS.findIndex((l) => l.id === '5-2'));
+eyes.seen = asCustom(ALL_LEVELS.findIndex((l) => l.id === '5-1')).seen;
+const eyesBack = decodeLink(encodeLink(eyes));
+check('link keeps who sees what', !!eyesBack && eyesBack.seen?.join() === eyes.seen?.join() &&
+  JSON.stringify(eyesBack.mechs) === JSON.stringify(eyes.mechs) && eyesBack.mechs.some((m) => m.seen === 'water'));
+const plain = asCustom(4);
+check('a level without hidden things keeps its old fingerprint', levelHash(plain) === levelHash({ ...plain, seen: undefined }) &&
+  levelHash(plain) === levelHash({ ...plain, seen: plain.rows.map((r) => '.'.repeat(r.length)) }));
+const hidden = { ...eyes, seen: [...eyes.seen!] };
+hidden.seen[3] = 'h' + hidden.seen[3].slice(1);
+check('hiding one tile changes the fingerprint', levelHash(hidden) !== levelHash(eyes));
+check('hiding a mechanism changes the fingerprint', levelHash({ ...eyes, mechs: eyes.mechs.map((m) => ({ ...m, seen: undefined })) }) !== levelHash(eyes));
+check('bad seen map is dropped', sanitize({ ...eyes, seen: eyes.seen!.map((r) => r.replace('.', 'X')) })?.seen === undefined);
+const trap = blankLevel('Trap', 'me');
+trap.rows[15] = '#' + '.'.repeat(12) + '#' + '.'.repeat(17) + '#';
+trap.rows[16] = '#'.repeat(10) + 'WW' + '#'.repeat(20);
+trap.seen = trap.rows.map((r) => '.'.repeat(r.length));
+trap.seen[16] = '.'.repeat(10) + 'cc' + '.'.repeat(20);
+check('hidden pool right after a step is a warning', checkLevel(trap).some((x) => !x.error && /hidden pool/.test(x.msg)));
 
 // Fingerprint and ✅.
 const edited = { ...lvl, rows: [...lvl.rows] };

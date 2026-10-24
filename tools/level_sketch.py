@@ -189,6 +189,16 @@ def draw_level(lv):
                 col = HOT_B if ch == "r" else COOL_B
                 cx, cy = px + T / 2, py + T / 2
                 d.polygon([(cx, cy - 6), (cx + 5, cy), (cx, cy + 6), (cx - 5, cy)], fill=col)
+    # Different eyes (16.7): things only one player sees get an outline in that player's color
+    seen = getattr(lv, "seen", None) or []
+    for y, r in enumerate(seen):
+        for x, e in enumerate(r):
+            if e in "hc":
+                d.rectangle([x * T + 1, y * T + 1, x * T + T - 2, y * T + T - 2], outline=HOT_B if e == "h" else COOL_B, width=2)
+    for o in lv.objects:
+        if o.get("seen"):
+            x, y = o["x"] * T, o["y"] * T
+            d.ellipse([x + T - 7, y - 2, x + T + 3, y + 5], outline=HOT_B if o["seen"] == "fire" else COOL_B, width=2)
     return im
 
 
@@ -214,6 +224,7 @@ def main(out):
             ("Gold = button, lever, gate, platform", BRASS),
             ("Same symbol = linked (circle, triangle, square, star)", GOLD),
             ("Thin outline: thumb zones (kept empty)", "#8a9a92"),
+            ("Orange / blue box: only Hot Boy / Cool Girl sees it", HOT_B),
             ("Grid: 32 x 18 tiles, 1 tile = character width", "#9BB5A3"),
         ]
         d.text((lx, ly), "Legend", fill="#E8F3EA", font=f1)

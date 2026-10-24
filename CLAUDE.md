@@ -7,11 +7,13 @@ Online 2-player co-op puzzle platformer for phone browsers (TypeScript + Vite + 
 - Never implement something that breaks a design pillar or hard limit in that doc. If a request conflicts with it, point that out first.
 - Items marked 💬 or ❓ in the doc are not decided yet: discuss them with the user before building.
 - When a design decision is made in conversation, record it in the doc (the relevant section plus the decision log).
+- Money and marketing plans live in `docs/MARKETING.md`. Ideas for future chapters are in doc 16.7.
 
 ## Code notes
 - Keep `src/game/` free of TypeScript-only runtime syntax (no parameter properties or enums), so Node can run it directly for `tools/` checks.
 - New Feel Lab settings go in the `DEFS` list in `src/game/settings.ts`; the panel builds itself from it.
-- Official levels: Chapter 1 is in `src/game/levels.ts`, Chapters 2–4 in `src/game/chapterN.ts`; register a new chapter in `CHAPTERS`. Draw a chapter for the doc with `python tools/level_sheet.py <n> docs/levels/chapter<n>.png`.
+- Official levels: Chapter 1 is in `src/game/levels.ts`, Chapters 2–5 in `src/game/chapterN.ts`; register a new chapter in `CHAPTERS`. Draw a chapter for the doc with `python tools/level_sheet.py <n> docs/levels/chapter<n>.png`.
+- Different eyes (doc 16.7): a level's optional `seen` overlay map (`h`/`c` = only Hot Boy / only Cool Girl sees that cell) plus `seen` on a mechanism. Hidden things stay real in physics and in `tools/sim.ts`; only drawing and sound change. `Stage.setViewer()` picks whose eyes a phone sees with (null = everything, as in the Feel Lab and designer).
 - Level designer (doc 16.3): a homemade level's ✅ is set **only** in `verifyTogether()` in `src/online/game.ts` (an online 2-player finish). Never add another path that verifies.
 
 ## The owner

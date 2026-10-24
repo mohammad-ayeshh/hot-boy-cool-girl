@@ -40,6 +40,7 @@ class Lv:
     def __init__(self, d, n):
         self.g = [list(r) for r in d["rows"]]
         self.objects = d.get("mechs", [])
+        self.seen = d.get("seen", [])
         self.name = f"{d['id']}  {d['name']}"
         self.teaches = d.get("idea", "")
 

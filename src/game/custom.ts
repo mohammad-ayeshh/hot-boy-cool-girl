@@ -2,7 +2,7 @@
 // A level is the same 32 × 18 ASCII map + mechanism list as Chapter 1, plus a name, the maker,
 // and the ✅: proof that two players finished this exact version together online.
 // Pure logic (no browser APIs), so Node can run it for tools/custom_check.ts.
-import { COLS, ROWS } from './level.ts';
+import { COLS, ROWS, SEEN_LEGEND } from './level.ts';
 import type { MechDef, Rune } from './mechanisms';
 
 export interface Verified {
@@ -21,6 +21,8 @@ export interface CustomLevel {
   author: string;
   rows: string[];
   mechs: MechDef[];
+  /** Different eyes (16.7): who alone sees each cell's tile or gem (legend SEEN_LEGEND). Absent = both see everything. */
+  seen?: string[];
   /** ⭐⭐⭐ time: set by the first verified run (+20%). */
   targetTime: number;
   created: number;
@@ -65,18 +67,23 @@ export function blankLevel(name: string, author: string): CustomLevel {
 }
 
 // ---------------------------------------------------------------- fingerprint
-/** One mechanism as a fixed-order list, so the same level always gives the same text. */
+/** One mechanism as a fixed-order list, so the same level always gives the same text. A hidden one ends in 'h' or 'c'. */
 function mechList(m: MechDef): (string | number)[] {
   const r = RUNES.indexOf(m.rune);
-  if (m.kind === 'button') return ['b', m.x, m.y, r];
-  if (m.kind === 'lever') return ['l', m.x, m.y, r];
-  if (m.kind === 'platform') return ['p', m.x, m.y, m.w, m.to[0], m.to[1], r];
-  return ['g', m.x, m.y, m.w, m.h, r];
+  const eye = m.seen ? [m.seen === 'fire' ? 'h' : 'c'] : [];
+  if (m.kind === 'button') return ['b', m.x, m.y, r, ...eye];
+  if (m.kind === 'lever') return ['l', m.x, m.y, r, ...eye];
+  if (m.kind === 'platform') return ['p', m.x, m.y, m.w, m.to[0], m.to[1], r, ...eye];
+  return ['g', m.x, m.y, m.w, m.h, r, ...eye];
 }
 
-/** FNV-1a over the map and mechanisms (not the name): 8 hex characters. */
-export function levelHash(l: Pick<CustomLevel, 'rows' | 'mechs'>): string {
-  const text = l.rows.join('/') + '|' + JSON.stringify(l.mechs.map(mechList));
+/** The seen map only if it hides something (levels without hidden things stay exactly as before). */
+export const usedSeen = (seen: string[] | undefined): string[] | undefined => (seen?.some((r) => /[hc]/.test(r)) ? seen : undefined);
+
+/** FNV-1a over the map, mechanisms and hidden things (not the name): 8 hex characters. */
+export function levelHash(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen'>): string {
+  const seen = usedSeen(l.seen);
+  const text = l.rows.join('/') + '|' + JSON.stringify(l.mechs.map(mechList)) + (seen ? '|' + seen.join('/') : '');
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i);
@@ -101,19 +108,31 @@ export function markVerified(l: CustomLevel, time: number, partner: string): boo
 const isInt = (v: unknown, lo: number, hi: number): v is number => typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi;
 const str = (v: unknown, max: number): string => (typeof v === 'string' ? v.slice(0, max) : '');
 
-function mechFromList(a: unknown): MechDef | null {
-  if (!Array.isArray(a)) return null;
+function mechFromList(list: unknown): MechDef | null {
+  if (!Array.isArray(list)) return null;
+  const last = list[list.length - 1];
+  const seen = last === 'h' ? 'fire' : last === 'c' ? 'water' : undefined;
+  const a = seen ? list.slice(0, -1) : list;
   const rune = RUNES[a[a.length - 1] as number];
   if (!rune) return null;
   const [k, x, y] = a;
   if (!isInt(x, 0, COLS - 1) || !isInt(y, 0, ROWS - 1)) return null;
-  if (k === 'b' && a.length === 4) return { kind: 'button', x, y, rune };
-  if (k === 'l' && a.length === 4) return { kind: 'lever', x, y, rune };
-  if (k === 'p' && a.length === 7 && isInt(a[3], 1, COLS) && isInt(a[4], 0, COLS - 1) && isInt(a[5], 0, ROWS - 1)) {
-    return { kind: 'platform', x, y, w: a[3], to: [a[4], a[5]], rune };
-  }
-  if (k === 'g' && a.length === 6 && isInt(a[3], 1, COLS) && isInt(a[4], 1, ROWS)) return { kind: 'gate', x, y, w: a[3], h: a[4], rune };
-  return null;
+  let m: MechDef | null = null;
+  if (k === 'b' && a.length === 4) m = { kind: 'button', x, y, rune };
+  else if (k === 'l' && a.length === 4) m = { kind: 'lever', x, y, rune };
+  else if (k === 'p' && a.length === 7 && isInt(a[3], 1, COLS) && isInt(a[4], 0, COLS - 1) && isInt(a[5], 0, ROWS - 1)) {
+    m = { kind: 'platform', x, y, w: a[3], to: [a[4], a[5]], rune };
+  } else if (k === 'g' && a.length === 6 && isInt(a[3], 1, COLS) && isInt(a[4], 1, ROWS)) m = { kind: 'gate', x, y, w: a[3], h: a[4], rune };
+  if (m && seen) m.seen = seen;
+  return m;
+}
+
+/** A seen map from another phone: right size and characters, or nothing. */
+function seenRows(v: unknown): string[] | undefined {
+  if (!Array.isArray(v) || v.length !== ROWS) return undefined;
+  const rows = v.map((r) => str(r, COLS + 1));
+  if (rows.some((r) => r.length !== COLS || [...r].some((ch) => !SEEN_LEGEND.includes(ch)))) return undefined;
+  return usedSeen(rows);
 }
 
 /**
@@ -152,6 +171,8 @@ export function sanitize(o: unknown): CustomLevel | null {
     created: num(v.created, 0),
     updated: num(v.updated, 0),
   };
+  const seen = seenRows(v.seen);
+  if (seen) out.seen = seen;
   const vf = v.verified as Record<string, unknown> | undefined;
   if (vf && typeof vf === 'object' && typeof vf.hash === 'string') {
     out.verified = { hash: str(vf.hash, 16), at: num(vf.at, 0), time: num(vf.time, 0), with: str(vf.with, 12) };
@@ -177,11 +198,11 @@ function packRows(rows: string[]): string {
   return out;
 }
 
-function unpackRows(p: string): string[] | null {
+function unpackRows(p: string, legend = LEGEND): string[] | null {
   let s = '';
   for (let i = 0; i < p.length;) {
     const ch = p[i++];
-    if (!LEGEND.includes(ch)) return null;
+    if (!legend.includes(ch)) return null;
     let digits = '';
     while (i < p.length && p[i] >= '0' && p[i] <= '9') digits += p[i++];
     const n = digits ? Number(digits) : 1;
@@ -211,6 +232,8 @@ export function encodeLink(l: CustomLevel): string {
   const o: Record<string, unknown> = {
     v: 1, i: l.id, n: l.name, a: l.author, r: packRows(l.rows), m: l.mechs.map(mechList), t: l.targetTime,
   };
+  const seen = usedSeen(l.seen);
+  if (seen) o.s = packRows(seen);
   if (l.verified) o.f = [l.verified.hash, l.verified.at, l.verified.time, l.verified.with];
   if (l.basedOn) o.b = l.basedOn;
   return toBase64Url(JSON.stringify(o));
@@ -223,9 +246,11 @@ export function decodeLink(s: string): CustomLevel | null {
     if (!o || o.v !== 1) return null;
     const rows = unpackRows(String(o.r ?? ''));
     if (!rows) return null;
+    const seen = o.s === undefined ? undefined : unpackRows(String(o.s), SEEN_LEGEND);
+    if (seen === null) return null;
     const f = Array.isArray(o.f) ? o.f : null;
     return sanitize({
-      id: o.i, name: o.n, author: o.a, rows, mechs: o.m, targetTime: o.t, created: Date.now(), updated: Date.now(),
+      id: o.i, name: o.n, author: o.a, rows, mechs: o.m, seen, targetTime: o.t, created: Date.now(), updated: Date.now(),
       verified: f ? { hash: f[0], at: f[1], time: f[2], with: f[3] } : undefined,
       copy: true, basedOn: o.b,
     });

@@ -502,6 +502,7 @@ export async function startGame(): Promise<void> {
   }
 
   function goHomeStage(): void {
+    stage.setViewer(null);
     stage.setLevel(levelData(ALL_LEVELS[0]));
     stage.setLocal({ fire: true, water: true });
     stage.controlled = null;
@@ -575,6 +576,7 @@ export async function startGame(): Promise<void> {
     finish = null;
     const data = levelData(def);
     gemElems = data.gems.map((g) => g.elem);
+    stage.setViewer(myElem); // Different eyes (16.7): you see only what your character sees
     stage.setLevel(data);
     stage.setLocal({ fire: myElem === 'fire', water: myElem === 'water' });
     stage.controlled = myElem;

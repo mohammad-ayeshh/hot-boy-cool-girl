@@ -2,17 +2,19 @@
 // Linked things share a gold rune: a button or lever "powers" every platform and gate with its rune.
 // Pure logic, no drawing. Both phones run it; the host's phone sends corrections (13.1, 13.2).
 // Coordinates in tiles. Buttons and levers sit on the floor at the bottom of their cell (y + 1).
-import type { Rect } from './level';
+import type { Elem, Rect } from './level';
 
 export type Rune = 'circle' | 'triangle' | 'square' | 'star';
 
-export type MechDef =
+/** `seen`: only this player sees it (Different eyes, 16.7); it still works for both. */
+export type MechDef = (
   | { kind: 'button'; x: number; y: number; rune: Rune }
   | { kind: 'lever'; x: number; y: number; rune: Rune }
   /** top-left at (x, y), w tiles wide, half a tile thick; travels to `to` while powered */
   | { kind: 'platform'; x: number; y: number; w: number; to: [number, number]; rune: Rune }
   /** fills w × h tiles while closed; slides up into the ceiling while powered */
-  | { kind: 'gate'; x: number; y: number; w: number; h: number; rune: Rune };
+  | { kind: 'gate'; x: number; y: number; w: number; h: number; rune: Rune }
+) & { seen?: Elem };
 
 type ButtonDef = Extract<MechDef, { kind: 'button' }>;
 type LeverDef = Extract<MechDef, { kind: 'lever' }>;
@@ -109,9 +111,9 @@ export class Mechanisms {
 
   /**
    * Move platforms and gates toward their powered / unpowered positions.
-   * `closing(rect)` is told the solid part of every gate that is closing: whoever is under it gets crushed.
+   * `closing(rect, i)` is told the solid part of every gate that is closing: whoever is under it gets crushed.
    */
-  update(dt: number, closing: (r: Rect) => void, events: MechEvent[]): void {
+  update(dt: number, closing: (r: Rect, i: number) => void, events: MechEvent[]): void {
     for (const b of this.buttons) b.sink += ((b.pressed ? 1 : 0) - b.sink) * Math.min(1, dt * 20);
     for (const l of this.levers) l.angle += ((l.on ? 1 : -1) - l.angle) * Math.min(1, dt * 14);
     this.platforms.forEach((pl, i) => {
@@ -136,7 +138,7 @@ export class Mechanisms {
       // (that twitch counted as "closing" and could crush someone jumping through an open trapdoor).
       const open = target > g.open ? Math.min(target, g.open + GATE_SPEED * dt) : Math.max(target, g.open - GATE_SPEED * dt);
       // A closing gate doesn't stop for anyone (10.2): standing in the gateway is deadly.
-      if (open < old) closing({ x0: g.def.x, y0: g.def.y, x1: g.def.x + g.def.w, y1: g.def.y + g.def.h * (1 - open) });
+      if (open < old) closing({ x0: g.def.x, y0: g.def.y, x1: g.def.x + g.def.w, y1: g.def.y + g.def.h * (1 - open) }, i);
       const moving = open !== old;
       if (moving && !g.moving) events.push({ k: 'gate', i, opening: open > old });
       g.moving = moving;

@@ -14,7 +14,9 @@ export const LIQUID_DEPTH = 0.2;
 
 import type { MechDef } from './mechanisms';
 
-export interface Gem { x: number; y: number; elem: Elem }
+/** Different eyes (16.7): a thing seen by only one player. Absent = both see it. Hidden things are still real (E5). */
+export type Seen = Elem | undefined;
+export interface Gem { x: number; y: number; elem: Elem; seen?: Elem }
 export interface Rect { x0: number; y0: number; x1: number; y1: number }
 export interface Point { x: number; y: number }
 export interface LevelData {
@@ -25,16 +27,23 @@ export interface LevelData {
   gems: Gem[];
   /** Buttons, levers, platforms, gates (see mechanisms.ts). */
   mechs: MechDef[];
+  /** [row][col]: who alone sees the tile there (and a gem in it). Absent = everything is seen by both. */
+  seen?: Seen[][];
 }
 
 const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P: 'poison' };
+
+/** Characters of a "seen" overlay map: `h` only Hot Boy sees this cell, `c` only Cool Girl, `.` both. */
+export const SEEN_LEGEND = '.hc';
+const SEEN_CHAR: Record<string, Seen> = { h: 'fire', c: 'water' };
 
 /**
  * Parse an ASCII map. `#` stone, `L` lava, `W` water, `P` poison,
  * `h`/`c` Hot Boy / Cool Girl start (feet on the bottom of that cell), `H`/`C` their exit doors
  * (standing on the bottom of that cell), `r`/`b` fire/water gem.
+ * `seen` (optional, same size): which cells' tiles and gems only one player sees (SEEN_LEGEND).
  */
-export function parseLevel(rows: readonly string[], mechs: MechDef[] = []): LevelData {
+export function parseLevel(rows: readonly string[], mechs: MechDef[] = [], seen?: readonly string[]): LevelData {
   if (rows.length !== ROWS) throw new Error(`Level must have ${ROWS} rows, got ${rows.length}`);
   const tiles: Tile[][] = [];
   const spawn = { fire: { x: 2, y: ROWS - 3 }, water: { x: 3, y: ROWS - 3 } };
@@ -49,12 +58,21 @@ export function parseLevel(rows: readonly string[], mechs: MechDef[] = []): Leve
       else if (ch === 'c') spawn.water = { x: x + 0.5, y: y + 1 };
       else if (ch === 'H') doors.fire = { x: x + 0.5, y: y + 1 };
       else if (ch === 'C') doors.water = { x: x + 0.5, y: y + 1 };
-      else if (ch === 'r') gems.push({ x: x + 0.5, y: y + 0.5, elem: 'fire' });
-      else if (ch === 'b') gems.push({ x: x + 0.5, y: y + 0.5, elem: 'water' });
+      else if (ch === 'r' || ch === 'b') {
+        const gem: Gem = { x: x + 0.5, y: y + 0.5, elem: ch === 'r' ? 'fire' : 'water' };
+        const who = SEEN_CHAR[seen?.[y]?.[x] ?? '.'];
+        if (who) gem.seen = who;
+        gems.push(gem);
+      }
     });
     tiles.push(row);
   });
-  return { tiles, spawn, doors, gems, mechs };
+  const data: LevelData = { tiles, spawn, doors, gems, mechs };
+  if (seen?.some((r) => /[hc]/.test(r))) {
+    if (seen.length !== ROWS || seen.some((r) => r.length !== COLS)) throw new Error(`The seen map must be ${COLS} × ${ROWS}`);
+    data.seen = seen.map((r) => [...r].map((ch) => SEEN_CHAR[ch]));
+  }
+  return data;
 }
 
 export class Level {
@@ -128,12 +146,12 @@ export class Level {
   }
 
   /** Distance from a point to the nearest tile of one of the given liquids (Infinity if none nearby). */
-  distanceToLiquid(px: number, py: number, kinds: readonly Liquid[], radius: number): number {
+  distanceToLiquid(px: number, py: number, kinds: readonly Liquid[], radius: number, visible: (x: number, y: number) => boolean = () => true): number {
     let best = Infinity;
     for (let ty = Math.floor(py - radius); ty <= Math.floor(py + radius); ty++) {
       for (let tx = Math.floor(px - radius); tx <= Math.floor(px + radius); tx++) {
         const t = this.tile(tx, ty);
-        if (!(kinds as readonly Tile[]).includes(t)) continue;
+        if (!(kinds as readonly Tile[]).includes(t) || !visible(tx, ty)) continue;
         const dx = Math.max(tx - px, 0, px - (tx + 1));
         const dy = Math.max(ty + LIQUID_DEPTH - py, 0, py - (ty + 1));
         best = Math.min(best, Math.hypot(dx, dy));
@@ -142,16 +160,21 @@ export class Level {
     return best;
   }
 
-  /** Horizontal runs of the same liquid, for drawing pools. */
-  pools(): { kind: Liquid; x0: number; x1: number; y: number }[] {
+  /** Who alone sees the tile at (tx, ty); undefined = both. */
+  seenBy(tx: number, ty: number): Seen {
+    return this.data.seen?.[ty]?.[tx];
+  }
+
+  /** Horizontal runs of the same liquid, for drawing pools (only the cells `visible` allows). */
+  pools(visible: (x: number, y: number) => boolean = () => true): { kind: Liquid; x0: number; x1: number; y: number }[] {
     const out: { kind: Liquid; x0: number; x1: number; y: number }[] = [];
     this.data.tiles.forEach((row, y) => {
       let x = 0;
       while (x < COLS) {
         const t = row[x];
-        if (t === 'lava' || t === 'water' || t === 'poison') {
+        if ((t === 'lava' || t === 'water' || t === 'poison') && visible(x, y)) {
           let e = x;
-          while (e + 1 < COLS && row[e + 1] === t) e++;
+          while (e + 1 < COLS && row[e + 1] === t && visible(e + 1, y)) e++;
           out.push({ kind: t, x0: x, x1: e + 1, y });
           x = e + 1;
         } else x++;

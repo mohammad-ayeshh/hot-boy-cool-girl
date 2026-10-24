@@ -7,6 +7,7 @@ import type { MechDef } from './mechanisms';
 import { CHAPTER_2 } from './chapter2.ts';
 import { CHAPTER_3 } from './chapter3.ts';
 import { CHAPTER_4 } from './chapter4.ts';
+import { CHAPTER_5 } from './chapter5.ts';
 
 export interface LevelDef {
   id: string;
@@ -18,6 +19,8 @@ export interface LevelDef {
   /** null = designed but not built yet. */
   rows: readonly string[] | null;
   mechs?: MechDef[];
+  /** Different eyes (16.7): an overlay map of who alone sees each cell (legend: SEEN_LEGEND in level.ts). */
+  seen?: readonly string[];
 }
 
 export const CHAPTER_1: LevelDef[] = [
@@ -177,6 +180,7 @@ export const CHAPTERS: Chapter[] = [
   { n: 2, name: 'The Flooded Halls', levels: CHAPTER_2 },
   { n: 3, name: 'The Deep Machine', levels: CHAPTER_3 },
   { n: 4, name: 'The Summit', levels: CHAPTER_4 },
+  { n: 5, name: 'The Hall of Eyes', levels: CHAPTER_5 },
 ];
 /** Every official level in play order: finishing one unlocks the next, across chapters (12.2). */
 export const ALL_LEVELS: LevelDef[] = CHAPTERS.flatMap((c) => c.levels);
@@ -185,7 +189,7 @@ export const chapterOf = (id: string): Chapter | undefined => CHAPTERS.find((c) 
 export const findLevel = (id: string): LevelDef | undefined => ALL_LEVELS.find((l) => l.id === id);
 /** Any playable level: an official one, a homemade level shared in this room, or one saved on this phone. */
 export const getLevel = (id: string): LevelDef | CustomLevel | undefined => findLevel(id) ?? roomLevel(id) ?? getMyLevel(id);
-export const levelData = (def: LevelDef): LevelData => parseLevel(def.rows!, def.mechs ?? []);
+export const levelData = (def: LevelDef): LevelData => parseLevel(def.rows!, def.mechs ?? [], def.seen);
 export const nextLevel = (id: string): LevelDef | undefined => {
   const i = ALL_LEVELS.findIndex((l) => l.id === id);
   return i < 0 ? undefined : ALL_LEVELS[i + 1];
