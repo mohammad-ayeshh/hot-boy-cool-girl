@@ -246,3 +246,39 @@ export function gate(opening: boolean, pan: number): void {
   hiss(ac, o, 'bandpass', opening ? 400 : 600, opening ? 900 : 300, 2, 0.4, 0.12);
   tone(ac, o, 'triangle', opening ? 90 : 120, opening ? 130 : 70, 0.4, 0.06);
 }
+
+// ---- password gates (16.7): carvings and symbol stones ----
+
+/** A wall carving lights up as someone walks past (G9): a soft two-note chime. */
+export function carving(pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  tone(ac, o, 'sine', vary(659.25, 0.01), 659.25, 0.5, 0.06, 0, 0.02);
+  tone(ac, o, 'sine', 987.77, 987.77, 0.7, 0.045, 0.12, 0.02);
+}
+
+/** A symbol stone sinks under a foot. Right: a stone thunk plus a note that rises with each animal entered (n). Wrong: a low thud (G7). */
+export function stone(ok: boolean, n: number, pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  hiss(ac, o, 'lowpass', 400, 140, 1, 0.18, 0.14, 0.005);
+  if (ok) {
+    tone(ac, o, 'triangle', vary(180), 120, 0.1, 0.12);
+    const f = SCALE[Math.min(SCALE.length - 1, 4 + Math.max(0, n - 1) * 2)];
+    if (n > 0) tone(ac, o, 'sine', f, f, 0.45, 0.1, 0.05, 0.01);
+  } else {
+    tone(ac, o, 'triangle', 95, 48, 0.45, 0.3);
+    tone(ac, o, 'sawtooth', 70, 40, 0.3, 0.05, 0.02);
+  }
+}
+
+/** The whole pattern is entered: a rising chord over a stone rumble. */
+export function solved(pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  [392, 523.25, 659.25, 783.99].forEach((f, i) => tone(ac, o, 'sine', f, f, 0.9, 0.08, i * 0.08, 0.01));
+  hiss(ac, o, 'lowpass', 220, 90, 1, 0.9, 0.12, 0.05);
+}

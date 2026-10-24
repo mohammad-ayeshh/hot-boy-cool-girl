@@ -43,6 +43,7 @@ class Lv:
         self.seen = d.get("seen", [])
         self.name = f"{d['id']}  {d['name']}"
         self.teaches = d.get("idea", "")
+        self.team_code = bool(d.get("teamCode"))
 
 
 def main(n, out):

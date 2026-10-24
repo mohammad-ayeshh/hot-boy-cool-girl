@@ -174,6 +174,19 @@ def draw_level(lv):
             d.line([x + w / 2, y + T - 3, tx + w / 2, ty + T - 3], fill=GOLD, width=1)
             d.rectangle([x, y + T - 6, x + w - 1, y + T - 1], fill=BRASS)
             rune(d, x + w / 2, y + T - 13, o["rune"], 4, GOLD)
+        elif o["kind"] == "stone":
+            # password gates (16.7): a gold slab with its animal's first two letters
+            d.rectangle([x + 1, y + T - 4, x + T - 2, y + T - 1], fill=BRASS)
+            d.rounded_rectangle([x - 1, y - 6, x + T, y + T - 6], 3, fill=STONE, outline=BRASS, width=1)
+            d.text((x + T / 2, y + 2), o["animal"][:2].title(), fill=GOLD, font=font(9, True), anchor="mm")
+        elif o["kind"] == "carving":
+            # the animal comes from the team's code, so the sheet shows "?" and the dots (its place in the code)
+            d.rounded_rectangle([x - 3, y - 3, x + T + 2, y + T + 6], 3, outline=GOLD, width=1)
+            d.text((x + T / 2, y + 5), "?" if getattr(lv, "team_code", False) else o["animal"][:2].title(), fill=GOLD, font=font(11, True), anchor="mm")
+            n = o["dots"]
+            for k in range(n):
+                cx = x + T / 2 + (k - (n - 1) / 2) * 4
+                d.ellipse([cx - 1.5, y + T + 1, cx + 1.5, y + T + 4], fill=IVORY)
     for y in range(H):
         for x in range(W):
             ch, px, py = lv.g[y][x], x * T, y * T
@@ -225,6 +238,8 @@ def main(out):
             ("Same symbol = linked (circle, triangle, square, star)", GOLD),
             ("Thin outline: thumb zones (kept empty)", "#8a9a92"),
             ("Orange / blue box: only Hot Boy / Cool Girl sees it", HOT_B),
+            ("Gold slab + letters: symbol stone (Sn = snake...)", BRASS),
+            ("Gold box ? + dots: carving (animal from the team code)", GOLD),
             ("Grid: 32 x 18 tiles, 1 tile = character width", "#9BB5A3"),
         ]
         d.text((lx, ly), "Legend", fill="#E8F3EA", font=f1)

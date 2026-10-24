@@ -34,7 +34,7 @@ export function thumb(l: CustomLevel, px = 4): string {
   for (const m of l.mechs) {
     if (m.kind === 'gate') g.fillRect(m.x * px, m.y * px, m.w * px, m.h * px);
     else if (m.kind === 'platform') g.fillRect(m.x * px, m.y * px, m.w * px, px / 2);
-    else g.fillRect(m.x * px, m.y * px + px / 2, px, px / 2);
+    else if (m.kind !== 'carving') g.fillRect(m.x * px, m.y * px + px / 2, px, px / 2); // carvings are only wall decoration
   }
   const url = c.toDataURL();
   cache.set(key, url);

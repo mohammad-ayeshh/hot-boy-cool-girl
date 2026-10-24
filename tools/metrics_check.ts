@@ -1,14 +1,12 @@
 // Checks that the movement settings still obey the level metrics (design doc 7.7),
 // by running the real physics in the Feel Lab metrics room.
 // Run: npm run check:metrics   (uses the default values from src/game/settings.ts)
-import { readFileSync } from 'node:fs';
 import { Body, STEP, derive } from '../src/game/body.ts';
 import { defaults } from '../src/game/settings.ts';
 import { Level, parseLevel } from '../src/game/level.ts';
+import { LAB_ROWS } from '../src/game/labLevel.ts';
 
-const src = readFileSync(new URL('../src/game/labLevel.ts', import.meta.url), 'utf8');
-const rows = [...src.matchAll(/^\s*'([^']{32})',/gm)].map((m) => m[1]);
-const level = new Level(parseLevel(rows));
+const level = new Level(parseLevel(LAB_ROWS));
 const { phys, stats } = derive(defaults());
 
 /** Run right from (x, y), press jump when `when` says so, until landing. Returns where we ended. */

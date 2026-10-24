@@ -5,6 +5,7 @@ import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
 import type { DeathCause, Elem } from '../game/level';
+import type { MechSync } from '../game/mechanisms';
 import { ALL_LEVELS, CHAPTERS, chapterOf, getLevel, levelData, nextLevel, type LevelDef } from '../game/levels';
 import { blankLevel, decodeLink, encodeLink, isCustomId, isVerified, levelHash, markVerified, newId, sanitize, type CustomLevel } from '../game/custom';
 import { checkLevel, hasErrors } from '../game/levelCheck';
@@ -12,6 +13,8 @@ import { deleteLevel, forgetRoomLevels, getMyLevel, listLevels, rememberRoomLeve
 import { openEditor } from '../editor/editor';
 import { thumb } from '../editor/thumb';
 import { isUnlocked, loadName, loadProgress, recordResult, saveName, starsFor } from '../game/progress';
+import { isCode, loadCode, phoneId, randomCode, saveCode } from '../game/teamCode';
+import type { Animal } from '../game/mechanisms';
 import { defaults } from '../game/settings';
 import { Session, type SessionStatus } from '../net/session';
 import { normalizeRoomCode } from '../net/room';
@@ -40,6 +43,8 @@ export async function startGame(): Promise<void> {
   let myName = loadName();
   let partnerName = '';
   let partnerDone: string[] = [];
+  /** The partner phone's hidden ID: picks which saved team code to use (16.7, G12). */
+  let partnerId = '';
   let picked = ALL_LEVELS[0].id;
   let readyMe = false, readyPartner = false;
   let level: LevelDef = ALL_LEVELS[0];
@@ -68,6 +73,8 @@ export async function startGame(): Promise<void> {
       localGem: (_e, i) => { collected.add(i); send({ t: 'gem', n: round, i }); },
       localEvent: (_e, ev) => send({ t: 'ev', n: round, e: ev }),
       localLever: (i, on) => send({ t: 'lever', n: round, i, on }),
+      // Symbol stones (16.7): the guest asks the host; the host's state goes out at once (13.1).
+      localStone: (i) => { if (session.isHost) sendWorld(); else send({ t: 'stone', n: round, i }); },
     },
   });
   stage.controlled = null;
@@ -559,11 +566,34 @@ export async function startGame(): Promise<void> {
   /** Host: start (or restart) a level for both phones. */
   function startLevel(id: string): void {
     round++;
-    send({ t: 'start', id, n: round });
-    doStart(id, round);
+    const code = teamCodeFor(getLevel(id));
+    send({ t: 'start', id, n: round, code });
+    doStart(id, round, code);
   }
 
-  function doStart(id: string, n: number): void {
+  // ---------------------------------------------------------------- team codes (16.7, G3, G11, G12)
+  /** Chapters whose levels use a team code. */
+  const CODE_CHAPTERS = [...new Set(ALL_LEVELS.flatMap((l) => (l.teamCode ? [l.teamCode] : [])))];
+
+  /** Host: this pair's code for a password level (picked and saved now if there is none yet). */
+  function teamCodeFor(def: LevelDef | CustomLevel | undefined): Animal[] | undefined {
+    const ch = def && 'teamCode' in def ? def.teamCode : undefined;
+    if (!ch) return undefined;
+    let code = partnerId ? loadCode(ch, partnerId) : null;
+    if (!code) {
+      code = randomCode();
+      if (partnerId) saveCode(ch, partnerId, code);
+    }
+    return code;
+  }
+
+  /** Both phones save the host's codes (12.4: next to progress). */
+  function keepCodes(codes: unknown): void {
+    if (!partnerId || !codes || typeof codes !== 'object') return;
+    for (const [ch, code] of Object.entries(codes)) if (isCode(code)) saveCode(Number(ch), partnerId, code);
+  }
+
+  function doStart(id: string, n: number, code?: Animal[]): void {
     const def = getLevel(id);
     if (!def?.rows) return;
     if (isCustomId(id) && !roomLevel(id)) rememberRoomLevel(def as CustomLevel);
@@ -574,7 +604,8 @@ export async function startGame(): Promise<void> {
     readyMe = readyPartner = false;
     myChoice = partnerChoice = null;
     finish = null;
-    const data = levelData(def);
+    if (code && !session.isHost && 'teamCode' in def && def.teamCode) keepCodes({ [def.teamCode]: code });
+    const data = levelData(def, code);
     gemElems = data.gems.map((g) => g.elem);
     stage.setViewer(myElem); // Different eyes (16.7): you see only what your character sees
     stage.setLevel(data);
@@ -640,6 +671,12 @@ export async function startGame(): Promise<void> {
     if (isCustomId(level.id)) verifyTogether(level as CustomLevel, data.time);
     const stars = starsFor(data.got === data.total, data.time, level.targetTime);
     recordResult(level.id, stars, data.time); // saved on both phones (12.3)
+    // Finishing a password chapter's vault level: the host picks the team's next code (G3, changed 2026-10-24).
+    if (session.isHost && 'teamCode' in level && level.teamCode && level.pattern && partnerId) {
+      const next = { [level.teamCode]: randomCode() };
+      keepCodes(next);
+      send({ t: 'codes', codes: next });
+    }
     const n = round;
     setTimeout(() => {
       if (round !== n || screen !== 'play') return;
@@ -752,7 +789,7 @@ export async function startGame(): Promise<void> {
   function onStatus(s: SessionStatus, info?: string): void {
     if (s === 'connected') {
       lostEl.classList.add('hidden');
-      send({ t: 'hello', v: __BUILD__, name: myName, done: Object.keys(loadProgress()) });
+      send({ t: 'hello', v: __BUILD__, name: myName, done: Object.keys(loadProgress()), id: phoneId() });
       sfx.chime([523.25, 783.99]); // "partner joined" (15.5)
       device.haptic(30);
       if (screen === 'home' || screen === 'invite') show('lobby');
@@ -790,6 +827,9 @@ export async function startGame(): Promise<void> {
       case 'hello': {
         partnerName = String(m.name ?? '').slice(0, 12);
         partnerDone = Array.isArray(m.done) ? (m.done as string[]) : [];
+        partnerId = typeof m.id === 'string' ? m.id.slice(0, 24) : '';
+        // Tell the host which codes this phone remembers for this partner; the host settles them (G3, G12).
+        if (partnerId && !session.isHost) send({ t: 'mycodes', codes: Object.fromEntries(CODE_CHAPTERS.map((ch) => [ch, loadCode(ch, partnerId)])) });
         const v = Number(m.v);
         versionProblem = v > __BUILD__ ? 'Your friend has a newer version.' : v < __BUILD__ ? 'Your friend has an older version: ask them to reload the page.' : '';
         if (v > __BUILD__) showUpdate();
@@ -825,7 +865,23 @@ export async function startGame(): Promise<void> {
         maybeStart();
         break;
       case 'start':
-        doStart(String(m.id), Number(m.n));
+        doStart(String(m.id), Number(m.n), isCode(m.code) ? m.code : undefined);
+        break;
+      case 'mycodes': {
+        // Host: keep my code for this pair; if I have none, take my friend's; if neither has one, pick a new one.
+        if (!session.isHost || !partnerId) break;
+        const theirs = (m.codes ?? {}) as Record<string, unknown>;
+        const codes: Record<number, Animal[]> = {};
+        for (const ch of CODE_CHAPTERS) {
+          const t = theirs[ch];
+          codes[ch] = loadCode(ch, partnerId) ?? (isCode(t) ? t : randomCode());
+        }
+        keepCodes(codes);
+        send({ t: 'codes', codes });
+        break;
+      }
+      case 'codes':
+        if (!session.isHost) keepCodes(m.codes);
         break;
       case 's':
         if (n === round && screen === 'play') {
@@ -855,7 +911,13 @@ export async function startGame(): Promise<void> {
         if (n === round) stage.remoteLever(Number(m.i), !!m.on);
         break;
       case 'w':
-        if (n === round && !session.isHost) stage.correctMech(m as { lv?: number[]; pl?: number[] });
+        if (n === round && !session.isHost) stage.correctMech(m as MechSync);
+        break;
+      case 'stone':
+        if (n === round && session.isHost && screen === 'play') {
+          stage.remoteStone(Number(m.i));
+          sendWorld();
+        }
         break;
       case 'reqRestart':
         if (session.isHost && screen === 'play') {
@@ -894,9 +956,12 @@ export async function startGame(): Promise<void> {
   }
 
   // Host: the shared world's state, so the guest's buttons/levers/platforms never drift apart (13.1, 13.2).
-  setInterval(() => {
-    if (screen !== 'play' || !session.connected || !session.isHost || !stage.mech.levers.length && !stage.mech.platforms.length) return;
+  function sendWorld(): void {
+    if (screen !== 'play' || !session.connected || !session.isHost) return;
     send({ t: 'w', n: round, ...stage.mechState() });
+  }
+  setInterval(() => {
+    if (stage.mech.levers.length || stage.mech.platforms.length || stage.mech.vault) sendWorld();
   }, 200);
 
   // Send my character ~30×/s while playing (13.2).

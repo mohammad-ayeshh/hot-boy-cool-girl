@@ -12,7 +12,7 @@ export type DeathCause = Liquid | 'crush';
 /** Liquids sit a little lower than the floor, so feet visibly dip in (and stepping out uses the step-up helper). */
 export const LIQUID_DEPTH = 0.2;
 
-import type { MechDef } from './mechanisms';
+import type { MechDef, Pattern } from './mechanisms';
 
 /** Different eyes (16.7): a thing seen by only one player. Absent = both see it. Hidden things are still real (E5). */
 export type Seen = Elem | undefined;
@@ -29,6 +29,8 @@ export interface LevelData {
   mechs: MechDef[];
   /** [row][col]: who alone sees the tile there (and a gem in it). Absent = everything is seen by both. */
   seen?: Seen[][];
+  /** Password gates (16.7): the order to step on the symbol stones, and the rune it turns on. */
+  pattern?: Pattern;
 }
 
 const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P: 'poison' };
@@ -43,7 +45,7 @@ const SEEN_CHAR: Record<string, Seen> = { h: 'fire', c: 'water' };
  * (standing on the bottom of that cell), `r`/`b` fire/water gem.
  * `seen` (optional, same size): which cells' tiles and gems only one player sees (SEEN_LEGEND).
  */
-export function parseLevel(rows: readonly string[], mechs: MechDef[] = [], seen?: readonly string[]): LevelData {
+export function parseLevel(rows: readonly string[], mechs: MechDef[] = [], seen?: readonly string[], pattern?: Pattern): LevelData {
   if (rows.length !== ROWS) throw new Error(`Level must have ${ROWS} rows, got ${rows.length}`);
   const tiles: Tile[][] = [];
   const spawn = { fire: { x: 2, y: ROWS - 3 }, water: { x: 3, y: ROWS - 3 } };
@@ -68,6 +70,7 @@ export function parseLevel(rows: readonly string[], mechs: MechDef[] = [], seen?
     tiles.push(row);
   });
   const data: LevelData = { tiles, spawn, doors, gems, mechs };
+  if (pattern) data.pattern = pattern;
   if (seen?.some((r) => /[hc]/.test(r))) {
     if (seen.length !== ROWS || seen.some((r) => r.length !== COLS)) throw new Error(`The seen map must be ${COLS} × ${ROWS}`);
     data.seen = seen.map((r) => [...r].map((ch) => SEEN_CHAR[ch]));

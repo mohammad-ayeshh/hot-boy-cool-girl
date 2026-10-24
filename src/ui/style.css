@@ -610,3 +610,20 @@ button.danger { background: var(--danger); border-color: transparent; }
 .ed-issues li.bad { color: #ffb0b0; }
 .ed-issues li.meh { color: #ffe39a; }
 .ed-issues li.good { color: var(--ok); }
+
+/* Level designer: password gates (16.3) — animal picker, carving dots and the code slots */
+.ed-animals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.ed-animal, .ed-dot { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; border-radius: 10px; }
+.ed-animal img { width: 44px; height: 44px; display: block; }
+.ed-animal small { font-size: 11px; color: var(--muted); }
+.ed-animal.on, .ed-dot.on { border-color: var(--gold); box-shadow: inset 0 0 0 2px rgba(227, 176, 75, 0.6); }
+.ed-dot { min-width: 54px; font-size: 20px; letter-spacing: 2px; color: var(--gold); }
+.ed-code { display: flex; gap: 8px; justify-content: center; }
+.ed-slot { width: 56px; height: 66px; border-radius: 10px; border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 3px; }
+.ed-slot img { width: 44px; height: 44px; }
+.ed-slot.empty { border-style: dashed; opacity: 0.6; }
+.ed-slot small { color: var(--gold); font-size: 12px; letter-spacing: 1px; }
+@media (max-height: 430px) {
+  .ed-animal img, .ed-slot img { width: 32px; height: 32px; }
+  .ed-slot { height: 50px; width: 44px; }
+}

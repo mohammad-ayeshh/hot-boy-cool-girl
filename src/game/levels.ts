@@ -3,11 +3,12 @@
 import { parseLevel, type LevelData } from './level.ts';
 import { getMyLevel, roomLevel } from './myLevels.ts';
 import type { CustomLevel } from './custom.ts';
-import type { MechDef } from './mechanisms';
+import type { Animal, MechDef, Pattern } from './mechanisms';
 import { CHAPTER_2 } from './chapter2.ts';
 import { CHAPTER_3 } from './chapter3.ts';
 import { CHAPTER_4 } from './chapter4.ts';
 import { CHAPTER_5 } from './chapter5.ts';
+import { CHAPTER_6 } from './chapter6.ts';
 
 export interface LevelDef {
   id: string;
@@ -21,6 +22,13 @@ export interface LevelDef {
   mechs?: MechDef[];
   /** Different eyes (16.7): an overlay map of who alone sees each cell (legend: SEEN_LEGEND in level.ts). */
   seen?: readonly string[];
+  /** Password gates (16.7): the order to step on the symbol stones and the rune it turns on. */
+  pattern?: Pattern;
+  /**
+   * Official password chapters (16.7, G3): this level uses the team's random code for chapter `teamCode`.
+   * Each carving shows the animal for its dots (dots 1 = first animal), and the pattern's code is the team code.
+   */
+  teamCode?: number;
 }
 
 export const CHAPTER_1: LevelDef[] = [
@@ -181,6 +189,7 @@ export const CHAPTERS: Chapter[] = [
   { n: 3, name: 'The Deep Machine', levels: CHAPTER_3 },
   { n: 4, name: 'The Summit', levels: CHAPTER_4 },
   { n: 5, name: 'The Hall of Eyes', levels: CHAPTER_5 },
+  { n: 6, name: 'The Sealed Vault', levels: CHAPTER_6 },
 ];
 /** Every official level in play order: finishing one unlocks the next, across chapters (12.2). */
 export const ALL_LEVELS: LevelDef[] = CHAPTERS.flatMap((c) => c.levels);
@@ -189,7 +198,20 @@ export const chapterOf = (id: string): Chapter | undefined => CHAPTERS.find((c) 
 export const findLevel = (id: string): LevelDef | undefined => ALL_LEVELS.find((l) => l.id === id);
 /** Any playable level: an official one, a homemade level shared in this room, or one saved on this phone. */
 export const getLevel = (id: string): LevelDef | CustomLevel | undefined => findLevel(id) ?? roomLevel(id) ?? getMyLevel(id);
-export const levelData = (def: LevelDef): LevelData => parseLevel(def.rows!, def.mechs ?? [], def.seen);
+/** A level's mechanisms and pattern with a team code filled in (unchanged for levels without `teamCode`). */
+export function withCode(def: LevelDef, code?: Animal[]): { mechs: MechDef[]; pattern?: Pattern } {
+  const mechs = def.mechs ?? [];
+  if (!def.teamCode || !code) return { mechs, pattern: def.pattern };
+  return {
+    mechs: mechs.map((m) => (m.kind === 'carving' ? { ...m, animal: code[m.dots - 1] ?? m.animal } : m)),
+    pattern: def.pattern && { ...def.pattern, code: [...code] },
+  };
+}
+
+export const levelData = (def: LevelDef, code?: Animal[]): LevelData => {
+  const { mechs, pattern } = withCode(def, code);
+  return parseLevel(def.rows!, mechs, def.seen, pattern);
+};
 export const nextLevel = (id: string): LevelDef | undefined => {
   const i = ALL_LEVELS.findIndex((l) => l.id === id);
   return i < 0 ? undefined : ALL_LEVELS[i + 1];

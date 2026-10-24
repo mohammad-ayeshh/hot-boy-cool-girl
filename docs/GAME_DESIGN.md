@@ -609,6 +609,7 @@ Every level must follow all of these, plus the pillars, the level metrics (7.7) 
 - **A ferry or lift sent with a lever should leave toward the left.** The second rider then walks left onto it, past the lever, without flipping it on by accident (2-4, 2-5).
 - **No pool or gap right at the mouth of a low tunnel.** You can't jump without headroom, so you'd fall in every time.
 - **Mind the ceiling over a climb.** A 2- or 3-tile climb needs room for your head above the spot you're jumping from (this is what broke 1-5).
+- **Symbol stones go on their own shelves, never in a row on the floor** *(added 2026-10-24 while building password gates)*. A stone counts the moment you stand on it, so walking along a row of stones would press every one you cross, and a wrong one resets the code (G7). Put each stone on a 1-tile shelf 3 tiles up (a full jump) with a 2-tile walkway under it: you walk *under* the stones you don't want and jump *up* onto the one you do. The Feel Lab vault room (`?lab=vault`) shows this layout.
 
 ### 16.2 Chapter 1: The Temple Gate (first 5 levels)
 Sketches drawn on the real 32 × 18 grid: [`docs/levels/chapter1-sketch.png`](levels/chapter1-sketch.png) (made with `tools/level_sketch.py`).
@@ -646,12 +647,20 @@ These sketches are a starting point. The real levels are built and tuned in the 
 - Place buttons, levers, moving platforms (drag the width, then tap where it travels) and gates (drag a box), and give each a rune.
 - Undo / redo, zoom, rename, delete.
 - **Try alone**: both characters on one phone with a swap button, like the Feel Lab.
+- **Password gates (16.7, G14):** place **symbol stones** (tap a floor spot, pick one of the 8 animals) and **carvings** (tap a wall spot, pick an animal and its 1–4 dots). Set the level's **pattern** (2–4 animals in order, repeats allowed) and give it a rune: entering the pattern turns that rune on and it stays on, like a lever, so it can open a gate or move a platform. A wrong stone resets the stones (G7). Stones and carvings also take the 👁 "Seen by" setting, so a maker can split the carvings between the players (different eyes). The pattern, stones and carvings are part of the share link and the ✅ fingerprint.
 
 **Built-in checks** (so homemade levels follow 5.3, 7.7 and 16.1):
-- **Errors (can't play yet):** missing or doubled start spot or door; a start or door inside stone or liquid or floating in the air; a platform or gate with no button or lever for its rune; something outside the grid.
-- **Warnings (allowed):** "almost" jumps (4-tile ledges, 5-tile gaps); things in the thumb corners; a button or lever that controls nothing; no gems.
+- **Errors (can't play yet):** missing or doubled start spot or door; a start or door inside stone or liquid or floating in the air; a platform or gate with no button, lever or pattern for its rune; something outside the grid; a pattern that uses an animal with no stone in the level; stones placed but no pattern set.
+- **Warnings (allowed):** "almost" jumps (4-tile ledges, 5-tile gaps); things in the thumb corners; a button or lever that controls nothing; no gems; a pattern animal with no matching carving (players would have to guess); carvings that don't match the pattern's order or dots.
 
-**Honest limit:** someone technical could fake the ✅ inside a link. That's fine between friends; real protection would need a server.
+**Password tools as built (2026-10-24):**
+- Two new tools on the left bar: **🐾 Symbol** (tap a floor spot, pick an animal) and **🗿 Carving** (tap an empty wall spot, pick its dots, then the animal; the animal that matches the code is suggested in gold). Tap an existing one to change or remove it. The animal pictures in the menus are drawn by the same code as in the game.
+- **🔑 Code** on the right bar: pick 2–4 animals in order (repeats allowed) and the rune it opens. The button then shows the rune and the code length.
+- The 👁 "Seen by" brush works on stones and carvings too. **Try alone** plays the code like the real game.
+- One extra warning beyond the list above: **a stone on a walkway** (players walking past would press it), from the level rule in 16.1.
+- Levels without password things keep exactly their old fingerprint, so no existing ✅ falls off (`npm run check:custom` guards this).
+
+**Honest limit:** someone technical could fake the ✅ inside a link, or read a homemade level's pattern from it. That's fine between friends; real protection would need a server.
 
 **Later, not now:** a public online list of everyone's levels (needs a server and accounts).
 
@@ -733,6 +742,28 @@ More ideas from the same talk:
 - In the level designer, the 👁 button on the right picks the "Seen by" brush; tap it again to switch between Only Hot Boy, Only Cool Girl and Both. Start spots and doors can't be hidden (E2).
 - The level checks warn when a hidden pool has less than 2 tiles of floor before it (warn space, E3). `npm run check:custom` makes sure no official level breaks this.
 
+#### Password gates: design 🔒
+*Designed one question at a time and completed 2026-10-24. The first chapter that uses it is 16.9.*
+
+| # | Question | Decision |
+|---|---|---|
+| G1 | Where are the symbols found, compared with the gate they open? | **Across the chapter** 🔒. Symbols are hidden in the earlier levels of a chapter, and the password gate is in the chapter's last level. Known cost: replaying the last level means remembering (or finding again) the earlier symbols, so this needs a journal and a code that stays the same on both phones between play sessions (decided in later questions). |
+| G2 | How do players enter the code? | **Walk onto symbol stones** 🔒. The gate has a row of stone buttons, each carved with a symbol; stepping on them in the right order opens it. Controls stay left, right, jump (6.1), no keypad covers the level (P2), and both players can share the stepping. |
+| G3 | When is a new random code picked, and how long does it last? | **Per team, until the gate opens** 🔒. The first time a team plays the chapter, the host's phone picks a random code and sends it to the partner; both phones save it. It stays the same between sessions (even days apart) until the team **finishes the vault level** (both at their doors), then a fresh code is picked for the next playthrough. *(Changed 2026-10-24 while building: was "until the gate is opened". A team could open the gate and then die before the doors; the level restarts with the gate closed, so they still need the same code.)* Every team's code is different, so it can't be looked up online. |
+| G4 | Is there an in-game journal? | **No** 🔒. Players remember the symbols themselves (paper, a screenshot, memory). This replaces the earlier journal idea in the table above. It works because the code doesn't change until the gate opens (G3), so notes from days ago stay right. |
+| G5 | What kind of symbols, and how many in a code? | **4 animal carvings** 🔒, picked from a set of 8 temple animals: snake, monkey, jaguar, frog, bird, fish, bat, turtle. Easy to say out loud (E1), told apart by shape and not only color (4.1), and right for the jungle temple. One symbol per level in levels 1–4. |
+| G6 | How do players know the order? | **Level order** 🔒. Level 1's symbol is first, level 2's second, and so on. Each carving also has 1–4 dots under it as a reminder. |
+| G7 | What happens on a wrong symbol? | **The stones reset** 🔒. A wrong stone flashes, makes a low thud, and all stones pop back up. No death and no penalty (12); the only cost is time, and with it the ⭐⭐⭐ time star. |
+| G8 | How are the gate's stones laid out? | **Split, 4 on each side** 🔒. A wall splits the gate room: Hot Boy's side has 4 of the 8 animal stones, Cool Girl's side the other 4. Each can step only on their own side's stones, so entering the code is turn-taking ("your turn: the frog!"). Both are needed (P1, D1). |
+| G9 | Where does a symbol sit in its level? | **On the main path, glowing when near** 🔒. Carved into the back wall somewhere you must pass to finish the level. Faint from far away; it lights up gold with a soft chime when either player walks past. It can't be missed, only forgotten, and since finishing a level unlocks the next (12.2), the team always passes all 4. |
+| G10 | Can both players see each symbol? | **Both see them in the first password chapter** 🔒, so the idea is taught on its own (D2). A later chapter mixes it with different eyes: each player sees only 2 of the 4 symbols and must share them on the call. |
+| G11 | What rules does the random code follow? | **Fully random** 🔒: any 4 of the 8 animals, repeats allowed (8 × 8 × 8 × 8 = 4,096 codes). A repeated animal is entered by stepping off its stone and on again. ⚠️ Sometimes all 4 animals are on one side, so one player does all the stepping while the other only calls out the code; accepted by the owner, since both still need each other to find and remember the symbols (D1). |
+| G12 | Which code is used with a different friend? | **One code per friend pair** 🔒. Each phone gets a hidden random ID (no account) and remembers a separate code for every partner it plays the chapter with. A new friend means a fresh code for that pair; the old friend's code stays safe. Joining a friend straight at level 5 means replaying levels 1–4 together to find your shared symbols. |
+| G13 | How is the password chapter shaped? | **Stones only in level 5** 🔒. Levels 1–4 are normal levels that each carry one carving; the 8 symbol stones first appear at the final gate in level 5. Simpler to build. ⚠️ Players meet the stones and the full test at once, so level 5 must make stepping on a stone easy to read: it sinks, glows and chimes, and a wrong one clearly resets (G7). |
+| G14 | Can homemade levels use symbol stones? | **Yes, with the maker's own pattern** 🔒 *(changed 2026-10-24 by the owner; was "not yet")*. A homemade level is a single level, so its code lives inside that level: the maker **picks a fixed pattern** (2–4 animals, repeats allowed), places the **symbol stones** and places the **carvings** that reveal it, all in the same level. The code is the same every time that level is played (only official chapters use random codes, G3). Harder to build, accepted on purpose. Details in 16.3. |
+
+**Build notes (not questions):** the route robot (D13) plays password levels with a fixed test code, since the real code is random. The code travels from the host like other room data (13.1) and is saved on both phones next to progress (12.4). Official and homemade levels use the same stone mechanism: a correct pattern turns a rune on (it stays on). In official level 6-5 the pattern comes from the team's saved random code; in a homemade level it comes from the level itself.
+
 How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 
 ### 16.8 Chapter 5: The Hall of Eyes 🔒
@@ -747,6 +778,28 @@ How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 | 5 | **Blind Trust** | **Final exam** | Hidden platforms, buttons and dangers for **both** players at once, plus hidden gems for the stars. Each player must guide and be guided. |
 
 **Star times** are first guesses (D12): tune them after real playthroughs.
+
+### 16.9 Chapter 6: The Sealed Vault 🔒
+*Planned and built 2026-10-24.* Sketches: [`docs/levels/chapter6.png`](levels/chapter6.png) (a carving shows **?**, because its animal comes from the team's code). Teaches **Password gates** (16.7, G1–G14). Levels 1–4 each carry one animal carving on the main path (G9), with 1–4 dots for its place in the code (G6). Both players see every carving (G10). The symbol stones appear only in level 5 (G13).
+
+| # | Name | New idea | How it works |
+|---|---|---|---|
+| 1 | **The First Mark** | **Carvings**: a wall symbol that glows and chimes when you pass | An easy shared path with a button-and-gate swap (Chapter 1 style). The carving (1 dot) sits right where the two meet, so neither can miss it. |
+| 2 | **The Lift Shaft** | A carving you pass **while riding** | One holds a button while the other rides a lift up past the carving (2 dots), then a lever brings the partner up the same way. |
+| 3 | **Resting Hall** | Breather (D11) | An easy gem run like 3-3. The carving (3 dots) sits in the middle of the gems. |
+| 4 | **Behind the Seal** | The carving is **inside a sealed room** | A trapdoor relay (Chapter 2/4 style): each opens the way for the other into a small chamber with the carving (4 dots), and both leave by the doors. |
+| 5 | **The Vault** | Exam: **symbol stones** | A route through mixed mechanisms leads to the split vault room (4 stones per side, G8). The players take turns stepping on the code; the vault gate opens onto the doors. |
+
+**How they were built:**
+- 6-1: his upper lane and her lower lane meet in a hall with the carving; then the 1-3 button swap through a gate.
+- 6-2: one lift. She rides it up while he holds the button; he lets go so it comes back down and steps on; she walks over a lever at the top that sends it up again.
+- 6-3: two gem blocks with a 4-tile jump over water between them (Hot Boy jumps it, Cool Girl may walk through); the carving sits beside the second block; a button-and-lever gate at the end.
+- 6-4: a trapdoor in the chamber floor, held open from below and then from above (like 4-4); the carving is between the trapdoor and the doors.
+- 6-5: up top he holds a gate button for her, and each opens the other's trapdoor with a lever. Below, each lands in their half of the vault: 4 stones on shelves with a walkway underneath (16.1). The code opens both vault gates onto the doors in the middle.
+
+**Proven winnable:** the route robot plays 6-5 with the test code **and 45 other codes** (all four animals on one side, the same animal four times, 40 random), and checks that every carving in 6-1…6-4 lights up on the way.
+
+**Star times** are first guesses (D12). Level 5's target time (90 s) allows for a couple of wrong guesses (G7).
 
 ---
 
@@ -811,3 +864,14 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-24 | **Different eyes, E6–E7 (16.7):** a level can split the hidden things between the players or give one player all of them; the game never says which, and it stays fixed for the level. In the level designer, each block gets a "Seen by" setting (Both / Only Hot Boy / Only Cool Girl), shown as an eye badge in the editor only. |
 | 2026-10-24 | **Different eyes design complete (16.7, E1–E7). Chapter 5 "The Hall of Eyes" planned (16.8):** Invisible Bridge, The Hidden Rune, Watch Your Step, One Pair of Eyes, Blind Trust. Not built yet. |
 | 2026-10-24 | **Different eyes and Chapter 5 built.** Each phone draws the level through its own player's eyes: a hidden stone looks like air, a hidden pool looks like plain floor, hidden mechanisms and gems aren't drawn and make no sound. Dying in something hidden flashes just that thing until the restart. The level designer has a 👁 "Seen by" brush, and hidden things travel in share links and count in the ✅ fingerprint (levels without hidden things keep their old fingerprint). Two levels changed while building: 5-2 uses two hidden buttons (no lever), and 5-3 uses hidden pools in both lanes (no lift). All 25 levels pass the route robot. Star times for Chapter 5 are guesses (D12). |
+| 2026-10-24 | **Password gates, G1–G2 (16.7):** symbols are hidden across a chapter's earlier levels and the gate is in its last level. The code is entered by walking onto carved symbol stones in order, so controls stay left, right, jump. |
+| 2026-10-24 | **Password gates, G3–G4 (16.7):** each team gets its own random code, saved on both phones and kept until the gate opens; then a new one is picked. No in-game journal: players note the symbols themselves. |
+| 2026-10-24 | **Password gates, G5–G7 (16.7):** the code is 4 animal carvings from a set of 8, one per level in levels 1–4, entered in level order (dots under each carving). A wrong stone just resets the stones; no death. |
+| 2026-10-24 | **Password gates, G8–G10 (16.7):** the 8 gate stones are split 4 and 4 between the players' sides, so they take turns entering the code. Each symbol is on the main path and glows when someone is near. Both players see all symbols in the first password chapter; mixing with different eyes comes in a later chapter. |
+| 2026-10-24 | **Password gates, G11–G12 (16.7):** codes are fully random (repeats allowed, so one player may do all the stepping). Each phone keeps a separate code per friend pair, using a hidden random phone ID. |
+| 2026-10-24 | **Password gates, G13–G14 (16.7):** in the password chapter, levels 1–4 each carry a carving and the symbol stones appear only at the level-5 gate. Homemade levels don't get symbol stones yet. |
+| 2026-10-24 | **Password gates design complete (16.7, G1–G14). Chapter 6 "The Sealed Vault" planned (16.9):** The First Mark, The Lift Shaft, Resting Hall, Behind the Seal, The Vault. Not built yet. |
+| 2026-10-24 | **G14 changed: homemade levels get password gates (16.3, 16.7).** The maker places symbol stones and carvings and sets a fixed pattern (2–4 animals) for that one level; entering it turns a rune on. New level checks cover patterns, stones and carvings; all three count in the share link and the ✅ fingerprint. |
+| 2026-10-24 | **G3 changed:** a team's code is replaced when they **finish** the vault level, not when the gate opens, so a death after opening the gate never locks them out. **Level rule added (16.1):** symbol stones sit on their own shelves 3 tiles up with a walkway underneath, because walking across a stone presses it. |
+| 2026-10-24 | **Password gates and Chapter 6 built (16.7, 16.9).** Wall carvings glow and chime when a player is near; symbol stones sink, glow and chime, and a wrong one resets them all with a low thud. The host referees the stones online. Each pair of phones keeps its own random code (a hidden phone ID, saved next to progress). The route robot proves 6-5 with 46 different codes and checks every carving is on the path. Test rooms: `?lab=vault`, and `?lab=<level id>` opens any official level in the Feel Lab. Star times are guesses (D12). |
+| 2026-10-24 | **Level designer: password tools built (16.3).** Symbol stone and carving tools with an animal picker, a 🔑 Code editor (2–4 animals and a rune), "Seen by" for both, and the new checks (plus a warning for a stone on a walkway). Stones, carvings and the code travel in share links and the room, and count in the ✅ fingerprint; levels without them keep their old fingerprint. |

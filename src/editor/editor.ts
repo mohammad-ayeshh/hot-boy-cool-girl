@@ -2,13 +2,14 @@
 // (physics paused), so it looks exactly like it will in play; this file adds the toolbars, touch
 // painting, undo, the built-in checks and "Try alone" (both characters on one phone, never verifies).
 import { COLS, ROWS, parseLevel, type Elem } from '../game/level';
-import type { Rune } from '../game/mechanisms';
-import { isVerified, NAME_MAX, RUNES, type CustomLevel } from '../game/custom';
+import { ANIMALS, type Animal, type Rune } from '../game/mechanisms';
+import { isVerified, NAME_MAX, PATTERN_MAX, PATTERN_MIN, RUNES, type CustomLevel } from '../game/custom';
 import { checkLevel, hasErrors, type Issue } from '../game/levelCheck';
 import { saveLevel } from '../game/myLevels';
 import type { Stage } from '../play/stage';
 import { T } from '../render/world';
-import { BRUSH, MAX_PLATFORM, addGate, addPlatform, box, mechAt, paint, paintEye, setPlatformTarget, toggleSwitch, type Eye, type Tool } from './tools';
+import { isBorder, BRUSH, MAX_PLATFORM, addGate, addPlatform, box, mechAt, paint, paintEye, passwordAt, placeCarving, placeStone, removeAt, setPlatformTarget, toggleSwitch, type Eye, type Tool } from './tools';
+import { ANIMAL_NAME, animalIcon } from './animalIcons';
 
 export interface EditorHost {
   stage: Stage;
@@ -46,7 +47,11 @@ const TOOLS: (ToolInfo | '|')[] = [
   { id: 'lever', icon: '⟋', label: 'Lever', hint: 'Tap a floor tile for a lever: stays where it was pushed. Tap again to remove.' },
   { id: 'platform', icon: '▬', label: 'Platform', hint: `Platform: drag sideways for its width (up to ${MAX_PLATFORM}), then tap where it moves to.` },
   { id: 'gate', icon: '▮', label: 'Gate', hint: 'Gate: drag a box. It slides open while its rune is powered.' },
+  '|',
+  { id: 'symbol', icon: '🐾', label: 'Symbol', hint: 'Symbol stone: tap a floor spot and pick an animal. Stepping on stones in the 🔑 Code order turns its rune on. Give each stone its own shelf: walking over a stone presses it.' },
+  { id: 'carving', icon: '🗿', label: 'Carving', hint: 'Carving: tap a wall spot, pick its dots (its place in the code) and an animal. It glows when a player walks past.' },
 ];
+const DOTS = (n: number) => '•'.repeat(n);
 
 export function openEditor(host: EditorHost, level: CustomLevel): { close(): void } {
   const { stage } = host;
@@ -60,6 +65,11 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
   const redo: string[] = [];
   let pendingPlatform = -1;
   let issues: Issue[] = checkLevel(level);
+  // Password gates (16.3): the tile being given an animal, the carving's dots, and the code being edited.
+  let picking: { kind: 'stone' | 'carving'; x: number; y: number } | null = null;
+  let carvingDots = 1;
+  let codeDraft: Animal[] = [];
+  let codeRune: Rune = 'star';
 
   // ---------------------------------------------------------------- DOM
   const el = document.createElement('div');
@@ -71,6 +81,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
       <button class="ed-btn" data-ed="redo">↷<small>Redo</small></button>
       <button class="ed-btn ed-rune" data-ed="rune"></button>
       <button class="ed-btn ed-eye" data-ed="eye"></button>
+      <button class="ed-btn ed-code" data-ed="code"></button>
       <button class="ed-btn" data-ed="zoom">🔍<small>Zoom</small></button>
       <button class="ed-btn ed-check" data-ed="issues"></button>
       <button class="ed-btn primary" data-ed="try">▶<small>Try</small></button>
@@ -99,6 +110,9 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
     q<HTMLButtonElement>('[data-ed="undo"]').disabled = !undo.length;
     q<HTMLButtonElement>('[data-ed="redo"]').disabled = !redo.length;
     q<HTMLElement>('.ed-title').textContent = `✎ ${level.name}  ${isVerified(level) ? '✅' : '· not verified'}`;
+    q<HTMLElement>('.ed-code').innerHTML = level.pattern
+      ? `<span class="rune">${RUNE_ICON[level.pattern.rune]}</span><small>Code ${level.pattern.code.length}</small>`
+      : `🔑<small>Code</small>`;
     q<HTMLElement>('[data-ed="zoom"]').innerHTML = `🔍<small>${stage.view.zoom > 1 ? '1×' : '2×'}</small>`;
     q<HTMLElement>('[data-ed="swap"]').textContent = `⇄ ${stage.controlled ? NAMES[stage.controlled] : ''}`;
   }
@@ -123,7 +137,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
     redrawQueued = true;
     requestAnimationFrame(() => {
       redrawQueued = false;
-      stage.setLevel(parseLevel(level.rows, level.mechs, level.seen), true);
+      stage.setLevel(parseLevel(level.rows, level.mechs, level.seen, level.pattern), true);
       issues = checkLevel(level);
       drawOverlay();
       updateUi();
@@ -170,12 +184,13 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
   }
 
   // ---------------------------------------------------------------- history + saving
-  const snap = () => JSON.stringify({ rows: level.rows, mechs: level.mechs, seen: level.seen });
+  const snap = () => JSON.stringify({ rows: level.rows, mechs: level.mechs, seen: level.seen, pattern: level.pattern });
   function restore(s: string): void {
     const o = JSON.parse(s);
     level.rows = o.rows;
     level.mechs = o.mechs;
     level.seen = o.seen;
+    level.pattern = o.pattern;
   }
   function save(): void {
     level.updated = Date.now();
@@ -224,6 +239,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
     if (BRUSH.includes(tool) || tool.startsWith('gem') || tool.startsWith('start') || tool.startsWith('door')) return paint(level, tool, x, y);
     if (tool === 'button' || tool === 'lever') return toggleSwitch(level, tool, x, y, rune);
     if (tool === 'eyes') return paintEye(level, x, y, eye);
+    if (tool === 'symbol' || tool === 'carving') { openPicker(tool === 'symbol' ? 'stone' : 'carving', x, y); return false; }
     return false;
   }
 
@@ -341,6 +357,76 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
       <button class="primary" data-ed="close">OK</button>`);
   }
 
+  // ---------------------------------------------------------------- password gates (16.3, 16.7 G14)
+  const animalGrid = (act: string, on?: Animal) => `<div class="ed-animals">${ANIMALS.map((a) =>
+    `<button class="ed-animal${a === on ? ' on' : ''}" data-ed="${act}" data-a="${a}"><img src="${animalIcon(a)}" alt="" /><small>${ANIMAL_NAME[a]}</small></button>`).join('')}</div>`;
+
+  /** Tap with the symbol or carving tool: pick the animal (and a carving's dots) for that tile. */
+  function openPicker(kind: 'stone' | 'carving', x: number, y: number): void {
+    if (isBorder(x, y)) return;
+    if (kind === 'carving' && level.rows[y][x] === '#') { host.toast('Carvings go on the back wall: tap an empty spot.'); return; }
+    const i = passwordAt(level, kind, x, y);
+    const old = i >= 0 ? level.mechs[i] : null;
+    if (!picking || picking.x !== x || picking.y !== y || picking.kind !== kind) {
+      if (old?.kind === 'carving') carvingDots = old.dots;
+      else if (kind === 'carving') {
+        const used = new Set(level.mechs.flatMap((m) => (m.kind === 'carving' ? [m.dots] : [])));
+        carvingDots = [1, 2, 3, 4].find((n) => !used.has(n)) ?? 1;
+      }
+    }
+    picking = { kind, x, y };
+    const current = old && (old.kind === 'stone' || old.kind === 'carving') ? old.animal : undefined;
+    const suggest = kind === 'carving' ? (current ?? level.pattern?.code[carvingDots - 1]) : current;
+    openPop(kind === 'stone'
+      ? `<h2>Symbol stone</h2><p>Pick its animal. Players enter the 🔑 Code by stepping on stones in order.</p>${animalGrid('animal', suggest)}
+        <div class="row">${old ? '<button data-ed="removepw">Remove</button>' : ''}<button data-ed="close">Cancel</button></div>`
+      : `<h2>Carving</h2><p>Its dots are its place in the code; then pick the animal.${level.pattern ? ' The gold one matches your 🔑 Code.' : ''}</p>
+        <div class="row">${[1, 2, 3, 4].map((n) => `<button class="ed-dot${n === carvingDots ? ' on' : ''}" data-ed="dots" data-n="${n}">${DOTS(n)}</button>`).join('')}</div>
+        ${animalGrid('animal', suggest)}
+        <div class="row">${old ? '<button data-ed="removepw">Remove</button>' : ''}<button data-ed="close">Cancel</button></div>`);
+  }
+
+  function pickAnimal(a: Animal): void {
+    if (!picking) return;
+    const before = snap();
+    if (picking.kind === 'stone') placeStone(level, picking.x, picking.y, a);
+    else placeCarving(level, picking.x, picking.y, a, carvingDots);
+    picking = null;
+    closePop();
+    commit(before);
+  }
+
+  /** The 🔑 Code: 2–4 animals in order (repeats allowed) and the rune they turn on. */
+  function openCode(fresh: boolean): void {
+    if (fresh) {
+      codeDraft = [...(level.pattern?.code ?? [])];
+      codeRune = level.pattern?.rune ?? rune;
+    }
+    const slots = Array.from({ length: PATTERN_MAX }, (_, i) => {
+      const a = codeDraft[i];
+      return `<div class="ed-slot${a ? '' : ' empty'}">${a ? `<img src="${animalIcon(a)}" alt="${a}" />` : ''}<small>${DOTS(i + 1)}</small></div>`;
+    }).join('');
+    const ok = codeDraft.length === 0 || codeDraft.length >= PATTERN_MIN;
+    openPop(`<h2>🔑 Code</h2>
+      <p>Stepping on the symbol stones in this order turns the rune on for good, like a lever. ${PATTERN_MIN}–${PATTERN_MAX} animals; the same one twice is fine (step off and on again). A wrong stone resets them all.</p>
+      <div class="ed-code">${slots}</div>
+      ${animalGrid('codeadd')}
+      <div class="row">
+        <button data-ed="codeback" ${codeDraft.length ? '' : 'disabled'}>⌫ Back</button>
+        <button data-ed="coderune">Opens <span class="rune">${RUNE_ICON[codeRune]}</span> ${codeRune}</button>
+        <button data-ed="codeclear" ${codeDraft.length ? '' : 'disabled'}>No code</button>
+      </div>
+      <div class="row"><button class="primary" data-ed="codesave" ${ok ? '' : 'disabled'}>${ok ? 'Save' : `Pick at least ${PATTERN_MIN}`}</button><button data-ed="close">Cancel</button></div>`);
+  }
+
+  function saveCode(): void {
+    const before = snap();
+    level.pattern = codeDraft.length ? { code: [...codeDraft], rune: codeRune } : undefined;
+    closePop();
+    commit(before);
+    if (level.pattern) host.toast(`Code saved: it turns ${RUNE_ICON[codeRune]} on. Give a gate or platform that rune, and place a stone for each animal.`, 4500);
+  }
+
   function rename(): void {
     openPop(`<h2>Level name</h2>
       <input class="name-input" id="ed-name" maxlength="${NAME_MAX}" value="${esc(level.name)}" autocomplete="off" />
@@ -361,7 +447,7 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
     stage.overlay.clear();
     stage.setSandbox(true);
     stage.paused = false;
-    stage.setLevel(parseLevel(level.rows, level.mechs, level.seen));
+    stage.setLevel(parseLevel(level.rows, level.mechs, level.seen, level.pattern));
     stage.setLocal({ fire: true, water: true });
     stage.controlled = 'fire';
     stage.inputEnabled = true;
@@ -442,7 +528,33 @@ export function openEditor(host: EditorHost, level: CustomLevel): { close(): voi
         break;
       }
       case 'unlock': editOk = true; closePop(); break;
-      case 'close': closePop(); break;
+      case 'close': picking = null; closePop(); break;
+      case 'animal': pickAnimal(b.dataset.a as Animal); break;
+      case 'dots':
+        carvingDots = Number(b.dataset.n) || 1;
+        if (picking) openPicker(picking.kind, picking.x, picking.y);
+        break;
+      case 'removepw':
+        if (picking) {
+          const before = snap();
+          removeAt(level, picking.kind, picking.x, picking.y);
+          picking = null;
+          closePop();
+          commit(before);
+        }
+        break;
+      case 'code':
+        if (!editOk) { askToEditVerified(); break; }
+        openCode(true);
+        break;
+      case 'codeadd':
+        if (codeDraft.length < PATTERN_MAX) codeDraft.push(b.dataset.a as Animal);
+        openCode(false);
+        break;
+      case 'codeback': codeDraft.pop(); openCode(false); break;
+      case 'codeclear': codeDraft = []; openCode(false); break;
+      case 'coderune': codeRune = RUNES[(RUNES.indexOf(codeRune) + 1) % RUNES.length]; openCode(false); break;
+      case 'codesave': saveCode(); break;
     }
   }
   el.addEventListener('click', onClick);

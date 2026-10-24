@@ -3,7 +3,7 @@
 // Errors block playing; warnings are allowed. Whether a level can be beaten is never checked here:
 // that is what finishing it together (the ✅) proves.
 import { COLS, ROWS } from './level.ts';
-import { MAX_BYTES, type CustomLevel } from './custom.ts';
+import { MAX_BYTES, PATTERN_MAX, PATTERN_MIN, type CustomLevel } from './custom.ts';
 import type { MechDef } from './mechanisms';
 
 export interface Issue {
@@ -18,7 +18,7 @@ const THUMB = 4; // bottom-left and bottom-right 4 × 4 tiles (5.3)
 const inThumbCorner = (x: number, y: number) => y >= ROWS - THUMB && (x < THUMB || x >= COLS - THUMB);
 const NICE: Record<string, string> = { h: 'Hot Boy start', c: 'Cool Girl start', H: 'Hot Boy door', C: 'Cool Girl door' };
 
-export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen'>): Issue[] {
+export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen' | 'pattern'>): Issue[] {
   const out: Issue[] = [];
   const err = (msg: string, x?: number, y?: number) => out.push({ error: true, msg, x, y });
   const warn = (msg: string, x?: number, y?: number) => out.push({ error: false, msg, x, y });
@@ -45,10 +45,16 @@ export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen'>): Iss
 
   // Mechanisms.
   const powers = new Set(l.mechs.filter((m) => m.kind === 'button' || m.kind === 'lever').map((m) => m.rune));
+  if (l.pattern) powers.add(l.pattern.rune); // an entered pattern keeps its rune on (16.7)
   const moved = new Set(l.mechs.filter((m) => m.kind === 'platform' || m.kind === 'gate').map((m) => m.rune));
-  const name = (m: MechDef) => ({ button: 'button', lever: 'lever', platform: 'moving platform', gate: 'gate' })[m.kind];
+  const name = (m: MechDef) => ({ button: 'button', lever: 'lever', platform: 'moving platform', gate: 'gate', stone: 'symbol stone', carving: 'carving' })[m.kind];
   for (const m of l.mechs) {
-    if (m.kind === 'button' || m.kind === 'lever') {
+    if (m.kind === 'carving') {
+      // decoration on the back wall: nothing to check here
+    } else if (m.kind === 'stone') {
+      if (stone(m.x, m.y)) err(`A ${name(m)} is inside stone.`, m.x, m.y);
+      else if (!stone(m.x, m.y + 1) && !solidMech(m.x, m.y + 1)) err(`A ${name(m)} is floating: put stone under it.`, m.x, m.y);
+    } else if (m.kind === 'button' || m.kind === 'lever') {
       if (stone(m.x, m.y)) err(`A ${name(m)} is inside stone.`, m.x, m.y);
       else if (!stone(m.x, m.y + 1) && !solidMech(m.x, m.y + 1)) err(`A ${name(m)} is floating: put stone under it.`, m.x, m.y);
       if (!moved.has(m.rune)) warn(`A ${name(m)} (${m.rune}) controls nothing: give a platform or gate the same rune.`, m.x, m.y);
@@ -65,7 +71,30 @@ export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen'>): Iss
         }
       }
     }
-    if (inThumbCorner(m.x, m.y)) warn(`A ${name(m)} is under a thumb (bottom corners).`, m.x, m.y);
+    if (m.kind !== 'carving' && inThumbCorner(m.x, m.y)) warn(`A ${name(m)} is under a thumb (bottom corners).`, m.x, m.y);
+  }
+
+  // Password gates (16.3, 16.7 G14): a pattern, the symbol stones to enter it, and the carvings that reveal it.
+  const stones = l.mechs.flatMap((m) => (m.kind === 'stone' ? [m] : []));
+  const carvings = l.mechs.flatMap((m) => (m.kind === 'carving' ? [m] : []));
+  const p = l.pattern;
+  if (stones.length && !p) err('There are symbol stones but no pattern: set one with 🔑 Code.', stones[0].x, stones[0].y);
+  if (p) {
+    if (p.code.length < PATTERN_MIN || p.code.length > PATTERN_MAX) err(`A pattern needs ${PATTERN_MIN}–${PATTERN_MAX} animals.`);
+    for (const a of new Set(p.code)) {
+      if (!stones.some((s) => s.animal === a)) err(`The pattern uses the ${a}, but there is no ${a} stone to step on.`);
+      if (!carvings.some((c) => c.animal === a)) warn(`No carving shows the ${a}: players would have to guess it.`);
+    }
+    if (!moved.has(p.rune)) warn(`The pattern (${p.rune}) opens nothing: give a gate or platform the same rune.`);
+    for (const c of carvings) {
+      if (c.dots > p.code.length) warn(`A carving has ${c.dots} dots, but the pattern has only ${p.code.length} animals.`, c.x, c.y);
+      else if (p.code[c.dots - 1] !== c.animal) warn(`A carving shows the ${c.animal} with ${c.dots} dot(s), but animal ${c.dots} of the pattern is the ${p.code[c.dots - 1]}.`, c.x, c.y);
+    }
+  } else if (carvings.length) warn('There are carvings but no pattern: they don’t open anything.', carvings[0].x, carvings[0].y);
+  // Walking across a stone presses it (16.1): each stone belongs on its own shelf, not on a walkway.
+  for (const s of stones) {
+    const walk = (x: number) => !stone(x, s.y) && (stone(x, s.y + 1) || solidMech(x, s.y + 1));
+    if (walk(s.x - 1) && walk(s.x + 1)) warn('Players walking past this stone would press it: put it on its own shelf with a way underneath.', s.x, s.y);
   }
 
   // Gems and hazards.

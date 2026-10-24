@@ -6,7 +6,9 @@ import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
 import type { Phys, JumpStats } from '../game/body';
 import type { Elem } from '../game/level';
-import { labLevel } from '../game/labLevel';
+import { labLevel, vaultLevel } from '../game/labLevel';
+import { findLevel, levelData } from '../game/levels';
+import { randomCode } from '../game/teamCode';
 import { load, save, type Key } from '../game/settings';
 import { Stage, createApp } from '../play/stage';
 import { Panel } from './panel';
@@ -17,7 +19,11 @@ const $ = <E extends HTMLElement>(id: string) => document.getElementById(id) as 
 export async function startFeelLab(): Promise<void> {
   const settings = load();
   const app = await createApp();
-  const stage = new Stage(app, settings, labLevel(), { sandbox: true });
+  // ?lab=vault: the password-gate test room; ?lab=6-5 (any official level id): that level, with a random team code
+  const which = new URLSearchParams(location.search).get('lab') ?? '';
+  const official = findLevel(which);
+  const room = which === 'vault' ? vaultLevel() : official?.rows ? levelData(official, randomCode()) : labLevel();
+  const stage = new Stage(app, settings, room, { sandbox: true });
   stage.setLocal({ fire: true, water: true });
   stage.hintZones();
 

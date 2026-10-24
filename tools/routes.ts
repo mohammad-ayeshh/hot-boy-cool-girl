@@ -1,6 +1,35 @@
 // A written solution for every level: what each character does, step by step.
 // x is in tiles (column 10 is x 10..11, its middle 10.5). `npm run check:routes` plays them all.
-import { gateOpen, gateShut, heard, jump, pause, platAt, say, to, until, type Route } from './sim.ts';
+import { enteredAt, gateOpen, gateShut, heard, jump, pause, platAt, say, to, until, type Cmd, type Route } from './sim.ts';
+import { CHAPTER_6 } from '../src/game/chapter6.ts';
+import type { Animal } from '../src/game/mechanisms.ts';
+
+/** The fixed code the robot plays password levels with (16.7 build notes): a repeat, and both sides' stones. */
+export const TEST_CODE: Animal[] = ['frog', 'bat', 'bat', 'monkey'];
+
+/**
+ * Level 6-5 for any code. Up top: he holds the gate button for her, each opens the other's trapdoor with a lever,
+ * and both drop into their half of the vault. Then they take turns: whoever owns the next animal stands in the gap
+ * next to its shelf, jumps up onto the stone, and steps back down (a repeat = step off and on again, G11).
+ */
+export function vaultRoute(code: Animal[]): Route {
+  const stones = CHAPTER_6[4].mechs!.flatMap((m) => (m.kind === 'stone' ? [m] : []));
+  const gates = [13, 18]; // the vault gates: a shelf next to one is climbed from its other side
+  const fire: Cmd[] = [to(12.5), say('he holds'), until('she is past the gate', (w) => w.body.water.x > 15.6), to(7.5),
+    until('he is down', (w) => w.body.fire.y > 15.9)];
+  const water: Cmd[] = [heard('he holds'), gateOpen(1), to(16.2), jump(19.6, { at: 16.2 }), to(21.2), to(23.9),
+    until('she is down', (w) => w.body.water.y > 15.9)];
+  code.forEach((animal, i) => {
+    const s = stones.find((st) => st.animal === animal)!;
+    const fromLeft = !gates.includes(s.x - 1);
+    const stand = fromLeft ? s.x - 0.7 : s.x + 1.7;
+    (s.x < 16 ? fire : water).push(enteredAt(i), to(stand), jump(s.x + 0.5), enteredAt(i + 1), to(stand));
+  });
+  fire.push(gateOpen(3), to(14.5));
+  water.push(gateOpen(4), to(17.5));
+  return { fire, water };
+}
+
 
 export const ROUTES: Record<string, Route> = {
   '1-1': {
@@ -139,4 +168,40 @@ export const ROUTES: Record<string, Route> = {
     water: [to(7.5), heard('he is on the trapdoor'), until('he is down', (w) => w.body.fire.y > 13.9), to(10.3), jump(13.7, { at: 10.3 }), to(14.4),
       jump(17.6, { at: 14.4 }), to(18.4), jump(20.6, { at: 18.4 }), to(21.4), jump(23.6, { at: 21.4 }), to(24.4), heard('he holds the button'), gateOpen(1), to(29.5)],
   },
+
+  // ---- Chapter 6 (played with TEST_CODE: the real code is random per team, 16.7)
+  '6-1': {
+    fire: [to(15.2), to(19.5), say('he holds'), heard('she holds'), to(26.3), jump(27.6, { at: 26.3 }), to(28.5)],
+    water: [to(17.5), heard('he holds'), gateOpen(0), to(25.5), say('she holds'), until('he is through', (w) => w.body.fire.x > 23.6),
+      to(26.3), jump(29.6, { at: 26.3 }), to(30.5)],
+  },
+  '6-2': {
+    fire: [to(6.3), heard('she is on'), to(7.5), heard('she is up'), to(8.4), jump(11.6, { at: 8.4 }), platAt(0, 0), to(12.4), jump(13.9), say('he is on'),
+      platAt(0, 1), to(26.5)],
+    water: [to(8.4), jump(11.6, { at: 8.4 }), to(12.4), jump(13.9), say('she is on'), platAt(0, 1), to(19.5), say('she is up'), heard('he is on'),
+      to(23.5), until('he is up', (w) => w.body.fire.y < 7.1 && w.body.fire.x > 15.2), to(28.5)],
+  },
+  '6-3': {
+    fire: [jump(6.6), to(6.3), jump(12.6, { at: 7.5 }), to(13.4), to(16.0), to(21.5), say('he holds'), heard('locked'), to(26.3), jump(27.6, { at: 26.3 }), to(28.5)],
+    water: [jump(6.6), to(9.0), to(11.2), jump(12.6), to(13.4), to(16.2), jump(19.6, { at: 16.2 }), heard('he holds'), gateOpen(0), to(25.8),
+      say('locked'), to(26.3), jump(29.6, { at: 26.3 }), to(30.5)],
+  },
+  '6-4': {
+    fire: [to(18.5), say('he holds'), heard('she holds'), to(21.4), jump(22.6), jump(24.6), say('he is up'), to(28.5)],
+    water: [to(10.4), jump(13.6, { at: 10.4 }), heard('he holds'), gateOpen(0), to(21.4), jump(22.6), jump(24.6), to(26.5), say('she holds'),
+      heard('he is up'), to(30.5)],
+  },
+  '6-5': vaultRoute(TEST_CODE),
+};
+
+/**
+ * The Feel Lab vault room (?lab=vault), code frog · bat · bat · monkey. Stones sit on shelves 3 tiles up
+ * (x 5, 8, 11, 14 for him; 17, 20, 23, 26 for her); the gaps between them are the walkway.
+ * She makes one wrong step on purpose (the fish), which must reset his frog.
+ */
+export const VAULT_ROUTE: Route = {
+  fire: [to(9.8), until('down', (w) => w.body.fire.y > 14.9), to(13.2), jump(14.5), say('frog'), heard('oops'),
+    to(12.6), jump(14.5), say('frog again'), to(12.6), enteredAt(3), to(9.8), jump(8.5), enteredAt(4), to(9.6), gateOpen(0), to(15.8)],
+  water: [to(21.8), until('down', (w) => w.body.water.y > 14.9), heard('frog'), jump(20.5), say('oops'), to(21.6),
+    heard('frog again'), jump(23.5), to(22.0), jump(23.5), to(22.0), gateOpen(0), to(16.2)],
 };

@@ -1,13 +1,14 @@
 // What each level designer tool does to a level (design doc 16.3). Pure functions on rows + mechs.
 import { COLS, ROWS } from '../game/level';
-import type { MechDef, Rune } from '../game/mechanisms';
+import type { Animal, MechDef, Rune } from '../game/mechanisms';
 
 export interface Draft { rows: string[]; mechs: MechDef[]; seen?: string[] }
 
 export type Tool =
   | 'stone' | 'erase' | 'lava' | 'water' | 'poison'
   | 'gemFire' | 'gemWater' | 'startFire' | 'startWater' | 'doorFire' | 'doorWater'
-  | 'button' | 'lever' | 'platform' | 'gate' | 'eyes';
+  | 'button' | 'lever' | 'platform' | 'gate' | 'eyes'
+  | 'symbol' | 'carving';
 
 /** "Seen by" (Different eyes, 16.7 E7): both, only Hot Boy (h) or only Cool Girl (c). */
 export type Eye = '.' | 'h' | 'c';
@@ -36,7 +37,7 @@ const put = (d: Draft, x: number, y: number, ch: string) => {
 export function mechAt(d: Draft, x: number, y: number): number {
   for (let i = d.mechs.length - 1; i >= 0; i--) {
     const m = d.mechs[i];
-    if ((m.kind === 'button' || m.kind === 'lever') && m.x === x && m.y === y) return i;
+    if ((m.kind === 'button' || m.kind === 'lever' || m.kind === 'stone' || m.kind === 'carving') && m.x === x && m.y === y) return i;
     if (m.kind === 'gate' && x >= m.x && x < m.x + m.w && y >= m.y && y < m.y + m.h) return i;
     if (m.kind === 'platform' && ((y === m.y && x >= m.x && x < m.x + m.w) || (y === m.to[1] && x >= m.to[0] && x < m.to[0] + m.w))) return i;
   }
@@ -132,5 +133,37 @@ export function setPlatformTarget(d: Draft, i: number, x: number, y: number): bo
   if (!m || m.kind !== 'platform') return false;
   const b = box(x, y, x + m.w - 1, y);
   m.to = [Math.min(b.x, COLS - 1 - m.w), b.y];
+  return true;
+}
+
+/** The symbol stone or carving on this tile (16.7), or -1. */
+export function passwordAt(d: Draft, kind: 'stone' | 'carving', x: number, y: number): number {
+  return d.mechs.findIndex((m) => m.kind === kind && m.x === x && m.y === y);
+}
+
+/** Put a symbol stone on a tile (replacing a stone already there). */
+export function placeStone(d: Draft, x: number, y: number, animal: Animal): boolean {
+  if (!inside(x, y) || isBorder(x, y)) return false;
+  const i = passwordAt(d, 'stone', x, y);
+  const seen = i >= 0 ? d.mechs[i].seen : undefined;
+  if (i >= 0) d.mechs.splice(i, 1);
+  d.mechs.push(seen ? { kind: 'stone', x, y, animal, seen } : { kind: 'stone', x, y, animal });
+  return true;
+}
+
+/** Put a carving on the back wall (replacing one already there). `dots`: its place in the pattern, 1–4. */
+export function placeCarving(d: Draft, x: number, y: number, animal: Animal, dots: number): boolean {
+  if (!inside(x, y) || isBorder(x, y)) return false;
+  const i = passwordAt(d, 'carving', x, y);
+  const seen = i >= 0 ? d.mechs[i].seen : undefined;
+  if (i >= 0) d.mechs.splice(i, 1);
+  d.mechs.push(seen ? { kind: 'carving', x, y, animal, dots, seen } : { kind: 'carving', x, y, animal, dots });
+  return true;
+}
+
+export function removeAt(d: Draft, kind: 'stone' | 'carving', x: number, y: number): boolean {
+  const i = passwordAt(d, kind, x, y);
+  if (i < 0) return false;
+  d.mechs.splice(i, 1);
   return true;
 }

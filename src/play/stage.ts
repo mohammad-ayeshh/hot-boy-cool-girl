@@ -8,7 +8,8 @@ import * as sfx from '../engine/sfx';
 import { Controls } from '../engine/input';
 import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, type JumpStats, type Phys } from '../game/body';
 import { COLS, ROWS, LIQUID_DEPTH, Level, type DeathCause, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
-import { Mechanisms, type Feet, type MechDef, type MechEvent, type Rune } from '../game/mechanisms';
+import { CARVING_DARK, CARVING_LIGHT, Mechanisms, carvingDistance, type Feet, type MechDef, type MechEvent, type MechSync, type Rune } from '../game/mechanisms';
+import { drawAnimal } from '../render/animals';
 import type { Settings } from '../game/settings';
 import { ParticleSystem, makeGlowTexture } from '../render/particles';
 import { CharacterView, type Pose } from '../render/character';
@@ -42,6 +43,8 @@ export interface StageHooks {
   localEvent?(elem: Elem, ev: HeroEvent): void;
   /** A character simulated on this phone flipped lever `i`. */
   localLever?(i: number, on: boolean): void;
+  /** A character simulated on this phone stepped onto symbol stone `i` (16.7). */
+  localStone?(i: number): void;
 }
 
 export interface StageOptions {
@@ -237,7 +240,7 @@ export class Stage {
   setLevel(data: LevelData, quiet = false): void {
     this.quiet = quiet;
     this.level = new Level(data);
-    this.mech = new Mechanisms(data.mechs);
+    this.mech = new Mechanisms(data.mechs, data.pattern);
     this.level.dynamic = this.mech.solids;
     this.revealed.clear();
     this.revealedGates.clear();
@@ -505,12 +508,21 @@ export class Stage {
     if (this.mech.setLever(i, on)) sfx.lever(this.panX(this.mech.levers[i].def.x));
   }
 
-  mechState(): { lv: number[]; pl: number[] } {
+  /** Host: the guest stepped onto symbol stone `i`. Applied right away: the host's word on the password is final (13.1). */
+  remoteStone(i: number): void {
+    const events: MechEvent[] = [];
+    this.mech.pressStone(i, events);
+    this.mechEvents(events);
+  }
+
+  mechState(): MechSync {
     return this.mech.state();
   }
 
-  correctMech(s: { lv?: number[]; pl?: number[] }): void {
-    this.mech.correct(s, performance.now());
+  correctMech(s: MechSync): void {
+    const events: MechEvent[] = [];
+    this.mech.correct(s, performance.now(), events);
+    this.mechEvents(events);
   }
 
   /** 0..1 how much a character is moving (drives their music layer). */
@@ -838,6 +850,10 @@ export class Stage {
     // levers: flipped by characters on this phone walking into them
     const events: MechEvent[] = [];
     this.mech.updateLevers(ELEMS.filter((e) => this.heroes[e].local && this.isAlive(e)).map((e) => feetOf(this.heroes[e].body)), now, events);
+    // symbol stones: only steps of characters on this phone count; the partner's arrive over the network
+    if (this.mech.stones.length && !this.completed) {
+      this.mech.updateStones(ELEMS.filter((e) => this.heroes[e].local && this.isAlive(e)).map((e) => ({ key: e, feet: feetOf(this.heroes[e].body) })), now, events);
+    }
     this.mechEvents(events);
     if (this.opts.sandbox) {
       for (const gem of this.gems) {
@@ -854,7 +870,7 @@ export class Stage {
   /** Buttons, platforms and gates move; riders are carried; nobody gets stuck inside a platform. */
   private stepMechanisms(): void {
     const m = this.mech;
-    if (!m.buttons.length && !m.platforms.length && !m.gates.length) return;
+    if (!m.buttons.length && !m.platforms.length && !m.gates.length && !m.stones.length) return;
     const events: MechEvent[] = [];
     const alive = ELEMS.filter((e) => this.isAlive(e)).map((e) => this.heroes[e]);
     m.updateButtons(alive.map((h) => feetOf(h.body)), events);
@@ -913,6 +929,19 @@ export class Stage {
         this.haptic(20);
       } else if (ev.k === 'platform') {
         if (this.seesMech(this.mech.platforms[ev.i].def)) sfx.grind(ev.start, this.panX(this.mech.platforms[ev.i].rect.x0));
+      } else if (ev.k === 'stone') {
+        // sink, glow and chime; a wrong one thuds and every stone pops back up (G7, G13)
+        if (ev.local) this.opts.hooks?.localStone?.(ev.i);
+        const d = this.mech.stones[ev.i]?.def;
+        if (d && !this.seesMech(d)) continue;
+        sfx.stone(ev.ok, ev.n, d ? this.panX(d.x) : 0);
+        if (ev.local) this.haptic(ev.ok ? 15 : 45);
+        if (d && ev.ok && ev.n > 0) this.burst((d.x + 0.5) * T, (d.y + 0.2) * T, [0xffffff, 0xf1e6c8, 0xe3b04b]);
+        if (!ev.ok) this.shake(0.15, 0.2);
+      } else if (ev.k === 'solved') {
+        sfx.solved(0);
+        this.haptic(40);
+        for (const s of this.mech.stones) if (this.seesMech(s.def)) this.burst((s.def.x + 0.5) * T, (s.def.y - 0.2) * T, [0xffffff, 0xf1e6c8, 0xe3b04b]);
       } else if (this.seesMech(this.mech.gates[ev.i].def, ev.i)) {
         sfx.gate(ev.opening, this.panX(this.mech.gates[ev.i].def.x));
       }
@@ -1121,11 +1150,61 @@ export class Stage {
   }
 
   /** Brass and gold mechanisms with their linking rune (10.1, 14.6). */
-  private drawMechs(): void {
+  private drawMechs(dt: number): void {
     const g = this.mechG.clear();
     const m = this.mech;
     const GOLD = 0xe3b04b, BRASS = 0x8a6a2a, IVORY = 0xf1e6c8;
+    const WALL = 0x16211f, EDGE = 0x55695f;
     const lit = (rune: Rune) => (m.powered(rune) ? 1 : 0);
+    // Carvings (G9): faint on the back wall; gold with a soft chime when either player comes near.
+    for (const c of m.carvings) {
+      const d = c.def;
+      if (!this.seesMech(d)) continue;
+      const cx = (d.x + 0.5) * T, cy = (d.y + 0.45) * T;
+      let dist = Infinity;
+      for (const e of ELEMS) {
+        const b = this.heroes[e].body;
+        if (this.isAlive(e)) dist = Math.min(dist, carvingDistance(d, b.x, b.y));
+      }
+      const wasLit = c.lit;
+      c.lit = dist < (c.lit ? CARVING_DARK : CARVING_LIGHT); // a little hysteresis, so it doesn't flicker at the edge
+      if (c.lit && !wasLit && !this.paused) {
+        sfx.carving(this.panX(d.x));
+        if (this.settings.gemFx) this.fx.emit({ x: cx, y: cy, count: 10, colors: [0xffffff, IVORY, GOLD], speed: [15, 50], life: [0.4, 0.8], size: [2, 4], spread: Math.PI });
+      }
+      c.near += ((c.lit ? 1 : 0) - c.near) * Math.min(1, dt * (c.lit ? 6 : 1.5));
+      const a = c.near;
+      if (a > 0.02) {
+        g.circle(cx, cy + 0.2 * T, 1.15 * T).fill({ color: GOLD, alpha: 0.07 * a });
+        g.circle(cx, cy + 0.2 * T, 0.75 * T).fill({ color: GOLD, alpha: 0.09 * a });
+      }
+      g.roundRect(cx - 0.72 * T, cy - 0.7 * T, 1.44 * T, 1.82 * T, 5).fill({ color: 0x0f1a18, alpha: 0.75 }).stroke({ width: 1.5, color: a > 0.5 ? GOLD : EDGE, alpha: 0.35 + 0.5 * a });
+      drawAnimal(g, d.animal, cx, cy, 1.25 * T, EDGE, 0.6 * (1 - a), WALL);
+      if (a > 0.02) drawAnimal(g, d.animal, cx, cy, 1.25 * T, GOLD, a, WALL);
+      const n = Math.max(1, Math.min(4, d.dots));
+      for (let k = 0; k < n; k++) {
+        const dx = (k - (n - 1) / 2) * 0.3 * T;
+        g.circle(cx + dx, cy + 0.88 * T, 0.08 * T).fill({ color: a > 0.5 ? IVORY : EDGE, alpha: 0.55 + 0.45 * a });
+      }
+    }
+    // Symbol stones (G2, G13): a carved plaque over a floor slab that sinks, glows and chimes; a wrong one flashes white.
+    const solved = !!m.vault?.solved;
+    m.stones.forEach((s, i) => {
+      if (!this.seesMech(s.def)) return;
+      const x = s.def.x * T, floor = (s.def.y + 1) * T, cx = x + T / 2, py = floor - 1.05 * T;
+      const down = m.stoneDown(i) || solved;
+      const pulse = solved ? 0.75 + 0.25 * Math.sin(this.simTime * 3 + i) : 1;
+      if (down) g.circle(cx, floor - 0.4 * T, 0.9 * T).fill({ color: GOLD, alpha: 0.12 * pulse });
+      g.roundRect(cx - 0.56 * T, py - 0.62 * T, 1.12 * T, 1.08 * T, 4).fill(0x2e3d39).stroke({ width: 1.5, color: down ? IVORY : BRASS, alpha: 0.9 });
+      drawAnimal(g, s.def.animal, cx, py - 0.08 * T, 0.98 * T, down ? IVORY : GOLD, down ? pulse : 0.85, 0x2e3d39);
+      g.roundRect(x + 1, floor - 4, T - 2, 4, 1.5).fill(BRASS);
+      const top = floor - 9 + s.sink * 5;
+      g.roundRect(x + 3, top, T - 6, floor - 4 - top + 1, 2).fill(down ? IVORY : GOLD);
+      if (s.flash > 0) {
+        g.roundRect(cx - 0.56 * T, py - 0.62 * T, 1.12 * T, 1.08 * T, 4).fill({ color: 0xffffff, alpha: 0.7 * s.flash });
+        g.roundRect(x + 3, top, T - 6, floor - 4 - top + 1, 2).fill({ color: 0xffffff, alpha: 0.7 * s.flash });
+      }
+    });
     for (const pl of m.platforms) {
       const d = pl.def;
       if (!this.seesMech(d)) continue;
@@ -1304,7 +1383,7 @@ export class Stage {
 
     this.pools.update(simDt, this.simTime);
     this.drawDoors(simDt);
-    this.drawMechs();
+    this.drawMechs(simDt);
     this.drawGems();
     this.drawReveal(realDt);
     for (const e of ELEMS) this.drawHero(this.heroes[e], alpha, simDt);

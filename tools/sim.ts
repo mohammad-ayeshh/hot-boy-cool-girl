@@ -4,7 +4,7 @@
 // proves every level can be won (decision log 2026-10-21: the checker alone can't see that).
 import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, type Input } from '../src/game/body.ts';
 import { ROWS, Level, parseLevel, type Elem, type Liquid, type Rect } from '../src/game/level.ts';
-import { Mechanisms, type MechDef, type MechEvent } from '../src/game/mechanisms.ts';
+import { CARVING_LIGHT, Mechanisms, carvingDistance, type MechDef, type MechEvent, type Pattern } from '../src/game/mechanisms.ts';
 import { defaults } from '../src/game/settings.ts';
 
 const { phys } = derive(defaults());
@@ -22,10 +22,15 @@ export class World {
   dead: string | null = null;
   flags = new Set<string>();
 
-  constructor(rows: readonly string[], mechs: MechDef[]) {
-    const data = parseLevel(rows, mechs);
+  /** Every symbol stone stepped on, in order (for traces). */
+  stoneLog: string[] = [];
+  /** Which carvings lit up (someone came close enough), by index in mech.carvings. */
+  carvingsSeen = new Set<number>();
+
+  constructor(rows: readonly string[], mechs: MechDef[], pattern?: Pattern) {
+    const data = parseLevel(rows, mechs, undefined, pattern);
     this.level = new Level(data);
-    this.mech = new Mechanisms(mechs);
+    this.mech = new Mechanisms(mechs, pattern);
     this.level.dynamic = this.mech.solids;
     this.doors = data.doors;
     this.gems = data.gems.map((g) => ({ ...g, alive: true }));
@@ -38,6 +43,9 @@ export class World {
   }
 
   gate(i: number): number { return this.mech.gates[i].open; }
+  /** How many animals of the password are entered so far. */
+  entered(): number { return this.mech.vault?.entered.length ?? 0; }
+  solved(): boolean { return !!this.mech.vault?.solved; }
   plat(i: number): number { return this.mech.platforms[i].p; }
 
   step(input: Record<Elem, Input>): void {
@@ -59,6 +67,15 @@ export class World {
       }
     }
     this.mech.updateLevers(ELEMS.map((e) => feetOf(this.body[e])), this.time * 1000, []);
+    this.mech.carvings.forEach((c, i) => {
+      // a clear margin inside the real lighting distance, so a player a little off the robot's line still lights it
+      if (ELEMS.some((e) => carvingDistance(c.def, this.body[e].x, this.body[e].y) < CARVING_LIGHT - 0.6)) this.carvingsSeen.add(i);
+    });
+    const events: MechEvent[] = [];
+    this.mech.updateStones(ELEMS.map((e) => ({ key: e, feet: feetOf(this.body[e]) })), this.time * 1000, events);
+    for (const ev of events) {
+      if (ev.k === 'stone') this.stoneLog.push(`${this.mech.stones[ev.i].def.animal}${ev.ok ? '' : ' (wrong: reset)'}`);
+    }
   }
 
   private stepMechanisms(): void {
@@ -166,14 +183,16 @@ export const heard = (flag: string): Cmd => until(`heard "${flag}"`, (w) => w.fl
 export const gateOpen = (i: number): Cmd => until(`gate ${i} open`, (w) => w.gate(i) >= 0.999);
 export const gateShut = (i: number): Cmd => until(`gate ${i} shut`, (w) => w.gate(i) <= 0.001);
 export const platAt = (i: number, p: 0 | 1): Cmd => until(`platform ${i} at ${p}`, (w) => w.plat(i) === p);
+/** Wait until `n` animals of the password are entered (taking turns at the vault, G8). */
+export const enteredAt = (n: number): Cmd => until(`${n} animal(s) entered`, (w) => w.entered() >= n || w.solved());
 
 export type Route = Record<Elem, Cmd[]>;
 
-export interface Result { won: boolean; time: number; gems: string; why: string; trace: string[] }
+export interface Result { won: boolean; time: number; gems: string; why: string; trace: string[]; world: World }
 
 /** Play the level with the solution. Wins when both stand in their doors at the same time. */
-export function play(rows: readonly string[], mechs: MechDef[], route: Route, opt: { trace?: boolean; limit?: number } = {}): Result {
-  const w = new World(rows, mechs);
+export function play(rows: readonly string[], mechs: MechDef[], route: Route, opt: { trace?: boolean; limit?: number; pattern?: Pattern; goal?: (w: World) => boolean } = {}): Result {
+  const w = new World(rows, mechs, opt.pattern);
   const pc: Record<Elem, number> = { fire: 0, water: 0 };
   const since: Record<Elem, number> = { fire: 0, water: 0 };
   const trace: string[] = [];
@@ -193,18 +212,18 @@ export function play(rows: readonly string[], mechs: MechDef[], route: Route, op
         since[e] = w.time;
       }
       if (pc[e] < list.length && w.time - since[e] > 20) {
-        return { won: false, time: w.time, gems: gemText(), why: `${e} stuck on "${list[pc[e]].what}" at ${where(e)}`, trace };
+        return { won: false, time: w.time, gems: gemText(), why: `${e} stuck on "${list[pc[e]].what}" at ${where(e)}`, trace, world: w };
       }
     }
     w.step(input);
     if (opt.trace && Math.floor(w.time * 4) !== lastTrace) {
       lastTrace = Math.floor(w.time * 4);
-      trace.push(`${w.time.toFixed(2)}  fire ${where('fire')}  water ${where('water')}  gates ${w.mech.gates.map((g) => g.open.toFixed(2))}  plats ${w.mech.platforms.map((p) => p.p.toFixed(2))}`);
+      trace.push(`${w.time.toFixed(2)}  fire ${where('fire')}  water ${where('water')}  gates ${w.mech.gates.map((g) => g.open.toFixed(2))}  plats ${w.mech.platforms.map((p) => p.p.toFixed(2))}${w.mech.vault ? `  code ${w.entered()}/${w.mech.vault.pattern.code.length} ${w.stoneLog.join(',')}` : ''}`);
     }
-    if (w.dead) return { won: false, time: w.time, gems: gemText(), why: w.dead, trace };
-    if (pc.fire >= route.fire.length && pc.water >= route.water.length && w.atDoor('fire') && w.atDoor('water')) {
-      return { won: true, time: w.time, gems: gemText(), why: '', trace };
+    if (w.dead) return { won: false, time: w.time, gems: gemText(), why: w.dead, trace, world: w };
+    if (pc.fire >= route.fire.length && pc.water >= route.water.length && (opt.goal ? opt.goal(w) : w.atDoor('fire') && w.atDoor('water'))) {
+      return { won: true, time: w.time, gems: gemText(), why: '', trace, world: w };
     }
   }
-  return { won: false, time: w.time, gems: gemText(), why: `time ran out: fire step ${pc.fire}/${route.fire.length} @ ${where('fire')}, water step ${pc.water}/${route.water.length} @ ${where('water')}`, trace };
+  return { won: false, time: w.time, gems: gemText(), why: `time ran out: fire step ${pc.fire}/${route.fire.length} @ ${where('fire')}, water step ${pc.water}/${route.water.length} @ ${where('water')}`, trace, world: w };
 }
