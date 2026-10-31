@@ -627,3 +627,21 @@ button.danger { background: var(--danger); border-color: transparent; }
   .ed-animal img, .ed-slot img { width: 32px; height: 32px; }
   .ed-slot { height: 50px; width: 44px; }
 }
+
+/* Pause menu: the player's sound and vibration choices (15.6) */
+.prefs { display: grid; gap: 6px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+.pref { display: flex; flex-direction: column; align-items: center; min-width: 92px; padding: 6px 10px; opacity: 0.6; }
+.pref small { font-size: 11px; color: var(--muted); }
+.pref.on { opacity: 1; border-color: var(--gold); }
+.pref.on small { color: var(--gold); }
+.pref-vol { display: flex; align-items: center; gap: 6px; font-size: 16px; }
+.pref-vol input { width: 120px; accent-color: var(--gold); }
+
+/* The full-game offer (12.6) and the 🔑 levels on the map */
+.map-node.paid { border-color: var(--gold); opacity: 0.85; }
+.map-node.paid small { color: var(--gold); }
+.offer .offer-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; text-align: left; font-size: 14px; }
+.offer .linkish { background: none; border: 0; padding: 0; color: var(--gold); text-decoration: underline; font-size: inherit; min-height: 0; }
+/* "New version available" (16.7) */
+.update-banner { position: absolute; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 12px; background: rgba(20, 30, 26, 0.95); border: 1px solid var(--gold); pointer-events: auto; z-index: 30; font-size: 14px; }
+.update-banner.hidden { display: none; }

@@ -11,13 +11,20 @@
     "typecheck": "tsc --noEmit",
     "check:metrics": "node tools/metrics_check.ts",
     "check:custom": "node tools/custom_check.ts",
-    "check:routes": "node tools/route_check.ts"
+    "check:routes": "node tools/route_check.ts",
+    "build:app": "tsc --noEmit && vite build --mode app --outDir dist-app",
+    "app:sync": "npm run build:app && cap sync android",
+    "app:open": "cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "cordova-plugin-purchase": "^13.20.0",
     "peerjs": "^1.5.5",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"

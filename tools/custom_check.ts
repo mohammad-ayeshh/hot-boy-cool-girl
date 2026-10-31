@@ -5,6 +5,8 @@ import { ALL_LEVELS, withCode, type LevelDef } from '../src/game/levels.ts';
 import { blankLevel, decodeLink, encodeLink, isVerified, levelHash, markVerified, sanitize, type CustomLevel } from '../src/game/custom.ts';
 import { checkLevel, hasErrors } from '../src/game/levelCheck.ts';
 import { isCode, loadCode, pairKey, phoneId, randomCode, saveCode } from '../src/game/teamCode.ts';
+import { PAYWALL_LIVE, canPlay, isPaidLevel, ownsGame, setOwned } from '../src/game/unlock.ts';
+import { PROTOCOL, playVersion } from '../src/game/version.ts';
 
 let failed = 0;
 const check = (name: string, ok: boolean, detail = '') => {
@@ -147,6 +149,16 @@ check('a carving shows the code animal for its dots', filled.mechs[0].kind === '
 check('the vault pattern becomes the team code', filled.pattern?.code.join() === 'frog,bat,turtle,monkey' && filled.pattern.rune === 'star');
 check('levels without a team code ignore it', withCode(ALL_LEVELS[3], ['frog', 'bat', 'turtle', 'monkey']).mechs === (ALL_LEVELS[3].mechs ?? withCode(ALL_LEVELS[3]).mechs));
 check('a broken code is refused', !isCode(['frog', 'dog', 'bat', 'bat']) && !isCode(['frog', 'bat']));
+
+// Free to try, pay once (12.6, decided 2026-10-31): Chapters 1–2 free, the rest paid; homemade levels free.
+check('chapters 1 and 2 are free, 3 to 6 are paid', !isPaidLevel('1-1') && !isPaidLevel('2-5') && isPaidLevel('3-1') && isPaidLevel('6-5'));
+check('homemade levels are always free', !isPaidLevel('u-abcd1234'));
+check('the lock is off until launch (PAYWALL_LIVE)', PAYWALL_LIVE === false && canPlay('6-5', false));
+use(phone()); setOwned(true);
+check('a purchase is remembered on the phone', ownsGame());
+setOwned(false);
+check('…and can be forgotten', !ownsGame());
+check('the play version is stable and has the protocol number', playVersion() === playVersion() && playVersion().startsWith(`${PROTOCOL}-`));
 
 process.exitCode = failed ? 1 : 0;
 console.log(failed ? `\n${failed} check(s) failed` : '\nAll checks passed');

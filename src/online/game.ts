@@ -14,6 +14,10 @@ import { openEditor } from '../editor/editor';
 import { thumb } from '../editor/thumb';
 import { isUnlocked, loadName, loadProgress, recordResult, saveName, starsFor } from '../game/progress';
 import { isCode, loadCode, phoneId, randomCode, saveCode } from '../game/teamCode';
+import { loadPrefs, savePrefs, type PrefKey } from '../game/prefs';
+import { playVersion } from '../game/version';
+import { FREE_CHAPTERS, STORE_URL, canPlay, ownsGame, paywallOn, setOwned } from '../game/unlock';
+import { buy, canBuy, initBilling, priceText, restore } from '../shop/billing';
 import type { Animal } from '../game/mechanisms';
 import { defaults } from '../game/settings';
 import { Session, type SessionStatus } from '../net/session';
@@ -34,6 +38,7 @@ const WAIT_LIMIT_MS = 120_000; // after 2 minutes of waiting, offer the way home
 
 export async function startGame(): Promise<void> {
   const settings = defaults();
+  loadPrefs(settings); // the player's own sound and vibration choices (15.6)
   settings.stats = false;
   const app = await createApp();
 
@@ -45,6 +50,9 @@ export async function startGame(): Promise<void> {
   let partnerDone: string[] = [];
   /** The partner phone's hidden ID: picks which saved team code to use (16.7, G12). */
   let partnerId = '';
+  /** Friend's pass (12.6): the partner's phone owns the full game, so this room plays everything. */
+  let partnerOwns = false;
+  const roomOwns = () => ownsGame() || partnerOwns;
   let picked = ALL_LEVELS[0].id;
   let readyMe = false, readyPartner = false;
   let level: LevelDef = ALL_LEVELS[0];
@@ -96,6 +104,7 @@ export async function startGame(): Promise<void> {
     <div class="overlay screen" id="scr"></div>
     <div class="overlay hidden" id="menu"></div>
     <div class="overlay hidden" id="lost"></div>
+    <div class="overlay hidden" id="offer"></div>
     <div class="rotate-msg"><div>📱↻<br/>Turn your phone sideways</div></div>`;
   const scr = $<HTMLElement>('#scr');
   const hud = $<HTMLElement>('.hud');
@@ -104,6 +113,7 @@ export async function startGame(): Promise<void> {
   const toastEl = $<HTMLElement>('.toast');
   const menuEl = $<HTMLElement>('#menu');
   const lostEl = $<HTMLElement>('#lost');
+  const offerEl = $<HTMLElement>('#offer');
   const fsBtn = $<HTMLElement>('.fs-btn');
 
   let toastTimer = 0;
@@ -158,6 +168,7 @@ export async function startGame(): Promise<void> {
     hud.classList.toggle('hidden', !playing);
     netDot.classList.toggle('hidden', s === 'home' || s === 'designer' || s === 'editor' || s === 'import');
     if (!playing) { closeMenu(); stage.showHints = false; }
+    syncBanner();
     render();
     updateFsButton();
     updateMusic();
@@ -239,9 +250,10 @@ export async function startGame(): Promise<void> {
     const nodes = ch.levels.map((l, i) => {
       const open = l.rows !== null && isUnlocked(l.id, mine, partnerDone);
       const stars = progress[l.id]?.stars ?? 0;
-      const label = l.rows === null ? 'soon' : open ? `<span class="on">${'★'.repeat(stars)}</span><span class="off">${'★'.repeat(3 - stars)}</span>` : '🔒';
+      const paid = open && !canPlay(l.id, roomOwns());
+      const label = l.rows === null ? 'soon' : paid ? '🔑 full game' : open ? `<span class="on">${'★'.repeat(stars)}</span><span class="off">${'★'.repeat(3 - stars)}</span>` : '🔒';
       const [x, y] = spots[i];
-      return `<button class="map-node ${l.id === picked ? 'picked' : ''} ${progress[l.id] ? 'done' : ''}" style="left:${x}%;top:${y}%" data-act="pick" data-id="${l.id}" ${open ? '' : 'disabled'}>
+      return `<button class="map-node ${l.id === picked ? 'picked' : ''} ${progress[l.id] ? 'done' : ''} ${paid ? 'paid' : ''}" style="left:${x}%;top:${y}%" data-act="pick" data-id="${l.id}" ${open ? '' : 'disabled'}>
         <b>${i + 1}</b><span class="map-name">${l.name}</span><small>${label}</small></button>`;
     }).join('');
     const pl = getLevel(picked);
@@ -301,7 +313,7 @@ export async function startGame(): Promise<void> {
       ${custom && verifiedNow ? `<div class="status ok">✅ Level verified with ${esc(partnerName || 'your friend')}! It can be shared by link now.</div>` : ''}
       ${custom && canKeep(custom) ? `<button data-act="keep">💾 ${getMyLevel(custom.id) ? 'Update my copy' : 'Keep a copy of this level'}</button>` : ''}
       <div class="row">
-        ${nx?.rows ? btn('next', 'Next level', 'primary') : ''}
+        ${nx?.rows && !canPlay(nx.id, roomOwns()) ? '<button class="primary" data-act="offer">🔑 Unlock the next chapters</button>' : nx?.rows ? btn('next', 'Next level', 'primary') : ''}
         ${btn('retry', 'Retry')}
         ${btn('map', 'Level map')}
       </div>
@@ -404,15 +416,21 @@ export async function startGame(): Promise<void> {
     else if (act === 'swap') swapRoles();
     else if (act === 'tomap') show('map');
     else if (act === 'tolobby') { if (readyMe) toggleReady(); show('lobby'); }
-    else if (act === 'pick') pickLevel(el.dataset.id!, true);
+    else if (act === 'pick') { if (canPlay(el.dataset.id!, roomOwns())) pickLevel(el.dataset.id!, true); else showOffer(); }
+    else if (act === 'offer') showOffer();
+    else if (act === 'buy') void doBuy();
+    else if (act === 'restore') void doRestore();
+    else if (act === 'getapp') window.open(STORE_URL, '_blank');
+    else if (act === 'closeoffer') offerEl.classList.add('hidden');
     else if (act === 'ready') toggleReady();
     else if (act === 'choice') choose(el.dataset.c as Choice);
     else if (act === 'menu') openMenu();
     else if (act === 'resume') closeMenu();
     else if (act === 'home') { leaveRoom(); lostEl.classList.add('hidden'); }
-    else if (act === 'update') location.reload();
+    else if (act === 'update') { if (device.isNativeApp()) window.open(STORE_URL, '_blank'); else location.reload(); }
     else if (act === 'net') toast(netText());
     else if (act === 'fullscreen') fullscreenTapped();
+    else if (act === 'pref') togglePref(el.dataset.k as PrefKey, el);
     else if (act === 'designer') show('designer');
     else if (act === 'tohome') { importLevel = null; show('home'); }
     else if (act === 'newlevel') {
@@ -442,6 +460,7 @@ export async function startGame(): Promise<void> {
     const t = ev.target as HTMLInputElement;
     if (t.id === 'code') t.value = normalizeRoomCode(t.value);
     if (t.id === 'name') { myName = t.value.trim().slice(0, 12); saveName(myName); }
+    if (t.dataset.pref) { (settings as unknown as Record<string, unknown>)[t.dataset.pref] = Number(t.value); applyPrefs(); }
   });
   ui.addEventListener('keydown', (ev) => {
     if ((ev.target as HTMLElement).id === 'code' && ev.key === 'Enter') void join(normalizeRoomCode((ev.target as HTMLInputElement).value));
@@ -560,7 +579,7 @@ export async function startGame(): Promise<void> {
   }
 
   function maybeStart(): void {
-    if (session.isHost && readyMe && readyPartner && !versionProblem) startLevel(picked);
+    if (session.isHost && readyMe && readyPartner && !versionProblem && canPlay(picked, roomOwns())) startLevel(picked);
   }
 
   /** Host: start (or restart) a level for both phones. */
@@ -737,9 +756,35 @@ export async function startGame(): Promise<void> {
       <button class="hold-btn big" id="hold"><span class="hold-ring"></span><span>Hold to restart</span></button>
       ${device.isStandalone() ? '' : `<button data-act="fullscreen">${fsLabel()}</button>`}
       <button data-act="leave">Leave room</button>
+      ${prefsHtml()}
     </div>`;
     menuEl.classList.remove('hidden');
     setupHold($<HTMLElement>('#hold', menuEl));
+  }
+
+  /** Sound, music and vibration (15.6): on/off buttons plus volume sliders. */
+  function prefsHtml(): string {
+    const tog = (k: PrefKey, label: string) => `<button class="pref${settings[k] ? ' on' : ''}" data-act="pref" data-k="${k}">${label}<small>${settings[k] ? 'On' : 'Off'}</small></button>`;
+    const vol = (k: PrefKey, label: string) => `<label class="pref-vol">${label}<input type="range" min="0" max="1" step="0.05" data-pref="${k}" value="${settings[k]}" /></label>`;
+    return `<div class="prefs">
+      <div class="row">${tog('sound', '🔊 Sound')}${tog('music', '🎵 Music')}${'vibrate' in navigator ? tog('haptics', '📳 Vibration') : ''}</div>
+      <div class="row">${vol('volume', '🔊')}${vol('musicVolume', '🎵')}</div>
+    </div>`;
+  }
+
+  function applyPrefs(): void {
+    sfx.configure(settings.sound, settings.volume);
+    music.configure(settings.music, settings.musicVolume);
+    savePrefs(settings);
+  }
+
+  function togglePref(k: PrefKey, btn: HTMLElement): void {
+    const on = !settings[k];
+    (settings as unknown as Record<string, unknown>)[k] = on;
+    applyPrefs();
+    btn.classList.toggle('on', on);
+    btn.querySelector('small')!.textContent = on ? 'On' : 'Off';
+    if (k === 'haptics' && on) device.haptic(30);
   }
 
   function closeMenu(): void {
@@ -761,7 +806,7 @@ export async function startGame(): Promise<void> {
       btn.classList.toggle('holding', holding && p > 0);
       if (p >= 1) {
         btn.classList.add('pop');
-        device.haptic(40);
+        if (settings.haptics) device.haptic(40);
         sfx.chime([392, 784], 0.05, 0.15);
         requestRestart();
         return;
@@ -789,9 +834,9 @@ export async function startGame(): Promise<void> {
   function onStatus(s: SessionStatus, info?: string): void {
     if (s === 'connected') {
       lostEl.classList.add('hidden');
-      send({ t: 'hello', v: __BUILD__, name: myName, done: Object.keys(loadProgress()), id: phoneId() });
+      send({ t: 'hello', v: __BUILD__, pv: playVersion(), own: ownsGame() ? 1 : 0, name: myName, done: Object.keys(loadProgress()), id: phoneId() });
       sfx.chime([523.25, 783.99]); // "partner joined" (15.5)
-      device.haptic(30);
+      if (settings.haptics) device.haptic(30);
       if (screen === 'home' || screen === 'invite') show('lobby');
       else updateMusic();
     } else if (s === 'lost') {
@@ -828,11 +873,14 @@ export async function startGame(): Promise<void> {
         partnerName = String(m.name ?? '').slice(0, 12);
         partnerDone = Array.isArray(m.done) ? (m.done as string[]) : [];
         partnerId = typeof m.id === 'string' ? m.id.slice(0, 24) : '';
+        partnerOwns = m.own === 1;
         // Tell the host which codes this phone remembers for this partner; the host settles them (G3, G12).
         if (partnerId && !session.isHost) send({ t: 'mycodes', codes: Object.fromEntries(CODE_CHAPTERS.map((ch) => [ch, loadCode(ch, partnerId)])) });
         const v = Number(m.v);
-        versionProblem = v > __BUILD__ ? 'Your friend has a newer version.' : v < __BUILD__ ? 'Your friend has an older version: ask them to reload the page.' : '';
-        if (v > __BUILD__) showUpdate();
+        // Friends can play together when the levels, physics and messages match (play version), even if other parts differ (13.6).
+        const same = typeof m.pv === 'string' ? m.pv === playVersion() : v === __BUILD__;
+        versionProblem = same ? '' : v > __BUILD__ ? 'Your friend has a newer version.' : 'Your friend has an older version: ask them to update the game.';
+        if (!same && v > __BUILD__) showUpdate();
         if (session.isHost) {
           send({ t: 'roles', host: myElem });
           sendPick(picked);
@@ -857,6 +905,10 @@ export async function startGame(): Promise<void> {
       }
       case 'pick':
         pickLevel(String(m.id), false);
+        break;
+      case 'own':
+        partnerOwns = m.on === 1;
+        if (screen === 'map' || screen === 'results') render();
         break;
       case 'ready':
         readyPartner = !!m.on && m.id === picked;
@@ -950,10 +1002,83 @@ export async function startGame(): Promise<void> {
     lostEl.innerHTML = `<div class="panel">
       <h2>Update needed</h2>
       <p>Your friend has a newer version of the game.</p>
-      <button class="primary big" data-act="update">Tap to update</button>
+      <button class="primary big" data-act="update">${device.isNativeApp() ? 'Update in the store' : 'Tap to update'}</button>
     </div>`;
     lostEl.classList.remove('hidden');
   }
+
+  // ---------------------------------------------------------------- the full game (12.6, decided 2026-10-31)
+  /** The offer: after the last free level, or when a 🔑 level is tapped. Never in the middle of a level. */
+  function showOffer(): void {
+    const paid = CHAPTERS.filter((c) => c.n > FREE_CHAPTERS);
+    const levels = paid.reduce((n, c) => n + c.levels.filter((l) => l.rows).length, 0);
+    const app = canBuy();
+    offerEl.innerHTML = `<div class="panel offer">
+      <h2>🔑 The temple goes deeper</h2>
+      <p>${levels} more levels: ${paid.map((c) => esc(c.name)).join(', ')}.</p>
+      <ul class="offer-points">
+        <li>✅ One purchase, yours forever. No ads, ever.</li>
+        <li>🤝 Only one of you pays: when either of you owns it, you play every chapter together.</li>
+      </ul>
+      <div class="row">
+        ${app ? `<button class="primary big" data-act="buy">Unlock for ${esc(priceText())}</button>` : '<button class="primary big" data-act="getapp">Get the app on Google Play</button>'}
+      </div>
+      <p class="small">${app ? '<button class="linkish" data-act="restore">Restore my purchase</button> · ' : ''}Or play with a friend who owns it.</p>
+      <button data-act="closeoffer">Not now</button>
+    </div>`;
+    offerEl.classList.remove('hidden');
+  }
+
+  function ownedNow(): void {
+    send({ t: 'own', on: 1 });
+    offerEl.classList.add('hidden');
+    toast('🔑 Full game unlocked. Thank you!', 4000);
+    sfx.chime([523.25, 659.25, 783.99]);
+    if (screen === 'map' || screen === 'results') render();
+  }
+
+  async function doBuy(): Promise<void> {
+    try { await buy(); } catch { toast('The purchase didn’t go through. Nothing was charged.', 4000); }
+  }
+
+  async function doRestore(): Promise<void> {
+    try { await restore(); } catch { /* reported by the store */ }
+    if (!ownsGame()) toast('No purchase found for this Google account.', 4000);
+  }
+
+  initBilling((owned) => { if (owned) ownedNow(); });
+  // dev only: `?paywall&owned` pretends this phone bought the game, `?paywall&unowned` forgets it
+  if (import.meta.env.DEV && paywallOn()) {
+    const q = new URLSearchParams(location.search);
+    if (q.has('owned')) setOwned(true);
+    if (q.has('unowned')) setOwned(false);
+  }
+
+  // ---------------------------------------------------------------- update check (16.7)
+  // The website asks for version.json (written by the build) when it opens and when you come back to it.
+  // A newer one shows a banner, never in the middle of a level. The store app is updated by the store instead.
+  var updateReady = false; // var: show() may read it before this line runs
+  const updateBanner = document.createElement('div');
+  updateBanner.className = 'update-banner hidden';
+  updateBanner.innerHTML = '✨ New version available <button class="primary" data-act="update">Update</button>';
+  ui.appendChild(updateBanner);
+  function syncBanner(): void {
+    // looked up, not captured: show() can run before this part of the setup has
+    document.querySelector('.update-banner')?.classList.toggle('hidden', !updateReady || screen === 'play' || screen === 'editor');
+  }
+  async function checkForUpdate(): Promise<void> {
+    if (device.isNativeApp() || updateReady) return;
+    try {
+      const r = await fetch(`${import.meta.env.BASE_URL}version.json?t=${Date.now()}`, { cache: 'no-store' });
+      const v = Number(((await r.json()) as { v?: unknown }).v);
+      if (v > __BUILD__) { updateReady = true; syncBanner(); }
+    } catch {
+      // offline or no version file (dev server): try again later
+    }
+  }
+  void checkForUpdate();
+  setInterval(() => void checkForUpdate(), 10 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) void checkForUpdate(); });
 
   // Host: the shared world's state, so the guest's buttons/levers/platforms never drift apart (13.1, 13.2).
   function sendWorld(): void {

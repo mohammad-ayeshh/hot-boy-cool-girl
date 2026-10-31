@@ -93,3 +93,8 @@ export function isStandalone(): boolean {
   return matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
+
+/** Running inside the store app (Capacitor) rather than a browser. */
+export function isNativeApp(): boolean {
+  return !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+}

@@ -387,18 +387,19 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 - No coins, shop or ads (P5).
 - *Later idea:* cosmetic rewards for stars (hats, trail colors) that never change gameplay.
 
-### 12.6 Making money 💬
-*Proposed 2026-10-24, not decided yet.* No ads, in line with P5 and the owner's own wish.
+### 12.6 Making money 🔒
+*Proposed 2026-10-24; decided by the owner 2026-10-31.* No ads, in line with P5 and the owner's own wish.
 
-**Recommended: free to try, pay once, and only one friend pays.**
-- Chapter 1 is free for everyone. One purchase (about $3–5) unlocks every chapter, forever.
-- **Friend's pass:** when an owner hosts a room, the friend plays the paid chapters for free. Only one of the two has to buy. This keeps P5 (friends playing in 30 seconds), and every player brings a new player.
-- The payment happens in the app stores (Google Play / App Store) through the Capacitor app. No server is needed, so L2 holds.
-- The website stays as the free demo that leads to the app.
-- **Later:** Steam, where co-op puzzle games sell well. A friend can join through Steam Remote Play Together without owning the game. This needs keyboard/controller support and a $100 Steam fee.
-- **Later:** cosmetics (hats, trail colors) as rewards or small purchases that never change gameplay (12.5).
+**Free to try, pay once, and only one friend pays.**
+- **Free:** Chapters 1 and 2 (10 levels) for everyone. **The level designer is free too:** shared homemade levels bring new players.
+- **One purchase, $2.99,** unlocks Chapters 3–6 and every future chapter, forever (product `full_game`).
+- **Friend's pass:** if **either** player in a room owns the game, the room plays every chapter. *(Planned as "when the buyer hosts"; built as "either", because the levels must open for both players whoever hosts.)*
+- **Where the offer appears:** on the results screen after the last free level (2-5), and when a 🔑 level is tapped on the map. Never in the middle of a level. It always offers "Not now" and "play with a friend who owns it".
+- **Payment:** Google Play Billing inside the Capacitor app (`cordova-plugin-purchase`). No server, so L2 holds; ownership is saved on the phone and restored from Google Play ("Restore my purchase"). No anti-cheat (13.6).
+- **The website** becomes the free demo (Chapters 1–2) with a "Get the app on Google Play" button. **The lock stays off until the app is live** (`PAYWALL_LIVE` in `src/game/unlock.ts`), so website players don't lose levels before there's a way to buy. `?paywall` previews it.
+- **Later:** iPhone (App Store), Steam, cosmetics that never change gameplay (12.5).
 
-**Honest note:** most indie games earn little. What sells a co-op game is people inviting friends, so the free first chapter and the friend's pass matter more than the price.
+**Honest note:** most indie games earn little. What sells a co-op game is people inviting friends, so the free chapters and the friend's pass matter more than the price.
 
 ## 13. Online rules 🔒
 *Locked 2026-10-17.*
@@ -436,7 +437,7 @@ In simple words: **each player is the boss of their own character, and the host 
 
 ### 13.6 Room rules
 - A room holds **exactly 2 players**. A third person sees "This room is full".
-- **Same version check:** both phones must run the same game version. If not, the older one sees "Your friend has a newer version, tap to update" (important, because updates auto-deploy).
+- **Same version check:** both phones must run the same **play version**: the same levels, movement physics and network messages (`src/game/version.ts`). Menus, art and sounds may differ. If not, the older one sees "Your friend has a newer version", with an update button (in the app it opens the store). *Changed 2026-10-31: was "the same build". With a store app, every website update would otherwise lock app players out of playing with website friends until the store delivers the update.*
 - **No anti-cheat.** You only play with friends; we don't spend effort on it.
 - **No chat or voice** in the game; friends use a phone call or Discord. *Later idea:* 4 quick signals over your character (👋 "Here!", ✋ "Wait", 👉 "Go!", 😅 "Oops").
 
@@ -580,7 +581,7 @@ Many people play on their phone **with the sound off** (and on iPhone the silent
 - **Every sound varies slightly** in pitch and volume each time (section 8).
 - **Stereo position:** sounds come from where they happen: lava on the left is heard more on the left. Hazard loops get **louder as you get closer**, an extra warning (always with a visual too).
 - Your partner's sounds play slightly quieter than your own.
-- **Settings:** music volume, sound volume, vibration on or off.
+- **Settings:** music volume, sound volume, vibration on or off. *Built 2026-10-31 in the pause menu (sound, music and vibration buttons plus two volume sliders), saved on the phone. Vibration is hidden on iPhone, which can't vibrate from a web page.*
 
 ## 16. Level design 🔒
 *Locked 2026-10-17.*
@@ -719,7 +720,7 @@ These sketches are a starting point. The real levels are built and tuned in the 
 
 More ideas from the same talk:
 - **Bigger level sizes** (two larger sizes) for harder levels. ⚠️ This breaks 5.1 "one level = one screen": on a phone either everything gets tiny or the camera must scroll. Discuss before building.
-- **Update check:** the game should check for a new version when it opens and offer "New levels available, tap to update". Today it only notices when the two phones have different versions, so an old version can stay open unnoticed. The owner hit this after Chapters 2–4 shipped.
+- **Update check:** *built 2026-10-31.* The website checks `version.json` (written by every build) when it opens, every 10 minutes and whenever you come back to it; a newer version shows a "New version available · Update" banner, never during a level. The store app is updated by the store.
 
 #### Different eyes: design 🔒
 *Designed one question at a time and completed 2026-10-24. The first chapter that uses it is 16.8.*
@@ -875,3 +876,5 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-24 | **G3 changed:** a team's code is replaced when they **finish** the vault level, not when the gate opens, so a death after opening the gate never locks them out. **Level rule added (16.1):** symbol stones sit on their own shelves 3 tiles up with a walkway underneath, because walking across a stone presses it. |
 | 2026-10-24 | **Password gates and Chapter 6 built (16.7, 16.9).** Wall carvings glow and chime when a player is near; symbol stones sink, glow and chime, and a wrong one resets them all with a low thud. The host referees the stones online. Each pair of phones keeps its own random code (a hidden phone ID, saved next to progress). The route robot proves 6-5 with 46 different codes and checks every carving is on the path. Test rooms: `?lab=vault`, and `?lab=<level id>` opens any official level in the Feel Lab. Star times are guesses (D12). |
 | 2026-10-24 | **Level designer: password tools built (16.3).** Symbol stone and carving tools with an animal picker, a 🔑 Code editor (2–4 animals and a rune), "Seen by" for both, and the new checks (plus a warning for a stone on a walkway). Stones, carvings and the code travel in share links and the room, and count in the ✅ fingerprint; levels without them keep their old fingerprint. |
+| 2026-10-31 | **Making money decided (12.6):** Chapters 1–2 and the level designer are free; one $2.99 purchase unlocks the rest forever; friend's pass: if either player owns it, the room plays everything. Offer after level 2-5 and on 🔑 levels, never mid-level. The lock stays off until the Android app is live. |
+| 2026-10-31 | **Ready-to-sell work built:** sound, music and vibration settings in the pause menu (15.6); a website update check with a banner (16.7); friends now need the same *play version* instead of the same build (13.6); the Android app project (Capacitor) with Google Play Billing; a privacy policy page; Google Play listing text, screenshots and feature graphic (`docs/store/`); release steps in `docs/RELEASE_ANDROID.md`. Not yet built into an app file (needs Android Studio) or tested with real purchases. |

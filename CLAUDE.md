@@ -8,6 +8,7 @@ Online 2-player co-op puzzle platformer for phone browsers (TypeScript + Vite + 
 - Items marked 💬 or ❓ in the doc are not decided yet: discuss them with the user before building.
 - When a design decision is made in conversation, record it in the doc (the relevant section plus the decision log).
 - Money and marketing plans live in `docs/MARKETING.md`. Ideas for future chapters are in doc 16.7.
+- Marketing skills (coreyhaines31/marketingskills, MIT) are installed in `.claude/skills/`. They all read `.agents/product-marketing.md` first: keep it in step with `docs/MARKETING.md`, never invent metrics or quotes there, and don't spend money or publish anything without the owner's yes.
 
 ## Code notes
 - Keep `src/game/` free of TypeScript-only runtime syntax (no parameter properties or enums), so Node can run it directly for `tools/` checks.
@@ -16,6 +17,8 @@ Online 2-player co-op puzzle platformer for phone browsers (TypeScript + Vite + 
 - Different eyes (doc 16.7): a level's optional `seen` overlay map (`h`/`c` = only Hot Boy / only Cool Girl sees that cell) plus `seen` on a mechanism. Hidden things stay real in physics and in `tools/sim.ts`; only drawing and sound change. `Stage.setViewer()` picks whose eyes a phone sees with (null = everything, as in the Feel Lab and designer).
 - Password gates (doc 16.7): `stone` and `carving` mechanisms plus a level `pattern` (in `mechanisms.ts`). Official password levels set `teamCode` (the chapter number): carvings take the team code's animal for their dots, and the pattern becomes the code (`withCode()` in `levels.ts`). Team codes live in `src/game/teamCode.ts`; the host settles them in the room. The route robot plays them with `TEST_CODE` (`tools/routes.ts`), and 6-5 also with many codes via `vaultRoute()`. Symbol stones go on their own shelves (doc 16.1).
 - Feel Lab test rooms: `?lab=vault` (stones and carvings), `?lab=<level id>` (any official level, with a random team code).
+- Selling (doc 12.6): free/paid rules, `PAYWALL_LIVE` and the product ID are in `src/game/unlock.ts`; the Google Play purchase is `src/shop/billing.ts` (only active in the app). Player sound/vibration choices: `src/game/prefs.ts`. Friends must share the same play version (`src/game/version.ts`): bump `PROTOCOL` when the messages between phones change.
+- Android app (Capacitor, `android/`): `npm run app:sync` builds the game into `dist-app/` and copies it in; release steps are in `docs/RELEASE_ANDROID.md`. Store images: `python tools/store_assets.py docs/store/raw docs/store`.
 - Level designer (doc 16.3): a homemade level's ✅ is set **only** in `verifyTogether()` in `src/online/game.ts` (an online 2-player finish). Never add another path that verifies.
 
 ## The owner
