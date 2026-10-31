@@ -28,8 +28,8 @@ Where we are (2026-10-31):
 - ✅ 6 chapters, 30 levels, different eyes and password gates are built.
 - ✅ A two-phone test over mobile data worked and was fun.
 - ✅ Chapter 1 was tested with a friend.
-- ⬜ **Strangers playing Chapters 1–2** (the free part): the next big step.
-- ⬜ A phone playtest of Chapters 2–6.
+- ✅ **Playtests done (owner, 2026-10-31):** about 20 people played the levels and 2 played the whole game. *The three numbers below and what testers said aren't written down yet: add them here.*
+- ✅ The Android app runs on the S23 Ultra (back button, sound pause, fullscreen fixed, 2026-10-31).
 - ⬜ A simple story (optional for the first release).
 
 ⚠️ The launch skill warns about two traps: polishing in private for too long, and "just one more feature". The game has enough content to start; what's missing is outside eyes.
@@ -87,10 +87,10 @@ Most indie games earn little. What makes a co-op game spread is **people invitin
 - [x] Finish the new mechanics and chapters (design doc 16.7)
 - [x] Real internet test on two phones (mobile data), 2026-10-31
 - [x] Free/paid decided; offer, friend's pass, settings and update check built; Android project, privacy page and store images ready (2026-10-31)
-- [ ] **Stranger playtest of Chapters 1–2; measure the three numbers** ← next
-- [ ] Phone playtest of Chapters 2–6; set real star times
+- [x] Playtests: ~20 people played the levels, 2 the whole game (2026-10-31). Still to do: write down the three numbers and quotes; set real star times
+- [x] Android app built and running on the owner's phone (2026-10-31)
 - [ ] Start posting short clips now (section 5); open the Discord founder-led (idea 6)
-- [ ] Android Studio: build the app; Google Play account, closed test with 12 testers for 14 days (`RELEASE_ANDROID.md`)
+- [ ] **Google Play account, signed upload, closed test with 12 testers for 14 days** (`RELEASE_ANDROID.md`) ← next: the 14-day clock is the longest wait, so start it first
 - [ ] Short store video (works on mute)
 - [ ] Launch: switch `PAYWALL_LIVE` on, publish, reach out to small co-op creators
 - [ ] Later: share card, "send to another friend", review prompt (section 6); iPhone; Steam

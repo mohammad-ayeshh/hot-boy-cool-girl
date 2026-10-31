@@ -153,6 +153,17 @@ export class Room {
     return 'direct';
   }
 
+  /** Bytes still waiting to go out. On a busy Wi-Fi this grows during a hiccup. */
+  get backlog(): number {
+    return this.conn?.dataChannel?.bufferedAmount ?? 0;
+  }
+
+  /** Does the browser still think the two phones can reach each other? */
+  get pathAlive(): boolean {
+    const s = this.conn?.peerConnection?.iceConnectionState;
+    return s === 'connected' || s === 'completed';
+  }
+
   /** Milliseconds since the partner last sent anything. */
   get silentFor(): number {
     return performance.now() - this.lastRecv;

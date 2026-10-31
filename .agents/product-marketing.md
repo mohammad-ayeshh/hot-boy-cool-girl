@@ -122,7 +122,7 @@ Not B2B. Two simple player types, both needed (it's co-op):
 ## Goals
 **Business goal:** First prove that strangers love the free chapter, then launch on Google Play with the one-time unlock.
 **Conversion actions, in order:** finish Chapter 1 → invite a friend → come back another day → buy the unlock (`docs/MARKETING.md` section 4).
-**Current metrics:** None yet. Next step is a stranger playtest of Chapter 1 measuring those three numbers.
+**Current metrics:** None written down yet. Playtests happened (2026-10-31: ~20 people played the levels, 2 the whole game), but the three numbers and quotes are still to be recorded. Don't invent them.
 
 ## Paid Ads (optional)
 Not running ads yet, and no ad budget. **Agent may:** draft, recommend. **Agent may not (without approval):** create accounts, spend money, publish anything.
@@ -135,8 +135,10 @@ Not running ads yet, and no ad budget. **Agent may:** draft, recommend. **Agent 
 | 2026-10-31 | Chapters 1–2 free, $2.99 unlock, friend's pass (either owner), designer free | Owner's decision | Monetization | Decided |
 | 2026-10-31 | Lead ads with "Only one of you ever pays", not lore | Marketing skills review | Ads, store page | Adopted |
 | 2026-10-31 | Two-phone play over mobile data works and is fun | Owner's own test | Proof | Tested |
+| 2026-10-31 | Playtests done: ~20 people played the levels, 2 the whole game | Owner's report (results not yet written down) | Launch readiness | Tested |
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v3 (2026-10-31): Playtests done (results to add).
 - v2 (2026-10-31): Business model decided; mobile-data test passed; ad lead line.
 - v1 (2026-10-31): Initial context, written from GAME_DESIGN.md and MARKETING.md when the marketing skills were installed.

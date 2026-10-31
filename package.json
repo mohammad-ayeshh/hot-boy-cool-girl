@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
     "cordova-plugin-purchase": "^13.20.0",
     "peerjs": "^1.5.5",

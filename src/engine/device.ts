@@ -48,10 +48,19 @@ async function keepAwake(): Promise<void> {
   }
 }
 
-// The wake lock is dropped whenever the tab is hidden; take it again on return.
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && audio) void keepAwake();
-});
+/**
+ * Going to another app, the home screen or the lock screen: all sound stops (music and effects share one
+ * AudioContext) and starts again on return. The wake lock is dropped while hidden; take it again on return.
+ */
+export function setHidden(hidden: boolean): void {
+  if (!audio) return;
+  if (hidden) void audio.suspend();
+  else {
+    void audio.resume();
+    void keepAwake();
+  }
+}
+document.addEventListener('visibilitychange', () => setHidden(document.hidden));
 
 export const canFullscreen = (): boolean => !!document.fullscreenEnabled;
 export const isFullscreen = (): boolean => !!document.fullscreenElement;
@@ -89,8 +98,9 @@ export async function enterFullscreenLandscape(): Promise<void> {
   }
 }
 
+/** Already fullscreen: opened from the home-screen icon, or the store app (which hides the bars itself). */
 export function isStandalone(): boolean {
-  return matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches ||
+  return isNativeApp() || matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
 

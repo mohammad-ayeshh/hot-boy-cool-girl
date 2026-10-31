@@ -424,6 +424,7 @@ In simple words: **each player is the boss of their own character, and the host 
 ### 13.3 Deaths and restarts
 - When anyone dies, **both** phones play the death effect and the level **restarts for both** about 1 s later.
 - **Either player can restart** from the pause menu at any time. The button must be **held for 1 s** to avoid accidents, and the partner sees "Cool Girl restarted the level".
+- **Either player can go to the level map** from the pause menu ("Hold for the level map", also held for 1 s). Both phones go to the map, and the partner sees "Hot Boy went to the level map". *Added 2026-10-31.*
 - **Hold-to-restart animation:** while held, a ring fills around the button over 1 s and the button gently shakes and brightens. Releasing early drains the ring back smoothly. When full, a small pop, a vibration and a flash confirm the restart.
 
 ### 13.4 Pause and leaving the app
@@ -433,7 +434,8 @@ In simple words: **each player is the boss of their own character, and the host 
 ### 13.5 Disconnects
 - If the connection drops, the remaining player sees **"Waiting for partner…"** and the level pauses.
 - The **room code stays the same** for the whole session. When the missing player comes back (same link or code), they reconnect automatically and the **level restarts**.
-- After **2 minutes** of waiting, the remaining player gets a button to go back to Home.
+- The waiting screen has a **"Leave room" button from the start**, so a player is never stuck: they can leave and join or create another room. *Changed 2026-10-31: was "after 2 minutes of waiting".*
+- **Wi-Fi hiccups aren't drops.** If the friend goes silent but the phones' connection still looks alive, the game waits up to 15 s (instead of 6 s) before calling it a drop, and the signal icon turns 🔴 after 2 s of silence. Position updates are skipped (not queued) while messages pile up. *Added 2026-10-31, after drops were seen only on shared Wi-Fi.*
 
 ### 13.6 Room rules
 - A room holds **exactly 2 players**. A third person sees "This room is full".
@@ -442,7 +444,7 @@ In simple words: **each player is the boss of their own character, and the host 
 - **No chat or voice** in the game; friends use a phone call or Discord. *Later idea:* 4 quick signals over your character (👋 "Here!", ✋ "Wait", 👉 "Go!", 😅 "Oops").
 
 ### 13.7 Connection indicator
-A small signal icon in the corner: 🟢 good (under 100 ms), 🟡 OK (100–200 ms), 🔴 laggy (over 200 ms). Tapping it shows the ping and whether you're connected directly or through the relay.
+A small signal icon in the corner: 🟢 good (under 100 ms), 🟡 OK (100–200 ms), 🔴 laggy (over 200 ms). Tapping it shows the ping and whether you're connected directly or through the relay, plus what the last drop looked like (e.g. "same Wi-Fi, 15 s silent"), to help find network problems.
 
 ## 14. Art style 🔒
 *Locked 2026-10-17. Exact shapes are refined in the game on a real phone.*
@@ -878,3 +880,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-24 | **Level designer: password tools built (16.3).** Symbol stone and carving tools with an animal picker, a 🔑 Code editor (2–4 animals and a rune), "Seen by" for both, and the new checks (plus a warning for a stone on a walkway). Stones, carvings and the code travel in share links and the room, and count in the ✅ fingerprint; levels without them keep their old fingerprint. |
 | 2026-10-31 | **Making money decided (12.6):** Chapters 1–2 and the level designer are free; one $2.99 purchase unlocks the rest forever; friend's pass: if either player owns it, the room plays everything. Offer after level 2-5 and on 🔑 levels, never mid-level. The lock stays off until the Android app is live. |
 | 2026-10-31 | **Ready-to-sell work built:** sound, music and vibration settings in the pause menu (15.6); a website update check with a banner (16.7); friends now need the same *play version* instead of the same build (13.6); the Android app project (Capacitor) with Google Play Billing; a privacy policy page; Google Play listing text, screenshots and feature graphic (`docs/store/`); release steps in `docs/RELEASE_ANDROID.md`. Not yet built into an app file (needs Android Studio) or tested with real purchases. |
+| 2026-10-31 | **Connection and menu (13.3, 13.5, 13.7):** "Leave room" on the waiting screen right away (was after 2 minutes); "Hold for the level map" in the pause menu takes both players to the map; Wi-Fi hiccups wait 15 s before counting as a drop, and position updates are skipped instead of piling up. Still free: the public PeerJS servers. Android app: the back button goes one screen back, and sound pauses when the app is hidden. |

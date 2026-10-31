@@ -11,6 +11,9 @@ These are the steps only you can do, because they need your PC setup, your Googl
 1. Download Android Studio from developer.android.com/studio and install it with the default options (it brings Java and the Android SDK).
 2. Open it once and let it finish downloading its components.
 
+*Done 2026-10-31 from the command line instead:* `winget install Google.AndroidStudio` (2026.2.2, brings Java 25 in `C:\Program Files\Android\Android Studio\jbr`), the SDK command-line tools in `%LOCALAPPDATA%\Android\Sdk`, then `android sdk install platforms/android-36 build-tools/36.0.0` plus platform-tools. `JAVA_HOME` and `ANDROID_HOME` are set for the user.
+Gradle 8.14 can't run on Java 25 ("Unsupported class file major version 69"), so the wrapper is now **Gradle 9.1.0** (`android/gradle/wrapper/gradle-wrapper.properties`); `gradlew assembleDebug` builds. If `npx cap` ever regenerates `android/`, set it again.
+
 ## 2. Put the game into the app and try it on your phone
 ```bash
 npm run app:sync

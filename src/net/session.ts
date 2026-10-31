@@ -13,6 +13,12 @@ export interface SessionEvents {
 
 const HEARTBEAT_MS = 1000;
 const SILENT_LIMIT_MS = 6000;
+// Silent, but the browser says the path still works: a Wi-Fi hiccup (busy router, phone power saving).
+// Give it longer before calling it a drop, since a full reconnect takes several seconds.
+const HICCUP_LIMIT_MS = 15000;
+// Position updates are only useful while fresh: when this much is already queued, skip one instead of
+// adding to the pile (all messages go in order, so a pile-up delays everything behind it).
+const BACKLOG_LIMIT = 16 * 1024;
 const REJOIN_EVERY_MS = 3000;
 
 export class Session {
@@ -21,6 +27,8 @@ export class Session {
   /** Smoothed round-trip time in ms (NaN until measured). */
   rtt = NaN;
   kind: ConnectionKind = 'unknown';
+  /** What the last drop looked like, for the connection info (e.g. "same Wi-Fi, 6 s silent"). */
+  lastDrop = '';
   private room: Room | null = null;
   private beat = 0;
   private rejoinTimer = 0;
@@ -66,6 +74,16 @@ export class Session {
 
   send(msg: Record<string, unknown>): void {
     if (this.status === 'connected') this.room?.send(msg);
+  }
+
+  /** For frequent updates that the next one replaces (positions, world state): skipped during a pile-up. */
+  sendFresh(msg: Record<string, unknown>): void {
+    if (this.status === 'connected' && (this.room?.backlog ?? 0) < BACKLOG_LIMIT) this.room?.send(msg);
+  }
+
+  /** Milliseconds the friend has been silent while connected (0 if not connected). */
+  get silentFor(): number {
+    return this.status === 'connected' ? this.room?.silentFor ?? 0 : 0;
   }
 
   leave(): void {
@@ -124,7 +142,7 @@ export class Session {
           this.set('idle', 'This room is full.');
         } else this.events.message(m);
       },
-      onDisconnected: () => this.lost(),
+      onDisconnected: (reason) => { this.noteDrop(reason); this.lost(); },
     };
   }
 
@@ -152,13 +170,20 @@ export class Session {
       if (!room || this.status !== 'connected') return;
       room.send({ t: 'ping', ts: performance.now() });
       // A phone that went to sleep may never send "close": notice the silence ourselves.
-      if (room.silentFor > SILENT_LIMIT_MS) {
+      const silent = room.silentFor;
+      if (silent > (room.pathAlive ? HICCUP_LIMIT_MS : SILENT_LIMIT_MS)) {
+        this.noteDrop(`${Math.round(silent / 1000)} s silent`);
         if (room.isHost) room.dropPartner();
         this.lost();
         return;
       }
       if (this.beats++ % 5 === 0) room.connectionKind().then((k) => { this.kind = k; }).catch(() => {});
     }, HEARTBEAT_MS);
+  }
+
+  private noteDrop(why: string): void {
+    const path = { local: 'same Wi-Fi', direct: 'direct', relay: 'relay', unknown: 'unknown path' }[this.kind];
+    this.lastDrop = `${path}, ${why}`;
   }
 
   private set(s: SessionStatus, info?: string): void {

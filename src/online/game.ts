@@ -34,7 +34,6 @@ const $ = <E extends HTMLElement>(sel: string, root: ParentNode = document) => r
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const SNAPSHOT_MS = 33; // ~30 per second (13.2)
 const RESTART_DELAY_MS = 1100; // death effect, then restart for both (13.3)
-const WAIT_LIMIT_MS = 120_000; // after 2 minutes of waiting, offer the way home (13.5)
 
 export async function startGame(): Promise<void> {
   const settings = defaults();
@@ -64,7 +63,6 @@ export async function startGame(): Promise<void> {
   let myChoice: Choice | null = null, partnerChoice: Choice | null = null;
   let finish: Finish | null = null;
   let menuOpen = false;
-  let lostAt = 0;
   let versionProblem = '';
   // level designer (16.3)
   let mapTab: number | 'mine' = 1; // a chapter number, or the homemade levels
@@ -665,6 +663,14 @@ export async function startGame(): Promise<void> {
   }
 
   /** Hold-to-restart from the pause menu: the host does it, the guest asks the host. */
+  /** Pause menu: both players leave the level for the level map (held like restart, 13.3). */
+  function leaveToMap(): void {
+    closeMenu();
+    send({ t: 'lobby', by: myElem });
+    finish = null;
+    goMap();
+  }
+
   function requestRestart(): void {
     if (session.isHost) {
       round++;
@@ -754,12 +760,14 @@ export async function startGame(): Promise<void> {
       <h2>Paused <small>(the game keeps running)</small></h2>
       <button class="primary big" data-act="resume">Resume</button>
       <button class="hold-btn big" id="hold"><span class="hold-ring"></span><span>Hold to restart</span></button>
+      <button class="hold-btn" id="hold-map"><span class="hold-ring"></span><span>Hold for the level map</span></button>
       ${device.isStandalone() ? '' : `<button data-act="fullscreen">${fsLabel()}</button>`}
       <button data-act="leave">Leave room</button>
       ${prefsHtml()}
     </div>`;
     menuEl.classList.remove('hidden');
-    setupHold($<HTMLElement>('#hold', menuEl));
+    setupHold($<HTMLElement>('#hold', menuEl), requestRestart);
+    setupHold($<HTMLElement>('#hold-map', menuEl), leaveToMap);
   }
 
   /** Sound, music and vibration (15.6): on/off buttons plus volume sliders. */
@@ -796,7 +804,7 @@ export async function startGame(): Promise<void> {
   }
 
   /** The ring fills over 1 s while held, the button shakes and brightens; early release drains it (13.3). */
-  function setupHold(btn: HTMLElement): void {
+  function setupHold(btn: HTMLElement, done: () => void): void {
     let p = 0, holding = false, last = 0, raf = 0;
     const loop = (t: number) => {
       const dt = last ? (t - last) / 1000 : 0;
@@ -808,7 +816,7 @@ export async function startGame(): Promise<void> {
         btn.classList.add('pop');
         if (settings.haptics) device.haptic(40);
         sfx.chime([392, 784], 0.05, 0.15);
-        requestRestart();
+        done();
         return;
       }
       if (holding || p > 0) raf = requestAnimationFrame(loop);
@@ -852,15 +860,14 @@ export async function startGame(): Promise<void> {
   }
 
   function showLost(): void {
-    lostAt = performance.now();
     stage.inputEnabled = false;
     stage.controls.reset();
     stage.setPartnerStatus(other(myElem), '');
     lostEl.innerHTML = `<div class="panel">
       <h2>Waiting for your friend…</h2>
-      <p>The connection dropped. They can reopen the same link (room <b>${session.code}</b>) and you'll continue.</p>
+      <p>The connection dropped. We keep trying; they can also reopen the same link (room <b>${session.code}</b>) and you'll continue.</p>
       <div class="spinner"></div>
-      <button class="hidden" id="lost-home" data-act="home">Back to home</button>
+      <button id="lost-home" data-act="home">Leave room</button>
     </div>`;
     lostEl.classList.remove('hidden');
   }
@@ -987,6 +994,11 @@ export async function startGame(): Promise<void> {
         resolveChoice();
         break;
       case 'lobby':
+        if (m.by) { // from the pause menu, mid-level (not from the results screen)
+          if (screen === 'play') toast(`${NAMES[m.by as Elem]} went to the level map`);
+          closeMenu();
+          finish = null;
+        }
         goMap();
         break;
       case 'status':
@@ -1047,6 +1059,36 @@ export async function startGame(): Promise<void> {
   }
 
   initBilling((owned) => { if (owned) ownedNow(); });
+
+  // Store app: Android's back button goes one step back, like the screen's own back button (closes a popup,
+  // pauses or resumes a level, results → map → characters → leave the room → home). On the home screen it
+  // sends the app to the background like Home; it never closes the app.
+  const BACK: Partial<Record<Screen, string>> = {
+    results: '[data-act="choice"][data-c="map"]',
+    map: '[data-act="tolobby"]',
+    lobby: '[data-act="leave"]',
+    invite: '[data-act="leave"]',
+    designer: '[data-act="tohome"]',
+    import: '[data-act="tohome"]',
+    editor: '[data-ed="done"]', // saves first, like tapping Done
+  };
+  function backPressed(): boolean {
+    const visible = (sel: string) => [...ui.querySelectorAll<HTMLElement>(sel)].find((b) => b.offsetParent !== null);
+    const popup = visible('[data-act="closeoffer"]') ?? visible('#lost-home');
+    if (popup) { popup.click(); return true; }
+    if (screen === 'play') { if (menuOpen) closeMenu(); else openMenu(); return true; }
+    const btn = BACK[screen] && visible(BACK[screen]!);
+    if (btn) { btn.click(); return true; }
+    return false;
+  }
+  if (device.isNativeApp()) {
+    void import('@capacitor/app').then(({ App }) => {
+      void App.addListener('backButton', () => { if (!backPressed()) void App.minimizeApp(); });
+      // the app's own "hidden" signal, in case the web view doesn't report it on every phone
+      void App.addListener('pause', () => device.setHidden(true));
+      void App.addListener('resume', () => device.setHidden(false));
+    });
+  }
   // dev only: `?paywall&owned` pretends this phone bought the game, `?paywall&unowned` forgets it
   if (import.meta.env.DEV && paywallOn()) {
     const q = new URLSearchParams(location.search);
@@ -1083,7 +1125,7 @@ export async function startGame(): Promise<void> {
   // Host: the shared world's state, so the guest's buttons/levers/platforms never drift apart (13.1, 13.2).
   function sendWorld(): void {
     if (screen !== 'play' || !session.connected || !session.isHost) return;
-    send({ t: 'w', n: round, ...stage.mechState() });
+    session.sendFresh({ t: 'w', n: round, ...stage.mechState() });
   }
   setInterval(() => {
     if (stage.mech.levers.length || stage.mech.platforms.length || stage.mech.vault) sendWorld();
@@ -1092,7 +1134,7 @@ export async function startGame(): Promise<void> {
   // Send my character ~30×/s while playing (13.2).
   setInterval(() => {
     if (screen !== 'play' || !session.connected) return;
-    send({ t: 's', n: round, ...stage.snapshot(myElem), d: stage.atDoor(myElem) ? 1 : 0 });
+    session.sendFresh({ t: 's', n: round, ...stage.snapshot(myElem), d: stage.atDoor(myElem) ? 1 : 0 });
   }, SNAPSHOT_MS);
 
   // HUD, connection dot, finish check, waiting timeout.
@@ -1109,18 +1151,19 @@ export async function startGame(): Promise<void> {
       hudInfo.textContent = `⏱ ${stage.levelTime.toFixed(1)}   🔥 ${g.fire[0]}/${g.fire[1]}   💧 ${g.water[0]}/${g.water[1]}`;
     }
     updateNet();
-    if (session.status === 'lost' && performance.now() - lostAt > WAIT_LIMIT_MS) document.getElementById('lost-home')?.classList.remove('hidden');
   }, 100);
 
   function updateNet(): void {
     const r = session.rtt;
-    netDot.textContent = !session.connected ? '⚪' : Number.isNaN(r) ? '🟢' : r < 100 ? '🟢' : r < 200 ? '🟡' : '🔴';
+    // a friend silent for 2 s is a hiccup in progress: show it before the ping catches up
+    netDot.textContent = !session.connected ? '⚪' : session.silentFor > 2000 ? '🔴' : Number.isNaN(r) ? '🟢' : r < 100 ? '🟢' : r < 200 ? '🟡' : '🔴';
   }
 
   function netText(): string {
     if (!session.connected) return 'Not connected';
     const path = { local: 'same Wi-Fi', direct: 'direct', relay: 'through the relay server', unknown: 'checking…' }[session.kind];
-    return `Ping ${Number.isNaN(session.rtt) ? '…' : Math.round(session.rtt) + ' ms'} · ${path}`;
+    const drop = session.lastDrop ? ` · last drop: ${session.lastDrop}` : '';
+    return `Ping ${Number.isNaN(session.rtt) ? '…' : Math.round(session.rtt) + ' ms'} · ${path}${drop}`;
   }
 
   // ---------------------------------------------------------------- go
