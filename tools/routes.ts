@@ -2,23 +2,21 @@
 // x is in tiles (column 10 is x 10..11, its middle 10.5). `npm run check:routes` plays them all.
 import { enteredAt, gateOpen, gateShut, heard, jump, pause, platAt, say, to, until, type Cmd, type Route } from './sim.ts';
 import { CHAPTER_6 } from '../src/game/chapter6.ts';
+import { CHAPTER_7 } from '../src/game/chapter7.ts';
+import type { LevelDef } from '../src/game/levels.ts';
 import type { Animal } from '../src/game/mechanisms.ts';
 
 /** The fixed code the robot plays password levels with (16.7 build notes): a repeat, and both sides' stones. */
 export const TEST_CODE: Animal[] = ['frog', 'bat', 'bat', 'monkey'];
 
 /**
- * Level 6-5 for any code. Up top: he holds the gate button for her, each opens the other's trapdoor with a lever,
- * and both drop into their half of the vault. Then they take turns: whoever owns the next animal stands in the gap
- * next to its shelf, jumps up onto the stone, and steps back down (a repeat = step off and on again, G11).
+ * Taking turns at a split vault (6-5, 7-5) once both are down in their halves: whoever owns the next animal stands
+ * in the gap next to its shelf, jumps up onto the stone, and steps back down (a repeat = step off and on again, G11).
+ * Hidden stones (7-5, W3) are real for both (E5), so the robot plays them the same way.
  */
-export function vaultRoute(code: Animal[]): Route {
-  const stones = CHAPTER_6[4].mechs!.flatMap((m) => (m.kind === 'stone' ? [m] : []));
+function enterCode(level: LevelDef, code: Animal[], fire: Cmd[], water: Cmd[]): Route {
+  const stones = level.mechs!.flatMap((m) => (m.kind === 'stone' ? [m] : []));
   const gates = [13, 18]; // the vault gates: a shelf next to one is climbed from its other side
-  const fire: Cmd[] = [to(12.5), say('he holds'), until('she is past the gate', (w) => w.body.water.x > 15.6), to(7.5),
-    until('he is down', (w) => w.body.fire.y > 15.9)];
-  const water: Cmd[] = [heard('he holds'), gateOpen(1), to(16.2), jump(19.6, { at: 16.2 }), to(21.2), to(23.9),
-    until('she is down', (w) => w.body.water.y > 15.9)];
   code.forEach((animal, i) => {
     const s = stones.find((st) => st.animal === animal)!;
     const fromLeft = !gates.includes(s.x - 1);
@@ -30,6 +28,29 @@ export function vaultRoute(code: Animal[]): Route {
   return { fire, water };
 }
 
+/** Level 6-5 for any code. Up top: he holds the gate button for her, each opens the other's trapdoor with a lever. */
+export function vaultRoute(code: Animal[]): Route {
+  const fire: Cmd[] = [to(12.5), say('he holds'), until('she is past the gate', (w) => w.body.water.x > 15.6), to(7.5),
+    until('he is down', (w) => w.body.fire.y > 15.9)];
+  const water: Cmd[] = [heard('he holds'), gateOpen(1), to(16.2), jump(19.6, { at: 16.2 }), to(21.2), to(23.9),
+    until('she is down', (w) => w.body.water.y > 15.9)];
+  return enterCode(CHAPTER_6[4], code, fire, water);
+}
+
+/**
+ * Level 7-5 for any code. Up top: he opens her trapdoor on the way, then stands on the gate button only she sees;
+ * she climbs onto the poison pit, crosses on the stones only he sees, and walks over the lever that opens his trapdoor.
+ */
+export function whisperRoute(code: Animal[]): Route {
+  const fire: Cmd[] = [to(12.5), say('he holds'), until('she is past the gate', (w) => w.body.water.x > 15.6), to(7.5),
+    until('he is down', (w) => w.body.fire.y > 15.9)];
+  const water: Cmd[] = [heard('he holds'), gateOpen(1), to(15.4), jump(16.6), to(17.4), jump(20.6, { at: 17.4 }), to(21.4),
+    jump(24.6, { at: 21.4 }), to(26.6), until('she is down', (w) => w.body.water.y > 15.9)];
+  return enterCode(CHAPTER_7[4], code, fire, water);
+}
+
+/** Password vaults the robot plays with many codes, not just TEST_CODE (route_check.ts). */
+export const CODE_ROUTES: Record<string, (code: Animal[]) => Route> = { '6-5': vaultRoute, '7-5': whisperRoute };
 
 export const ROUTES: Record<string, Route> = {
   '1-1': {
@@ -192,6 +213,27 @@ export const ROUTES: Record<string, Route> = {
       heard('he is up'), to(30.5)],
   },
   '6-5': vaultRoute(TEST_CODE),
+
+  // ---- Chapter 7 (TEST_CODE too). Hidden things are real for both (E5), so the robot plays them like any level.
+  '7-1': {
+    fire: [to(1.5), until('he is down', (w) => w.body.fire.y > 15.9), to(16.5), gateOpen(0), to(24.4), jump(25.8, { at: 24.4 }), to(26.5)],
+    water: [to(16.5), gateOpen(1), to(21.5), until('she is down', (w) => w.body.water.y > 15.9), to(24.4), jump(25.8, { at: 24.4 }), to(28.5)],
+  },
+  '7-2': {
+    fire: [to(3.4), jump(6.6, { at: 3.4 }), to(7.4), jump(10.6, { at: 7.4 }), to(11.4), jump(13.6, { at: 11.4 }), to(15.5)],
+    water: [to(28.6), jump(25.4, { at: 28.6 }), to(24.6), jump(21.4, { at: 24.6 }), to(20.6), jump(18.4, { at: 20.6 }), to(17.5)],
+  },
+  '7-3': {
+    fire: [to(5.2), jump(7.5), to(8.6), to(12.4), jump(15.6, { at: 12.4 }), to(21.5), say('he holds'), heard('locked'), to(26.3),
+      jump(27.6, { at: 26.3 }), to(27.5)],
+    water: [to(5.2), jump(7.5), to(10.4), jump(13.5, { at: 10.4 }), jump(15.6), to(22.3), heard('he holds'), gateOpen(0), to(25.8),
+      say('locked'), to(26.3), jump(29.6, { at: 26.3 }), to(29.5)],
+  },
+  '7-4': {
+    fire: [to(25.5), say('he holds'), heard('locked'), to(8.6), jump(7.2), jump(8.6), to(14.5)],
+    water: [heard('he holds'), gateOpen(0), to(8.6), jump(7.2), jump(8.6), to(11.8), say('locked'), to(16.5)],
+  },
+  '7-5': whisperRoute(TEST_CODE),
 };
 
 /**

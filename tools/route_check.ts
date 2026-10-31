@@ -6,7 +6,7 @@ import { ALL_LEVELS, findLevel, withCode } from '../src/game/levels.ts';
 import { VAULT_MECHS, VAULT_PATTERN, VAULT_ROWS } from '../src/game/labLevel.ts';
 import { ANIMALS, Mechanisms, type Animal, type MechEvent, type MechSync } from '../src/game/mechanisms.ts';
 import { play, type World } from './sim.ts';
-import { ROUTES, TEST_CODE, VAULT_ROUTE, vaultRoute } from './routes.ts';
+import { CODE_ROUTES, ROUTES, TEST_CODE, VAULT_ROUTE } from './routes.ts';
 
 const args = process.argv.slice(2);
 const only = args.filter((a) => !a.startsWith('-'));
@@ -28,10 +28,11 @@ for (const l of ALL_LEVELS) {
   console.log(`${r.won ? 'PASS' : 'FAIL'}  ${l.id} ${l.name}: ${note}`);
   if (!r.won) failed++;
 }
-// Level 6-5 with many codes, not just the test one: the vault must work for whatever code a team gets (G11),
+// The vaults (6-5, 7-5) with many codes, not just the test one: a vault must work for whatever code a team gets (G11),
 // including every animal on one side (one player does all the stepping) and the same animal four times.
-const vault = findLevel('6-5');
-if (vault?.rows && (!only.length || only.includes('6-5'))) {
+for (const [id, routeFor] of Object.entries(CODE_ROUTES)) {
+  const vault = findLevel(id);
+  if (!vault?.rows || (only.length && !only.includes(id))) continue;
   const codes: Animal[][] = [
     ['snake', 'monkey', 'jaguar', 'frog'], ['turtle', 'bat', 'fish', 'bird'], ['frog', 'frog', 'frog', 'frog'],
     ['snake', 'turtle', 'snake', 'turtle'], ['bird', 'bird', 'jaguar', 'jaguar'],
@@ -42,10 +43,10 @@ if (vault?.rows && (!only.length || only.includes('6-5'))) {
   const bad: string[] = [];
   for (const code of codes) {
     const { mechs, pattern } = withCode(vault, code);
-    const r = play(vault.rows, mechs, vaultRoute(code), { pattern });
+    const r = play(vault.rows, mechs, routeFor(code), { pattern });
     if (!r.won || r.world.stoneLog.join() !== code.join()) bad.push(`${code.join(' ')}: ${r.why || r.world.stoneLog.join(',')}`);
   }
-  console.log(`${bad.length ? 'FAIL' : 'PASS'}  6-5 with ${codes.length} different codes${bad.length ? `: ${bad.slice(0, 3).join(' | ')}` : ' (one side only, repeats, 40 random)'}`);
+  console.log(`${bad.length ? 'FAIL' : 'PASS'}  ${id} with ${codes.length} different codes${bad.length ? `: ${bad.slice(0, 3).join(' | ')}` : ' (one side only, repeats, 40 random)'}`);
   if (bad.length) failed++;
 }
 // The password-gate test room (?lab=vault): a right step, a wrong one that must reset everything (G7),

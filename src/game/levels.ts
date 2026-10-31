@@ -9,6 +9,7 @@ import { CHAPTER_3 } from './chapter3.ts';
 import { CHAPTER_4 } from './chapter4.ts';
 import { CHAPTER_5 } from './chapter5.ts';
 import { CHAPTER_6 } from './chapter6.ts';
+import { CHAPTER_7 } from './chapter7.ts';
 
 export interface LevelDef {
   id: string;
@@ -190,6 +191,7 @@ export const CHAPTERS: Chapter[] = [
   { n: 4, name: 'The Summit', levels: CHAPTER_4 },
   { n: 5, name: 'The Hall of Eyes', levels: CHAPTER_5 },
   { n: 6, name: 'The Sealed Vault', levels: CHAPTER_6 },
+  { n: 7, name: 'The Whispering Vault', levels: CHAPTER_7 },
 ];
 /** Every official level in play order: finishing one unlocks the next, across chapters (12.2). */
 export const ALL_LEVELS: LevelDef[] = CHAPTERS.flatMap((c) => c.levels);

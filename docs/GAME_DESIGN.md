@@ -804,6 +804,37 @@ How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 
 **Star times** are first guesses (D12). Level 5's target time (90 s) allows for a couple of wrong guesses (G7).
 
+### 16.10 Chapter 7: The Whispering Vault 🔒
+*Planned and approved by the owner 2026-10-31.* Sketches: [`docs/levels/chapter7.png`](levels/chapter7.png). Mixes **Password gates** and **Different eyes** (16.7), as G10 promised: **each player holds half of the secret and has to say it out loud** (E1). A paid chapter (12.6).
+
+| # | Decision |
+|---|---|
+| W1 | **Each carving is seen by only one player** 🔒: Cool Girl sees carvings 1 and 3, Hot Boy sees carvings 2 and 4 (G10). The other player sees a blank wall and hears no chime (16.7 "how hidden things look"). The game never says who sees what (E4). |
+| W2 | **Its own team code** 🔒: Chapter 7 has its own random 4-animal code, separate from Chapter 6's, with the same rules: one per friend pair, replaced when the team finishes level 5 (G3, G11, G12). Levels 1–4 carry one carving each, the stones are only in level 5 (G13). |
+| W3 | **Hidden stones in the vault** 🔒: the vault is split 4 and 4 as in 6-5 (G8), but on each side 2 of the 4 symbol stones are seen **only by the partner**. The shelf under a hidden stone stays visible, so you see an empty shelf and your partner tells you which animal sits there. A hidden stone is real (E5): you can step on it without seeing it. |
+| W4 | **One new thing per level** 🔒 (D2): 7-1 teaches the hidden carving alone, 7-2–7-4 combine it with one Chapter 5 idea each, 7-3 is a breather (D11), and 7-5 is the exam. |
+
+| # | Name | New thing | How it plays |
+|---|---|---|---|
+| 1 | **Half a Secret** | A carving **only one of you sees** | An easy shared path (like 6-1). Only Cool Girl sees the carving (1 dot); Hot Boy walks past a blank wall, so she has to tell him. Nothing can kill you. |
+| 2 | **The Unseen Bridge** | The carving waits **across hidden stepping stones** | A poison pit with hidden stepping stones (like 5-1): each sees the stones the other needs. On the far side, carving 2 is seen only by Hot Boy. |
+| 3 | **Quiet Hall** | Breather (D11) | An easy gem run with some hidden gems for the stars. Carving 3 (only Cool Girl) sits in the middle. |
+| 4 | **The Hidden Key** | A **hidden button** opens the carving's room | The button that opens the sealed room is seen only by Cool Girl; she guides Hot Boy onto it. Inside, carving 4 is seen only by Hot Boy. |
+| 5 | **The Whispering Vault** | Exam: **hidden stones** (W3) | A short climb with a hidden mechanism leads to the split vault. The players take turns on the code, guiding each other onto the stones they can't see. |
+
+**Known risk (accepted, as in Chapter 6):** if a player forgets to say a carving out loud, the team only finds out at the vault and must replay that level to read it again (no journal, G4).
+
+**How they were built (2026-10-31):**
+- 7-1: both start on an upper ledge next to the carving. He drops into the lower lane (lava), she stays up (water). Each lane has a gate, and the lever that opens it is in the other lane (like 2-1). Both lanes lead to the doors on a ledge at the right.
+- 7-2: they start on opposite sides and cross toward each other over two poison pits: a low hidden stone, then a high one, then the middle (each sees the partner's stones). Carving 2 is at the edge of the middle, right where Hot Boy lands. The doors are in the middle.
+- 7-3: a hill, a lava pool next to a water pool, and a platform with carving 3 on top. Two gems are hidden: a fire gem only she sees and a water gem only he sees, so chasing ⭐⭐⭐ means telling each other. A button-and-lever gate to the doors at the end (like 3-3).
+- 7-4: the chamber with the doors and carving 4 is up on the left, behind a trapdoor. The button that opens it sits past a 6-tile lava pool (only Hot Boy gets there), and only Cool Girl sees it. She climbs in and walks over a lever that locks the trapdoor open, then he climbs in.
+- 7-5: up top, he walks over the lever that opens her trapdoor and stands on the gate button only she sees. She climbs onto a poison pit and crosses on stones only he sees, then walks over the lever that opens his trapdoor. The vault below is the same room as 6-5, but the monkey and frog stones (his side) are seen only by her, and the bird and bat stones (her side) only by him.
+
+**Proven winnable:** every level passes the route robot; 7-5 is played with the test code **and 45 other codes**, like 6-5.
+
+**Star times** are first guesses (D12). Level 5's target time (100 s) allows for wrong guesses and for guiding each other onto hidden stones.
+
 ---
 
 ## 17. Design topics ✅
@@ -880,4 +911,6 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-24 | **Level designer: password tools built (16.3).** Symbol stone and carving tools with an animal picker, a 🔑 Code editor (2–4 animals and a rune), "Seen by" for both, and the new checks (plus a warning for a stone on a walkway). Stones, carvings and the code travel in share links and the room, and count in the ✅ fingerprint; levels without them keep their old fingerprint. |
 | 2026-10-31 | **Making money decided (12.6):** Chapters 1–2 and the level designer are free; one $2.99 purchase unlocks the rest forever; friend's pass: if either player owns it, the room plays everything. Offer after level 2-5 and on 🔑 levels, never mid-level. The lock stays off until the Android app is live. |
 | 2026-10-31 | **Ready-to-sell work built:** sound, music and vibration settings in the pause menu (15.6); a website update check with a banner (16.7); friends now need the same *play version* instead of the same build (13.6); the Android app project (Capacitor) with Google Play Billing; a privacy policy page; Google Play listing text, screenshots and feature graphic (`docs/store/`); release steps in `docs/RELEASE_ANDROID.md`. Not yet built into an app file (needs Android Studio) or tested with real purchases. |
+| 2026-10-31 | **Chapter 7 "The Whispering Vault" planned and approved (16.10, W1–W4):** password gates mixed with different eyes. Each player sees only 2 of the 4 carvings (Cool Girl 1 and 3, Hot Boy 2 and 4), the chapter has its own team code, and in the vault 2 stones per side are seen only by the partner (the shelf stays visible). Levels: Half a Secret, The Unseen Bridge, Quiet Hall, The Hidden Key, The Whispering Vault. |
+| 2026-10-31 | **Chapter 7 built (16.10).** All 35 levels pass the route robot; 7-5 is proven with 46 codes. No new mechanism was needed: hidden carvings and stones use the existing "Seen by" setting, and the chapter's own code uses the existing team-code system. As a paid chapter it is locked by the $2.99 purchase like Chapters 3–6. Star times are guesses (D12); a real two-phone playtest is still needed. |
 | 2026-10-31 | **Connection and menu (13.3, 13.5, 13.7):** "Leave room" on the waiting screen right away (was after 2 minutes); "Hold for the level map" in the pause menu takes both players to the map; Wi-Fi hiccups wait 15 s before counting as a drop, and position updates are skipped instead of piling up. Still free: the public PeerJS servers. Android app: the back button goes one screen back, and sound pauses when the app is hidden. |
