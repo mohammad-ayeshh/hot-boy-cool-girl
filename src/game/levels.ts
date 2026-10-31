@@ -212,7 +212,7 @@ export function withCode(def: LevelDef, code?: Animal[]): { mechs: MechDef[]; pa
 
 export const levelData = (def: LevelDef, code?: Animal[]): LevelData => {
   const { mechs, pattern } = withCode(def, code);
-  return parseLevel(def.rows!, mechs, def.seen, pattern);
+  return { ...parseLevel(def.rows!, mechs, def.seen, pattern), theme: chapterOf(def.id)?.n };
 };
 export const nextLevel = (id: string): LevelDef | undefined => {
   const i = ALL_LEVELS.findIndex((l) => l.id === id);

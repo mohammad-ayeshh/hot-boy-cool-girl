@@ -1,6 +1,7 @@
 // Code-made sound effects (design doc 15.2, 15.3). Every sound varies slightly each time.
 // Hot Boy = crackly, warm, punchy. Cool Girl = soft, glassy, airy.
 import { audioContext } from './device';
+import { music } from './music';
 import type { DeathCause, Elem, Liquid } from '../game/level';
 
 let master: GainNode | null = null;
@@ -166,14 +167,12 @@ export function death(e: Elem, cause: DeathCause, pan: number, gain = 1): void {
   }
 }
 
-// Gem notes are in the music's key (15.4): a minor pentatonic on A.
-const SCALE = [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880];
-
+// Gem notes are in the music's key (15.4): each chapter's tune has its own scale (9.3).
 export function gem(e: Elem, combo: number, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
   const o = out(ac, pan, gain);
-  const f = SCALE[Math.min(combo, SCALE.length - 1) + 3] ?? 880;
+  const f = music.gemNote(Math.min(combo, 7));
   if (e === 'fire') {
     tone(ac, o, 'triangle', f, f, 0.22, 0.2); // warm
     tone(ac, o, 'sine', f * 2, f * 2, 0.12, 0.06);
@@ -266,7 +265,7 @@ export function stone(ok: boolean, n: number, pan: number): void {
   hiss(ac, o, 'lowpass', 400, 140, 1, 0.18, 0.14, 0.005);
   if (ok) {
     tone(ac, o, 'triangle', vary(180), 120, 0.1, 0.12);
-    const f = SCALE[Math.min(SCALE.length - 1, 4 + Math.max(0, n - 1) * 2)];
+    const f = music.gemNote(Math.min(7, 1 + Math.max(0, n - 1) * 2)); // in the chapter's key, like gems
     if (n > 0) tone(ac, o, 'sine', f, f, 0.45, 0.1, 0.05, 0.01);
   } else {
     tone(ac, o, 'triangle', 95, 48, 0.45, 0.3);

@@ -93,6 +93,7 @@ export const DEFS = {
   splash: t('World', 'Liquid splashes', true, { effect: true }),
   deathFx: t('World', 'Element deaths (steam, vapor, sparks)', true, { effect: true }),
   liquidGlow: t('World', 'Liquids glow', true, { effect: true }),
+  scenery: t('World', 'Living background', true, { effect: true, hint: 'Moving gears, blinking eyes, fog and floating dust behind the level (9.3)' }),
 
   // ---- Time (8.2) ----
   hitStop: t('Time', 'Hit-stop on death', true, { effect: true }),

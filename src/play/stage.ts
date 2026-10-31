@@ -5,6 +5,7 @@
 import { Application, Container, Graphics, Sprite, Text } from 'pixi.js';
 import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
+import { music } from '../engine/music';
 import { Controls } from '../engine/input';
 import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, type JumpStats, type Phys } from '../game/body';
 import { COLS, ROWS, LIQUID_DEPTH, Level, type DeathCause, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
@@ -13,7 +14,8 @@ import { drawAnimal } from '../render/animals';
 import type { Settings } from '../game/settings';
 import { ParticleSystem, makeGlowTexture } from '../render/particles';
 import { CharacterView, type Pose } from '../render/character';
-import { Pools, T, drawBackground, drawTiles, lerpColor } from '../render/world';
+import { Pools, T, airParticle, drawBackground, drawScenery, drawTiles, lerpColor } from '../render/world';
+import { THEMES, themeFor, type Theme } from '../render/themes';
 import { COOL_HAIR, HOT_FLAME, HairChain } from '../render/hair';
 
 const FIRE_FX = [0xfff0c2, 0xffb02e, 0xff6a1a];
@@ -158,6 +160,11 @@ export class Stage {
   private readonly margins = new Graphics();
   private readonly world = new Container();
   private readonly bg = new Graphics();
+  /** The chapter's look (9.3): moving scenery and the air layer sit between the back wall and the level. */
+  private theme: Theme = THEMES[0];
+  private readonly scenery = new Graphics();
+  private readonly air = new ParticleSystem(this.glowTex, 200, 'normal');
+  private airDue = 0;
   private readonly tiles = new Graphics();
   private readonly lights = new Container();
   private readonly levelLights = new Container();
@@ -203,9 +210,9 @@ export class Stage {
   constructor(readonly app: Application, readonly settings: Settings, level: LevelData, private opts: StageOptions) {
     this.controls = new Controls(app.canvas, { deadZone: settings.deadZone, anchorFollows: settings.anchorFollows, anchorLeash: settings.anchorLeash });
     this.lights.addChild(this.levelLights);
-    this.world.addChild(this.bg, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.revealG, this.fx.view, this.debug, this.overlay);
+    this.world.addChild(this.bg, this.scenery, this.air.view, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.revealG, this.fx.view, this.debug, this.overlay);
     app.stage.addChild(this.margins, this.world, this.screenFx, this.hints);
-    drawBackground(this.bg);
+    drawBackground(this.bg, this.theme);
     this.heroes = { water: this.makeHero('water'), fire: this.makeHero('fire') };
     this.setLevel(level);
     this.applySettings();
@@ -240,6 +247,14 @@ export class Stage {
   setLevel(data: LevelData, quiet = false): void {
     this.quiet = quiet;
     this.level = new Level(data);
+    const theme = themeFor(data.theme);
+    if (theme !== this.theme) {
+      this.theme = theme;
+      music.setChapter(theme.chapter);
+      drawBackground(this.bg, theme);
+      this.air.clear();
+      this.layout();
+    }
     this.mech = new Mechanisms(data.mechs, data.pattern);
     this.level.dynamic = this.mech.solids;
     this.revealed.clear();
@@ -292,7 +307,7 @@ export class Stage {
 
   /** Stone and the liquid glows: everything that changes when the viewer (or what's revealed) changes. */
   private drawWorld(): void {
-    drawTiles(this.tiles, this.level, this.sees);
+    drawTiles(this.tiles, this.level, this.sees, this.theme);
     for (const lg of this.liquidGlows) lg.s.destroy();
     this.liquidGlows = [];
     for (const pool of this.level.pools(this.sees)) {
@@ -393,7 +408,8 @@ export class Stage {
     this.controls.opts = { deadZone: s.deadZone, anchorFollows: s.anchorFollows, anchorLeash: s.anchorLeash };
     sfx.configure(s.sound, s.volume);
     this.tiles.tint = s.lighting ? 0x8d9a9c : 0xffffff;
-    this.bg.tint = s.lighting ? 0xb0bcbd : 0xffffff;
+    this.bg.tint = this.scenery.tint = s.lighting ? 0xb0bcbd : 0xffffff;
+    if (!s.scenery) { this.scenery.clear(); this.air.clear(); }
     if (!s.trails) this.trails.clear();
   }
 
@@ -1341,17 +1357,18 @@ export class Stage {
     this.scale = Math.min((W - left - right) / (COLS * T), H / (ROWS * T));
     this.baseX = left + (W - left - right - COLS * T * this.scale) / 2;
     this.baseY = (H - ROWS * T * this.scale) / 2;
-    const m = this.margins.clear().rect(0, 0, W, H).fill(0x050a09);
-    // simple temple columns in the side margins (where the thumbs rest)
+    const [outside, column, band] = this.theme.margin;
+    const m = this.margins.clear().rect(0, 0, W, H).fill(this.theme.sky[1]);
+    // simple temple columns in the side margins (where the thumbs rest), in the chapter's colors (9.3)
     const mw = this.baseX;
     if (mw > 8) {
       for (const side of [0, 1]) {
         const x0 = side ? W - mw : 0;
-        m.rect(x0, 0, mw, H).fill(0x0a1412);
+        m.rect(x0, 0, mw, H).fill(outside);
         const colX = side ? x0 + mw * 0.25 : x0 + mw * 0.35;
-        m.rect(colX, 0, mw * 0.4, H).fill(0x0f1c19);
-        m.rect(side ? colX : colX + mw * 0.4 - 3, 0, 3, H).fill({ color: 0x2e3d39, alpha: 0.6 });
-        for (let y = 0; y < H; y += 46) m.rect(colX - 3, y, mw * 0.4 + 6, 5).fill(0x070e0c);
+        m.rect(colX, 0, mw * 0.4, H).fill(column);
+        m.rect(side ? colX : colX + mw * 0.4 - 3, 0, 3, H).fill({ color: this.theme.stone.mid, alpha: 0.6 });
+        for (let y = 0; y < H; y += 46) m.rect(colX - 3, y, mw * 0.4 + 6, 5).fill(band);
       }
     }
   };
@@ -1390,6 +1407,11 @@ export class Stage {
     this.drawFlames(simDt);
     this.trails.update(simDt);
     this.dust.update(simDt);
+    if (s.scenery) {
+      drawScenery(this.scenery, this.theme, this.simTime);
+      for (this.airDue += realDt * this.theme.air.rate; this.airDue >= 1; this.airDue--) this.air.emit(airParticle(this.theme));
+      this.air.update(realDt);
+    }
     this.fx.update(simDt);
     for (const lg of this.liquidGlows) {
       lg.s.visible = s.lighting && s.liquidGlow;

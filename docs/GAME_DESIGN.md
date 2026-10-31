@@ -510,6 +510,42 @@ Stylized slim figures with a **big head (about half head, half body)**, arms and
 - **Hot Boy leaves small flames in his footsteps** (and a few when he lands) that flicker and go out after about half a second.
 All three can be switched off in the Feel Lab.
 
+### 9.3 Chapter themes 🔒
+*Decided 2026-10-31 by the owner.* **One temple, one journey:** each chapter is a different part of the same jungle temple, with its own background and its own music (15.4). Homemade levels use the Chapter 1 look.
+
+Two rules keep the game readable (P2, 4.1):
+- **Only the scenery changes.** Characters, lava, water, poison, gems, doors and mechanisms keep exactly their colors and shapes in every chapter.
+- **Backgrounds stay dark and muted.** No bright orange, cyan, violet or gold in the scenery, because those colors already mean something (4.2). Background shapes never look like platforms.
+
+| Ch | Area | Look | Music |
+|---|---|---|---|
+| 1 | The Temple Gate | Jungle entrance: green moss, vines, roots, fireflies, moonlight | Today's song (warm marimba and hand drums): the home theme |
+| 2 | The Flooded Halls | Damp grey-green stone, water stains, falling drips, low mist | Slower and echoey, drip-like plinks |
+| 3 | The Deep Machine | Bronze-brown stone, huge slow gears far behind, chains, dust | Faster, ticking clockwork drums |
+| 4 | The Summit | Open night sky with stars, distant mountains, broken roof arches, wind | Wide and hopeful, airy flute pads |
+| 5 | The Hall of Eyes | Pale stone carved with giant eyes that slowly blink | Mysterious, floating chimes |
+| 6 | The Sealed Vault | Deep underground: great round vault doors, tall sealed niches, heavy pillars, dust | Low, heavy, ancient drums and drones |
+| 7 | The Whispering Vault | Coldest and darkest: grey-blue stone, hanging rocks, pale drifting wisps | Very quiet, breathy "whisper" sounds, rare chimes |
+
+Every chapter keeps the duet (15.4): only the key, speed and instruments change. The home screen and map keep today's music. Built in two steps, checked with the owner in between: backgrounds first, then music.
+
+**Backgrounds as built (2026-10-31):** preview in [`docs/levels/themes.png`](levels/themes.png). Each chapter's colors and scenery live in `src/render/themes.ts`; the still scenery is drawn once, and the moving parts (gears, blinking eyes, fog, twinkling stars) plus a floating air layer (fireflies, drips, dust, wind, wisps) sit behind the level, so they're hidden wherever there's stone. The side margins on wide phones take the chapter's colors too. Feel Lab › World › **Living background** switches the moving parts off.
+**Music as built (2026-10-31):** each chapter's tune is in `src/engine/music.ts` (`TUNES`); levels pick their chapter's tune, and the home screen, lobby and map keep Chapter 1's.
+
+| Ch | Key and chords | Speed | Hot Boy's layer | Cool Girl's layer | Texture |
+|---|---|---|---|---|---|
+| 1 | A minor: Am – F – C – G | 92 | hand drums, marimba plucks | quick chime arpeggio | — |
+| 2 | D minor: Dm – B♭ – F – C | 74 | soft toms, few plucks | slow chimes, long echo | water drops |
+| 3 | C minor: Cm – Cm – A♭ – G | 112 | clockwork tick-tock, a repeating pluck pattern | quick chimes, short echo | — |
+| 4 | D major: D – A – Bm – G | 84 | soft toms, plucks | chimes; airy flute pads | wind gusts |
+| 5 | E minor drifting to C minor and B | 68 | rare drums, plucks from the chords | slow floating chimes | — |
+| 6 | E Phrygian: Em – F – Em – Dm | 78 | a big, deep ancient drum, low plucks | slow chimes | — |
+| 7 | F♯ minor, quieter overall | 64 | a soft pulse, rare plucks | rare long chimes, big echo | breathy whispers |
+
+Gem notes and the symbol-stone notes follow the playing tune's scale, so they always fit the music (15.4). The tunes are first versions: the owner listens on the phone and asks for changes.
+
+- **Changed while building:** Chapter 6 shows round vault doors and tall niches instead of the 8 animal carvings, because background animals could be mistaken for the real code carvings (P2). Floating block-shaped niches were also replaced by tall arched ones, so nothing in the background looks like a ledge.
+
 ### 14.6 The temple world
 - **Stone tiles:** carved blocks with soft rounded corners, a light top edge (light from above), dark cracks. Edges join automatically ("autotiling"), so walls never look like a grid.
 - **Moss and vines** on top edges and hanging down, in muted green only.
@@ -558,7 +594,7 @@ Many people play on their phone **with the sound off** (and on iPhone the silent
   - When both are moving, the full song plays. Teamwork literally sounds better (P1).
 - Gem pickups play notes **in the same key as the music**, so collecting sounds musical.
 - Music **ducks** (quiets down) during death and swells on level complete.
-- **Different temple chapters get a different music variation** (later).
+- **Each temple chapter gets its own music variation** (9.3, decided 2026-10-31).
 
 ### 15.4b Menu music
 - **Home screen:** a calm title theme that mixes both motifs: drums and chimes, slow and inviting.
@@ -714,7 +750,7 @@ These sketches are a starting point. The real levels are built and tuned in the 
 | **Chained together** | A chain links the two. One stands as the anchor while the other hangs and swings. | ⚠️ Big risk to P6: your movement would depend on your partner's delayed position over the network, which can cause rubber-banding. It must be prototyped first (Feel Lab, then two phones). | Hard: the hardest idea on this list |
 | **1v1 race** | A mirrored level cut in half; each player races their own half against the clock, and the faster one wins. | ❌ Breaks P1 ("together or not at all") if it is a chapter. It can live as a separate **Versus mode** next to the story. | Medium |
 | **Story and lore** | A short story told through each chapter: why the two are in the temple, what's at the summit. | ✅ Told with pictures and the temple itself, little or no text (D4) | Easy–medium (mostly art and writing) |
-| **A background per chapter** | Each chapter gets its own look (flooded halls, machinery, summit sky), using the same depth layers (9.1). | ✅ | Medium (art) |
+| **A background per chapter** | Each chapter gets its own look (flooded halls, machinery, summit sky), using the same depth layers (9.1). *Decided 2026-10-31, with music per chapter: see 9.3.* | ✅ | Medium (art) |
 
 **Suggested order:** first different eyes, then password gates (and mixing the two), story and backgrounds alongside, then don't touch. Chained together needs a prototype before it's promised. The 1v1 race becomes a separate Versus mode.
 
@@ -913,4 +949,6 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-31 | **Ready-to-sell work built:** sound, music and vibration settings in the pause menu (15.6); a website update check with a banner (16.7); friends now need the same *play version* instead of the same build (13.6); the Android app project (Capacitor) with Google Play Billing; a privacy policy page; Google Play listing text, screenshots and feature graphic (`docs/store/`); release steps in `docs/RELEASE_ANDROID.md`. Not yet built into an app file (needs Android Studio) or tested with real purchases. |
 | 2026-10-31 | **Chapter 7 "The Whispering Vault" planned and approved (16.10, W1–W4):** password gates mixed with different eyes. Each player sees only 2 of the 4 carvings (Cool Girl 1 and 3, Hot Boy 2 and 4), the chapter has its own team code, and in the vault 2 stones per side are seen only by the partner (the shelf stays visible). Levels: Half a Secret, The Unseen Bridge, Quiet Hall, The Hidden Key, The Whispering Vault. |
 | 2026-10-31 | **Chapter 7 built (16.10).** All 35 levels pass the route robot; 7-5 is proven with 46 codes. No new mechanism was needed: hidden carvings and stones use the existing "Seen by" setting, and the chapter's own code uses the existing team-code system. As a paid chapter it is locked by the $2.99 purchase like Chapters 3–6. Star times are guesses (D12); a real two-phone playtest is still needed. |
+| 2026-10-31 | **Chapter themes decided (9.3):** one temple, one journey. Each chapter is its own area of the temple with its own background and music (jungle gate, flooded halls, deep machine, summit sky, hall of eyes, sealed vault, whispering vault). Only the scenery changes; gameplay colors and shapes stay the same, and backgrounds stay dark and muted. Built in two steps: backgrounds, then music. |
+| 2026-10-31 | **Chapter themes built (9.3):** every chapter has its own background (still scenery, moving parts and a floating air layer, all behind the level) and its own tune (key, chords, speed, drums and a texture such as drips, wind or whispers), while the duet stays. Gem and stone notes follow each tune's key. Chapter 6's background uses vault doors instead of animal carvings so it can't be mistaken for the code. Feel Lab › World › Living background turns the moving scenery off. |
 | 2026-10-31 | **Connection and menu (13.3, 13.5, 13.7):** "Leave room" on the waiting screen right away (was after 2 minutes); "Hold for the level map" in the pause menu takes both players to the map; Wi-Fi hiccups wait 15 s before counting as a drop, and position updates are skipped instead of piling up. Still free: the public PeerJS servers. Android app: the back button goes one screen back, and sound pauses when the app is hidden. |

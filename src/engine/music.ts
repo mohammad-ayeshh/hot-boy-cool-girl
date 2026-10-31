@@ -1,23 +1,69 @@
 // The duet music (design doc 15.4, 15.4b), composed in code with Web Audio.
-// Three layers over a 4-chord loop in A minor:
-//   base   = warm drone + soft pad (always on)
-//   fire   = Hot Boy: hand drums + marimba-like plucks (louder while he moves)
+// Three layers over a 4-chord loop:
+//   base   = warm drone + soft pad (always on), plus the chapter's texture (drips, wind, whispers)
+//   fire   = Hot Boy: drums + marimba-like plucks (louder while he moves)
 //   water  = Cool Girl: glassy chimes + flowing arpeggios with echo (louder while she moves)
 // Both moving = the full song. Teamwork literally sounds better (P1).
+// Each chapter has its own tune (9.3): key, chords, speed, drums and texture change; the duet stays.
+// The home screen, lobby and map always play Chapter 1's tune.
 import { audioContext } from './device';
 import type { Elem } from '../game/level';
 
 export type MusicMode = 'title' | 'lobby' | 'map' | 'level';
 
-// Am – F – C – G, one chord per bar. Notes as MIDI numbers.
-const CHORDS = [
-  [57, 60, 64], // A C E
-  [53, 57, 60], // F A C
-  [48, 52, 55], // C E G
-  [55, 59, 62], // G B D
-];
-const ROOTS = [45, 41, 48, 43];
-const PENTA = [57, 60, 62, 64, 67, 69, 72, 74, 76]; // A minor pentatonic, for melodies
+/** One chapter's music. Notes are MIDI numbers; one chord per bar. */
+interface Tune {
+  chords: number[][];
+  roots: number[];
+  /** A pentatonic scale from about A3 up (the first 5 notes are one octave): melodies and gem notes. */
+  scale: number[];
+  bpm: number;
+  /** Hot Boy's drums: hand drums, soft toms, clockwork ticks, sparse, a heavy ancient drum, or almost nothing. */
+  drums: 'hand' | 'soft' | 'clock' | 'sparse' | 'heavy' | 'whisper';
+  /** 16th steps with a pluck, how likely each one plays, and an octave shift */
+  plucks: number[];
+  pluckChance: number;
+  pluckOctave?: number;
+  /** plucks follow a fixed machine-like pattern (indexes into `scale`) instead of random notes */
+  ostinato?: number[];
+  /** plucks use the chord's notes instead of the scale (for chords outside the scale) */
+  chordPlucks?: boolean;
+  /** Cool Girl's arpeggio: a chime every 2 or 4 steps, and how likely each one plays */
+  arpEvery: 2 | 4;
+  arpChance: number;
+  bellLen: number;
+  /** echo feedback (0..0.7) */
+  echo: number;
+  pad: 'warm' | 'flute';
+  texture?: 'drips' | 'wind' | 'breath';
+  /** overall loudness in levels */
+  level: number;
+}
+
+const TUNES: Record<number, Tune> = {
+  // 1 The Temple Gate: A minor, Am – F – C – G, warm marimba and hand drums (the home theme)
+  1: { chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], roots: [45, 41, 48, 43], scale: [57, 60, 62, 64, 67, 69, 72, 74, 76],
+    bpm: 92, drums: 'hand', plucks: [0, 3, 6, 8, 11, 14], pluckChance: 0.8, arpEvery: 2, arpChance: 1, bellLen: 0.9, echo: 0.35, pad: 'warm', level: 1 },
+  // 2 The Flooded Halls: D minor, Dm – B♭ – F – C, slow, long echoes and falling drips
+  2: { chords: [[57, 62, 65], [58, 62, 65], [57, 60, 65], [55, 60, 64]], roots: [50, 46, 41, 48], scale: [57, 60, 62, 65, 67, 69, 72, 74, 77],
+    bpm: 74, drums: 'soft', plucks: [0, 8], pluckChance: 0.6, arpEvery: 4, arpChance: 1, bellLen: 1.6, echo: 0.55, pad: 'warm', texture: 'drips', level: 1 },
+  // 3 The Deep Machine: C minor, Cm – Cm – A♭ – G, fast: ticking clockwork and a repeating pluck pattern
+  3: { chords: [[55, 60, 63], [55, 60, 63], [56, 60, 63], [55, 59, 62]], roots: [48, 48, 44, 43], scale: [55, 58, 60, 63, 65, 67, 70, 72, 75],
+    bpm: 112, drums: 'clock', plucks: [0, 2, 4, 6, 8, 10, 12, 14], pluckChance: 1, ostinato: [2, 4, 3, 2, 1, 3, 2, 0], arpEvery: 2, arpChance: 0.8,
+    bellLen: 0.6, echo: 0.2, pad: 'warm', level: 0.95 },
+  // 4 The Summit: D major, D – A – Bm – G, wide and hopeful: airy flute pads and wind
+  4: { chords: [[57, 62, 66], [57, 61, 64], [59, 62, 66], [55, 59, 62]], roots: [50, 45, 47, 43], scale: [57, 59, 62, 64, 66, 69, 71, 74, 76],
+    bpm: 84, drums: 'soft', plucks: [0, 6, 12], pluckChance: 0.7, arpEvery: 2, arpChance: 1, bellLen: 1.1, echo: 0.45, pad: 'flute', texture: 'wind', level: 1 },
+  // 5 The Hall of Eyes: E minor drifting to C minor and B (strange, shifting chords), slow floating chimes
+  5: { chords: [[55, 59, 64], [55, 60, 63], [55, 59, 64], [54, 59, 63]], roots: [52, 48, 52, 47], scale: [57, 59, 62, 64, 67, 69, 71, 74, 76],
+    bpm: 68, drums: 'sparse', plucks: [0, 10], pluckChance: 0.5, chordPlucks: true, arpEvery: 4, arpChance: 1, bellLen: 2, echo: 0.55, pad: 'warm', level: 1 },
+  // 6 The Sealed Vault: E Phrygian, Em – F – Em – Dm, low and heavy: an ancient drum and deep plucks
+  6: { chords: [[52, 55, 59], [53, 57, 60], [52, 55, 59], [50, 53, 57]], roots: [52, 53, 52, 50], scale: [57, 59, 62, 64, 65, 69, 71, 74, 76],
+    bpm: 78, drums: 'heavy', plucks: [0, 7], pluckChance: 0.6, pluckOctave: -12, arpEvery: 4, arpChance: 1, bellLen: 1.3, echo: 0.4, pad: 'warm', level: 1 },
+  // 7 The Whispering Vault: F♯ minor, very quiet: breathy whispers, a soft pulse and rare chimes
+  7: { chords: [[54, 57, 61], [54, 57, 62], [54, 59, 62], [54, 57, 61]], roots: [54, 50, 47, 54], scale: [57, 59, 61, 64, 66, 69, 71, 73, 76],
+    bpm: 64, drums: 'whisper', plucks: [4, 12], pluckChance: 0.4, arpEvery: 4, arpChance: 0.55, bellLen: 2.2, echo: 0.6, pad: 'warm', texture: 'breath', level: 0.8 },
+};
 const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
 // Small deterministic random so each bar's melody is varied but the loop stays coherent.
@@ -35,7 +81,9 @@ class Music {
   private master: GainNode | null = null;
   private duckGain: GainNode | null = null;
   private layers: Record<'base' | 'fire' | 'water', Layer> | null = null;
-  private echo: { input: GainNode } | null = null;
+  private echo: { input: GainNode; delay: DelayNode; fb: GainNode } | null = null;
+  private noise: AudioBuffer | null = null;
+  private chapter = 1;
   private timer = 0;
   private step = 0; // 16th notes since start
   private nextTime = 0;
@@ -75,7 +123,12 @@ class Music {
     lp.frequency.value = 3000;
     input.connect(delay).connect(lp).connect(fb).connect(delay);
     lp.connect(this.layers.water.gain);
-    this.echo = { input };
+    this.echo = { input, delay, fb };
+    // 2 s of white noise for wind and whispers
+    this.noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const data = this.noise.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    this.retune();
     this.nextTime = ac.currentTime + 0.1;
     this.timer = window.setInterval(() => this.schedule(), 40);
     this.applyMix(true);
@@ -90,8 +143,36 @@ class Music {
   setMode(mode: MusicMode): void {
     if (mode === this.mode) return;
     this.mode = mode;
-    this.bpm = mode === 'level' ? 92 : mode === 'map' ? 80 : 76;
+    this.retune();
     this.applyMix();
+  }
+
+  /** The chapter whose tune plays in levels (9.3). Homemade levels and test rooms use Chapter 1's. */
+  setChapter(chapter: number): void {
+    const ch = TUNES[chapter] ? chapter : 1;
+    if (ch === this.chapter) return;
+    this.chapter = ch;
+    this.retune();
+    this.applyMix();
+  }
+
+  /** A gem's note: the playing tune's scale, climbing with the combo (15.4: gems are in the music's key). */
+  gemNote(combo: number): number {
+    const sc = this.tune.scale, j = combo + 3;
+    return hz(sc[j % 5] + 12 * Math.floor(j / 5));
+  }
+
+  private get tune(): Tune {
+    return this.mode === 'level' ? TUNES[this.chapter] : TUNES[1];
+  }
+
+  /** Speed and echo for the current mode and tune. */
+  private retune(): void {
+    this.bpm = this.mode === 'level' ? this.tune.bpm : this.mode === 'map' ? 80 : 76;
+    if (!this.ac || !this.echo) return;
+    const t = this.ac.currentTime;
+    this.echo.delay.delayTime.setTargetAtTime((60 / this.bpm) * 0.75, t, 0.1);
+    this.echo.fb.gain.setTargetAtTime(this.tune.echo, t, 0.1);
   }
 
   /** Lobby: your own layer plays alone until your partner arrives (15.4b). */
@@ -150,8 +231,10 @@ class Music {
       base = 0.6;
       fire = water = 0.3;
     } else if (this.mode === 'level') {
-      fire = 0.12 + 0.8 * this.moveFire;
-      water = 0.12 + 0.8 * this.moveWater;
+      const k = this.tune.level;
+      base *= k;
+      fire = (0.12 + 0.8 * this.moveFire) * k;
+      water = (0.12 + 0.8 * this.moveWater) * k;
     }
     const t = this.ac.currentTime;
     const set = (l: Layer, v: number) => {
@@ -179,39 +262,81 @@ class Music {
 
   private playStep(s: number, t: number): void {
     const L = this.layers!;
+    const tune = this.tune;
     const bar = Math.floor(s / 16);
     const i = s % 16;
-    const chord = CHORDS[bar % 4];
-    const root = ROOTS[bar % 4];
+    const chord = tune.chords[bar % tune.chords.length];
+    const root = tune.roots[bar % tune.roots.length];
     const calm = this.mode !== 'level';
+    const barLen = (60 / this.bpm) * 4;
 
-    // --- base: drone + pad, changes with each bar
+    // --- base: drone + pad, changes with each bar, plus the chapter's texture
     if (i === 0) {
-      this.drone(t, hz(root - 12), (60 / this.bpm) * 4, L.base.gain);
-      for (const n of chord) this.pad(t, hz(n), (60 / this.bpm) * 4, L.base.gain);
+      this.drone(t, hz(root - 12), barLen, L.base.gain);
+      for (const n of chord) this.pad(t, hz(n), barLen, tune.pad, L.base.gain);
     }
+    if (tune.texture === 'drips' && rnd(bar * 17 + i) > 0.93) this.drip(t, L.base.gain);
+    if (tune.texture === 'wind' && i === 0 && bar % 2 === 0) this.whoosh(t, barLen * 2, 500, 0.6, 0.05, L.base.gain);
+    if (tune.texture === 'breath' && i % 8 === 0 && rnd(bar * 3 + i) > 0.55) this.whoosh(t, barLen * 0.6, 2400, 2.5, 0.035, L.base.gain);
 
-    // --- fire: hand drums + plucks
-    const drumPattern = calm ? [0, 10] : [0, 6, 10, 14];
-    if (drumPattern.includes(i)) this.drum(t, i === 0 ? 1 : 0.6, true, L.fire.gain);
-    if (!calm ? i % 4 === 2 : i === 8) this.drum(t, 0.4, false, L.fire.gain);
-    if (!calm && i === 15 && rnd(bar * 7) > 0.5) this.drum(t, 0.3, false, L.fire.gain);
-    const pluckSteps = calm ? [0, 6, 12] : [0, 3, 6, 8, 11, 14];
-    if (pluckSteps.includes(i) && rnd(bar * 31 + i) > (calm ? 0.35 : 0.2)) {
-      const n = PENTA[Math.floor(rnd(bar * 13 + i * 3) * 6)];
-      this.pluck(t, hz(n), 0.35, 0.09, L.fire.gain);
+    // --- fire: drums + plucks
+    this.drums(calm ? 'calm' : tune.drums, bar, i, t, L.fire.gain);
+    const pluckSteps = calm ? [0, 6, 12] : tune.plucks;
+    if (pluckSteps.includes(i) && rnd(bar * 31 + i) < (calm ? 0.65 : tune.pluckChance)) {
+      const k = pluckSteps.indexOf(i);
+      const n = tune.ostinato && !calm ? tune.scale[tune.ostinato[(k + (bar % 2) * 4) % tune.ostinato.length]]
+        : tune.chordPlucks ? chord[Math.floor(rnd(bar * 13 + i * 3) * 3)] + 12
+        : tune.scale[Math.floor(rnd(bar * 13 + i * 3) * 6)];
+      this.pluck(t, hz(n + (calm ? 0 : tune.pluckOctave ?? 0)), 0.35, 0.09, L.fire.gain);
     }
 
     // --- water: arpeggio chimes with echo
-    const arp = calm ? i % 4 === 0 : i % 2 === 0;
-    if (arp) {
-      const k = Math.floor(i / (calm ? 4 : 2));
+    const every = calm ? 4 : tune.arpEvery;
+    if (i % every === 0 && (calm || rnd(bar * 41 + i) < tune.arpChance)) {
+      const k = Math.floor(i / every);
       const up = [0, 1, 2, 1, 2, 0, 1, 2][k % 8];
       const n = chord[up] + 12 + (k % 4 === 3 ? 12 : 0);
-      this.bell(t, hz(n), calm ? 1.4 : 0.9, calm ? 0.05 : 0.04, this.echo!.input);
-      this.bell(t, hz(n), calm ? 1.4 : 0.9, calm ? 0.05 : 0.04, L.water.gain);
+      const len = calm ? 1.4 : tune.bellLen, vol = calm ? 0.05 : 0.04;
+      this.bell(t, hz(n), len, vol, this.echo!.input);
+      this.bell(t, hz(n), len, vol, L.water.gain);
     }
-    if (i === 0 && rnd(bar * 5) > 0.4) this.bell(t, hz(PENTA[5 + Math.floor(rnd(bar) * 4)] + 12), 2, 0.035, L.water.gain);
+    if (i === 0 && rnd(bar * 5) > 0.4) this.bell(t, hz(tune.scale[5 + Math.floor(rnd(bar) * 4)] + 12), 2, 0.035, L.water.gain);
+  }
+
+  /** Hot Boy's drum part for one 16th step. */
+  private drums(kind: Tune['drums'] | 'calm', bar: number, i: number, t: number, dest: AudioNode): void {
+    switch (kind) {
+      case 'calm':
+        if (i === 0 || i === 10) this.drum(t, i === 0 ? 1 : 0.6, true, dest);
+        if (i === 8) this.drum(t, 0.4, false, dest);
+        break;
+      case 'hand':
+        if ([0, 6, 10, 14].includes(i)) this.drum(t, i === 0 ? 1 : 0.6, true, dest);
+        if (i % 4 === 2) this.drum(t, 0.4, false, dest);
+        if (i === 15 && rnd(bar * 7) > 0.5) this.drum(t, 0.3, false, dest);
+        break;
+      case 'soft':
+        if (i === 0) this.drum(t, 0.7, true, dest);
+        if (i === 10) this.drum(t, 0.4, true, dest);
+        break;
+      case 'clock':
+        if (i === 0 || i === 8) this.drum(t, 0.8, true, dest);
+        if (i % 2 === 0) this.click(t, i % 4 === 0 ? 1900 : 1400, 0.5, dest); // tick, tock
+        break;
+      case 'sparse':
+        if (i === 0 && bar % 2 === 0) this.drum(t, 0.6, true, dest);
+        if (i === 12) this.drum(t, 0.3, false, dest);
+        break;
+      case 'heavy':
+        if (i === 0) this.drum(t, 1, true, dest, true);
+        if (i === 3) this.drum(t, 0.6, true, dest, true);
+        if (i === 8) this.drum(t, 0.8, true, dest, true);
+        if (i === 12) this.drum(t, 0.35, false, dest);
+        break;
+      case 'whisper':
+        if (i === 0 && bar % 2 === 0) this.drum(t, 0.4, true, dest);
+        break;
+    }
   }
 
   // ------------------------------------------------------------ instruments
@@ -249,33 +374,43 @@ class Music {
     o2.stop(t + dur + 0.3);
   }
 
-  private pad(t: number, f: number, dur: number, dest: AudioNode): void {
+  /** Soft pad: warm (triangle), or flute (sine with a slow breath in and a gentle vibrato). */
+  private pad(t: number, f: number, dur: number, kind: Tune['pad'], dest: AudioNode): void {
     const ac = this.ac!;
     const o = ac.createOscillator();
     const g = ac.createGain();
-    o.type = 'triangle';
+    o.type = kind === 'flute' ? 'sine' : 'triangle';
     o.frequency.value = f;
     o.detune.value = (Math.random() - 0.5) * 8;
+    if (kind === 'flute') {
+      const lfo = ac.createOscillator();
+      const depth = ac.createGain();
+      lfo.frequency.value = 4.5 + Math.random();
+      depth.gain.value = 9; // cents
+      lfo.connect(depth).connect(o.detune);
+      lfo.start(t);
+      lfo.stop(t + dur + 0.7);
+    }
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.022, t + 0.8);
+    g.gain.exponentialRampToValueAtTime(kind === 'flute' ? 0.028 : 0.022, t + (kind === 'flute' ? 1.4 : 0.8));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.6);
     o.connect(g).connect(dest);
     o.start(t);
     o.stop(t + dur + 0.7);
   }
 
-  /** Hand drum: low (tom) or high (conga slap). */
-  private drum(t: number, vel: number, low: boolean, dest: AudioNode): void {
+  /** Hand drum: low (tom) or high (conga slap); `deep`: a big, slow ancient drum (Chapter 6). */
+  private drum(t: number, vel: number, low: boolean, dest: AudioNode, deep = false): void {
     const ac = this.ac!;
     const o = ac.createOscillator();
     const g = ac.createGain();
     o.type = 'sine';
-    o.frequency.setValueAtTime(low ? 150 : 330, t);
-    o.frequency.exponentialRampToValueAtTime(low ? 62 : 210, t + (low ? 0.18 : 0.08));
-    this.env(g, t, 0.004, (low ? 0.3 : 0.14) * vel, low ? 0.32 : 0.14);
+    o.frequency.setValueAtTime(deep ? 110 : low ? 150 : 330, t);
+    o.frequency.exponentialRampToValueAtTime(deep ? 42 : low ? 62 : 210, t + (deep ? 0.3 : low ? 0.18 : 0.08));
+    this.env(g, t, 0.004, (deep ? 0.36 : low ? 0.3 : 0.14) * vel, deep ? 0.55 : low ? 0.32 : 0.14);
     o.connect(g).connect(dest);
     o.start(t);
-    o.stop(t + 0.4);
+    o.stop(t + (deep ? 0.6 : 0.4));
   }
 
   /** Marimba-like pluck: triangle + a quick octave partial. */
@@ -306,6 +441,58 @@ class Music {
       o.start(t);
       o.stop(t + dur + 0.05);
     }
+  }
+
+  /** Clockwork tick: a tiny, bright click. */
+  private click(t: number, f: number, vel: number, dest: AudioNode): void {
+    const ac = this.ac!;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = 'square';
+    o.frequency.value = f;
+    this.env(g, t, 0.001, 0.025 * vel, 0.035);
+    o.connect(g).connect(dest);
+    o.start(t);
+    o.stop(t + 0.05);
+  }
+
+  /** A water drop: a short high note that falls, with an echo. */
+  private drip(t: number, dest: AudioNode): void {
+    const ac = this.ac!;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    const f = 1100 + Math.random() * 700;
+    o.type = 'sine';
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 0.5, t + 0.07);
+    this.env(g, t, 0.002, 0.03, 0.12);
+    o.connect(g);
+    g.connect(dest);
+    g.connect(this.echo!.input);
+    o.start(t);
+    o.stop(t + 0.15);
+  }
+
+  /** Filtered noise that swells and fades: wind (low, wide) or a whisper (high, narrow). */
+  private whoosh(t: number, dur: number, freq: number, q: number, vol: number, dest: AudioNode): void {
+    const ac = this.ac!;
+    if (!this.noise) return;
+    const src = ac.createBufferSource();
+    const bp = ac.createBiquadFilter();
+    const g = ac.createGain();
+    src.buffer = this.noise;
+    src.loop = true;
+    bp.type = 'bandpass';
+    bp.Q.value = q;
+    bp.frequency.setValueAtTime(freq * 0.8, t);
+    bp.frequency.linearRampToValueAtTime(freq * 1.25, t + dur * 0.5);
+    bp.frequency.linearRampToValueAtTime(freq, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.45);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bp).connect(g).connect(dest);
+    src.start(t, Math.random() * 1.5);
+    src.stop(t + dur + 0.05);
   }
 
   stop(): void {

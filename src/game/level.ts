@@ -31,6 +31,8 @@ export interface LevelData {
   seen?: Seen[][];
   /** Password gates (16.7): the order to step on the symbol stones, and the rune it turns on. */
   pattern?: Pattern;
+  /** The chapter whose look (9.3) the level uses; absent = Chapter 1's. */
+  theme?: number;
 }
 
 const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P: 'poison' };
