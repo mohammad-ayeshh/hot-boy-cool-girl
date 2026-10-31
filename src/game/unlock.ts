@@ -13,7 +13,7 @@ export const APP_ID = 'io.github.mohammadayeshh.hotboycoolgirl';
 export const STORE_URL = `https://play.google.com/store/apps/details?id=${APP_ID}`;
 
 /**
- * The lock is off until the app is in the store: switching it on earlier would take Chapters 3–6 away from
+ * The lock is off until the app is in the store: switching it on earlier would take Chapter 3 and up away from
  * website players with no way to buy. Turn it on at launch (and `?paywall` previews it in a browser).
  */
 export const PAYWALL_LIVE = false;

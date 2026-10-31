@@ -16,10 +16,11 @@
 **Business model (decided 2026-10-31):** No ads, ever. Chapters 1–2 and the level designer are free; one $2.99 purchase (Google Play, in the Android app) unlocks every other chapter forever. **Friend's pass:** if either player in a room owns the game, the room plays everything, so only one of two friends pays. The website is the free demo that leads to the app. Not launched yet.
 
 **What's in the game now (2026-10-31):**
-- 6 chapters, 30 levels, each proven winnable.
+- 7 chapters, 35 levels, each proven winnable.
 - Buttons, levers, lifts, gates and trapdoors.
 - **Different eyes:** some things are visible to only one player, so you must describe them out loud.
 - **Password gates:** animal carvings hidden across a chapter. Each team gets its own random code, entered on symbol stones by taking turns.
+- **Both mixed (Chapter 7):** each player sees only half of the secret code, so the two must tell each other their half.
 - A level designer: build a level, finish it together to get a ✅, share it by link.
 - A duet soundtrack where each character's music layer gets louder while they move.
 

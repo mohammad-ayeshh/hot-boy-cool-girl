@@ -31,8 +31,9 @@ Everything here is true today; don't add claims we can't prove (no "best", no pl
 > • Hold the button so your friend can pass, then they hold one for you.
 > • Different eyes: some stones, buttons and traps are visible on only one phone. Describe what you see and guide each other through.
 > • The Sealed Vault: animal carvings are hidden across the chapter. Every pair of friends gets its own secret code, entered on symbol stones by taking turns.
+> • The Whispering Vault: each of you sees only half of the secret code. Say your half out loud, or the vault stays shut.
 >
-> 30 LEVELS IN 6 TEMPLE CHAPTERS
+> 35 LEVELS IN 7 TEMPLE CHAPTERS
 > Lifts, levers, trapdoors, crushing gates, lava, water and poison, built to be readable at a glance and fair to play.
 >
 > MAKE YOUR OWN LEVELS
@@ -55,7 +56,7 @@ Still to make: a short **preview video** (YouTube link) that works with the soun
 
 ## Answers for the Play Console forms
 - **Price:** the app is free to install; one in-app product.
-- **In-app product:** ID `full_game`, one-time (non-consumable), **$2.99** (decided 2026-10-31). Name "Full game", description "Unlock chapters 3–6 forever. Your friend plays them with you for free."
+- **In-app product:** ID `full_game`, one-time (non-consumable), **$2.99** (decided 2026-10-31). Name "Full game", description "Unlock every chapter after chapter 2, forever. Your friend plays them with you for free."
 - **Ads:** no ads.
 - **Data safety:** no data collected or shared by the app; data stays on the device. Online play connects phones directly (WebRTC) through the public PeerJS connection service; see the privacy page. Payments are handled by Google Play.
 - **Target audience:** pick the ages honestly; the game has no chat and no personal data, but don't pick "children" unless you're ready for Google's extra Families rules.

@@ -25,7 +25,7 @@ marketing skills installed in `.claude/skills/` (their game context is `.agents/
 Start selling when **a stranger who plays the free chapters wants to pay for the next one.** That is measured, not guessed.
 
 Where we are (2026-10-31):
-- ✅ 6 chapters, 30 levels, different eyes and password gates are built.
+- ✅ 7 chapters, 35 levels, different eyes and password gates (and both mixed in Chapter 7) are built.
 - ✅ A two-phone test over mobile data worked and was fun.
 - ✅ Chapter 1 was tested with a friend.
 - ✅ **Playtests done (owner, 2026-10-31):** about 20 people played the levels and 2 played the whole game. *The three numbers below and what testers said aren't written down yet: add them here.*

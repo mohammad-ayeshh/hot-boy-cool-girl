@@ -42,10 +42,10 @@ npm run app:open
 8. New personal accounts must run a **closed test with at least 12 testers for 14 days** before going public. Friends and family count; they need to stay opted in the whole time.
 
 ## 5. Launch day
-1. In `src/game/unlock.ts` set `PAYWALL_LIVE = true` (until then Chapters 3–6 stay open on the website, and the lock only shows with `?paywall`).
+1. In `src/game/unlock.ts` set `PAYWALL_LIVE = true` (until then Chapter 3 and up stay open on the website, and the lock only shows with `?paywall`).
 2. `npm run app:sync`, raise `versionCode`, build a new signed bundle, and send it to **Production**.
 3. Push the website at the same time, so the website becomes the free demo (Chapters 1–2) with a "Get the app" button.
-4. Website players who already finished Chapters 3–6 will see them locked: say so in your launch post (or decide to give them something).
+4. Website players who already finished Chapter 3 or later will see those chapters locked: say so in your launch post (or decide to give them something).
 
 ## Good to know
 - The app and the website can play together. Friends only need the same *play version* (same levels, physics and network messages), not the same build (`src/game/version.ts`).
