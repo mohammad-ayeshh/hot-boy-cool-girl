@@ -9,8 +9,7 @@ export const FREE_CHAPTERS = 2;
 /** The one product in Google Play Console / App Store Connect. */
 export const PRODUCT_ID = 'full_game';
 export const PRICE_TEXT = '$2.99'; // shown until the store tells us the local price
-export const APP_ID = 'io.github.mohammadayeshh.hotboycoolgirl';
-export const STORE_URL = `https://play.google.com/store/apps/details?id=${APP_ID}`;
+export const APP_ID = 'io.github.mohammadayeshh.hotboycoolgirl'; // the store link is in links.ts
 
 /**
  * The lock is off until the app is in the store: switching it on earlier would take Chapter 3 and up away from

@@ -16,8 +16,10 @@ import { isUnlocked, loadName, loadProgress, recordResult, saveName, starsFor } 
 import { isCode, loadCode, phoneId, randomCode, saveCode } from '../game/teamCode';
 import { loadPrefs, savePrefs, type PrefKey } from '../game/prefs';
 import { playVersion } from '../game/version';
-import { FREE_CHAPTERS, STORE_URL, canPlay, ownsGame, paywallOn, setOwned } from '../game/unlock';
+import { FREE_CHAPTERS, canPlay, ownsGame, paywallOn, setOwned } from '../game/unlock';
+import { STORE_URL, SUPPORT_EMAIL, WEB_URL, feedbackLink, storeLink } from '../game/links';
 import { buy, canBuy, initBilling, priceText, restore } from '../shop/billing';
+import { askForReview } from '../shop/review';
 import type { Animal } from '../game/mechanisms';
 import { defaults } from '../game/settings';
 import { Session, type SessionStatus } from '../net/session';
@@ -229,8 +231,12 @@ export async function startGame(): Promise<void> {
 
   function homeHtml(): string {
     const ios = /iPhone|iPad/.test(navigator.userAgent) && !device.isStandalone();
+    // A stranger from a clip or the store must get it in seconds: two people, two phones (MARKETING_PLAN M3).
+    // One line, not a tutorial (11.2). The Feel Lab stays at ?lab but isn't advertised to players.
+    const about = device.isNativeApp() ? `${WEB_URL}about.html` : 'about.html';
     return `<div class="panel">
       <h1><span class="hot">Hot Boy</span> &amp; <span class="cool">Cool Girl</span></h1>
+      <p class="tagline">A co-op puzzle game for two friends, each on their own phone.</p>
       <input class="name-input" id="name" maxlength="12" placeholder="Your name (optional)" value="${esc(myName)}" autocomplete="off" />
       <button class="primary big" data-act="create">Create room</button>
       <div class="row">
@@ -240,7 +246,7 @@ export async function startGame(): Promise<void> {
       <button data-act="designer">🛠 Level designer</button>
       <div class="status" id="status"></div>
       ${ios ? '<p class="small">Tip: Share → “Add to Home Screen” plays fullscreen and keeps your progress safe.</p>' : ''}
-      <p class="small"><a href="?lab">Feel Lab</a></p>
+      <p class="small"><a href="${about}" target="${device.isNativeApp() ? '_blank' : '_self'}">About the game</a>${SUPPORT_EMAIL ? ` · <a href="${feedbackLink()}">Send feedback</a>` : ''}</p>
     </div>`;
   }
 
@@ -427,7 +433,7 @@ export async function startGame(): Promise<void> {
 
   async function shareLevel(l: CustomLevel | undefined): Promise<void> {
     if (!l || !isVerified(l)) return;
-    const url = `${location.origin}${location.pathname}?level=${encodeLink(l)}`;
+    const url = `${siteUrl()}?level=${encodeLink(l)}`;
     try {
       if (navigator.share) await navigator.share({ title: l.name, text: `Play my level “${l.name}” in Hot Boy & Cool Girl!`, url });
       else { await navigator.clipboard.writeText(url); toast('Level link copied'); }
@@ -461,7 +467,7 @@ export async function startGame(): Promise<void> {
     else if (act === 'offer') showOffer();
     else if (act === 'buy') void doBuy();
     else if (act === 'restore') void doRestore();
-    else if (act === 'getapp') window.open(STORE_URL, '_blank');
+    else if (act === 'getapp') window.open(storeLink('website'), '_blank');
     else if (act === 'closeoffer') offerEl.classList.add('hidden');
     else if (act === 'ready') toggleReady();
     else if (act === 'choice') choose(el.dataset.c as Choice);
@@ -507,12 +513,16 @@ export async function startGame(): Promise<void> {
     if ((ev.target as HTMLElement).id === 'code' && ev.key === 'Enter') void join(normalizeRoomCode((ev.target as HTMLInputElement).value));
   });
 
+  // "Doesn't connect" is the review that sinks an online game, so every connection error says what to try (MARKETING_PLAN M13).
+  const NET_HELP = 'Check that both phones are online. On shared or school Wi-Fi, try mobile data instead.';
   const setStatus = (text: string, err = false) => {
     const s = document.getElementById('status');
     if (s) { s.textContent = text; s.className = `status ${err ? 'err' : ''}`; }
   };
 
-  const roomLink = () => `${location.origin}${location.pathname}?room=${session.code}`;
+  /** Where shared links point: this website, or the real website from inside the store app (its own address is local). */
+  const siteUrl = () => (device.isNativeApp() ? WEB_URL : `${location.origin}${location.pathname}`);
+  const roomLink = () => `${siteUrl()}?room=${session.code}`;
   const rememberRoomInUrl = () => history.replaceState(null, '', `?room=${session.code}`);
 
   async function create(): Promise<void> {
@@ -523,7 +533,7 @@ export async function startGame(): Promise<void> {
       rememberRoomInUrl();
       show('invite');
     } catch (e) {
-      setStatus((e as Error).message, true);
+      setStatus(`${(e as Error).message} ${NET_HELP}`, true);
     }
   }
 
@@ -535,14 +545,16 @@ export async function startGame(): Promise<void> {
       rememberRoomInUrl();
       if (session.status === 'waiting') show('invite'); // nobody was there: we opened it
     } catch (e) {
-      setStatus((e as Error).message, true);
+      setStatus(`${(e as Error).message} ${NET_HELP}`, true);
     }
   }
 
   async function shareLink(): Promise<void> {
     const url = roomLink();
     try {
-      if (navigator.share) await navigator.share({ title: 'Hot Boy & Cool Girl', text: `Play with me! Room ${session.code}`, url });
+      // The friend decides in a second: say what it is and that it costs nothing to join (MARKETING_PLAN M4).
+      const text = `Play Hot Boy & Cool Girl with me: a co-op puzzle game, you on your phone and me on mine. Free, no download, no account. Room ${session.code}`;
+      if (navigator.share) await navigator.share({ title: 'Hot Boy & Cool Girl', text, url });
       else await copyLink();
     } catch {
       // share sheet closed
@@ -756,6 +768,9 @@ export async function startGame(): Promise<void> {
       music.jingle(stars);
       // stars count up with three rising notes
       for (let i = 0; i < stars; i++) setTimeout(() => sfx.chime([523.25 * Math.pow(1.26, i)], 0, 0.14), 300 + i * 350);
+      // a whole chapter just cleared: the best moment to ask for a rating, once the stars have counted up
+      const ch = chapterOf(level.id);
+      if (ch && ch.levels[ch.levels.length - 1].id === level.id) setTimeout(() => void askForReview(), 2500);
     }, 1800);
   }
 
@@ -912,6 +927,7 @@ export async function startGame(): Promise<void> {
     lostEl.innerHTML = `<div class="panel">
       <h2>Waiting for your friend…</h2>
       <p>The connection dropped. We keep trying; they can also reopen the same link (room <b>${session.code}</b>) and you'll continue.</p>
+      <p class="small">${NET_HELP}</p>
       <div class="spinner"></div>
       <button id="lost-home" data-act="home">Leave room</button>
     </div>`;
@@ -1077,6 +1093,13 @@ export async function startGame(): Promise<void> {
     const paid = CHAPTERS.filter((c) => c.n > FREE_CHAPTERS);
     const levels = paid.reduce((n, c) => n + c.levels.filter((l) => l.rows).length, 0);
     const app = canBuy();
+    // The unlock is sold only in the Android app for now, so an iPhone gets no store button it can't use (MARKETING_PLAN M5).
+    const iphone = !app && device.isIOS();
+    const action = app
+      ? `<button class="primary big" data-act="buy">Unlock for ${esc(priceText())}</button>`
+      : iphone
+        ? '<p>The full game is sold in the Android app for now, not yet on iPhone.</p>'
+        : '<button class="primary big" data-act="getapp">Get the app on Google Play</button>';
     offerEl.innerHTML = `<div class="panel offer">
       <h2>🔑 The temple goes deeper</h2>
       <p>${levels} more levels: ${paid.map((c) => esc(c.name)).join(', ')}.</p>
@@ -1084,10 +1107,8 @@ export async function startGame(): Promise<void> {
         <li>✅ One purchase, yours forever. No ads, ever.</li>
         <li>🤝 Only one of you pays: when either of you owns it, you play every chapter together.</li>
       </ul>
-      <div class="row">
-        ${app ? `<button class="primary big" data-act="buy">Unlock for ${esc(priceText())}</button>` : '<button class="primary big" data-act="getapp">Get the app on Google Play</button>'}
-      </div>
-      <p class="small">${app ? '<button class="linkish" data-act="restore">Restore my purchase</button> · ' : ''}Or play with a friend who owns it.</p>
+      <div class="row">${action}</div>
+      <p class="small">${app ? '<button class="linkish" data-act="restore">Restore my purchase</button> · ' : ''}${iphone ? 'You can still play every chapter with a friend who owns it on Android.' : 'Or play with a friend who owns it.'}</p>
       <button data-act="closeoffer">Not now</button>
     </div>`;
     offerEl.classList.remove('hidden');

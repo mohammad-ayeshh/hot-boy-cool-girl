@@ -4,6 +4,8 @@ Usage: python tools/store_assets.py <raw folder> docs/store
 Raw captures come from the Feel Lab (?lab=<level id>) rendered straight from the game canvas:
 01-fire-and-water, 02a-eyes-his, 02b-eyes-hers, 03-vault, 04-hold-the-button, feature-src.
 Writes 1920x1080 captioned screenshots and the 1024x500 feature graphic. Change a caption here and run it again.
+Also writes the website's copies: public/share-card.jpg (the 1200x630 picture a shared link shows in WhatsApp and
+other apps, MARKETING_PLAN M2) and public/press/ (images for the about page and press kit, M14).
 """
 import os
 import sys
@@ -93,6 +95,25 @@ def feature(raw):
     return im.convert("RGB")
 
 
+def share_card(raw):
+    """1200x630: what a room link shows when pasted into a chat. Says what it is and that joining costs nothing."""
+    src = load(raw, "feature-src")
+    im = src.crop((0, 36, W, 36 + 1008)).resize((1200, 630), Image.LANCZOS).convert("RGBA")
+    shade = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(shade)
+    for x in range(700):
+        d.line([(x, 0), (x, 630)], fill=(5, 10, 9, int(215 * (1 - x / 700) ** 1.2)))
+    im = Image.alpha_composite(im, shade)
+    d = ImageDraw.Draw(im)
+    f = font(80, black=True)
+    d.text((60, 150), "Hot Boy", font=f, fill=FIRE)
+    d.text((60, 238), "& Cool Girl", font=f, fill=WATER)
+    d.text((62, 370), "A co-op puzzle game", font=font(38), fill=WHITE)
+    d.text((62, 418), "for two friends, two phones.", font=font(38), fill=WHITE)
+    d.text((62, 490), "Free to try together. No ads.", font=font(34), fill=GOLD)
+    return im.convert("RGB")
+
+
 def main(raw, out):
     os.makedirs(out, exist_ok=True)
     shots = [
@@ -106,6 +127,14 @@ def main(raw, out):
         im.save(os.path.join(out, f"screenshot-{name}.png"))
     feature(raw).save(os.path.join(out, "feature-graphic.png"))
     print("wrote", len(shots), "screenshots and the feature graphic to", out)
+    public = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public")
+    share_card(raw).save(os.path.join(public, "share-card.jpg"), quality=86)
+    press = os.path.join(public, "press")
+    os.makedirs(press, exist_ok=True)
+    for name, im in shots:  # smaller copies for the web page; the full-size ones stay in docs/store
+        im.resize((1280, 720), Image.LANCZOS).save(os.path.join(press, f"screenshot-{name}.jpg"), quality=86)
+    feature(raw).save(os.path.join(press, "feature-graphic.png"))
+    print("wrote public/share-card.jpg and", len(shots) + 1, "images to public/press")
 
 
 if __name__ == "__main__":

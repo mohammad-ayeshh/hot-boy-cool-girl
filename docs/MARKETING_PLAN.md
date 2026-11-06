@@ -76,6 +76,25 @@ In the order to go through them. Each has one recommendation.
 | M13 | **Connection trouble isn't explained.** Rooms use the free public PeerJS servers (no guarantee) and drops were seen on shared Wi-Fi (13.5). There's no "Can't connect? Try mobile data" help. | "Doesn't connect" is the review that kills an online game. | 🔴 | S | 🧑 test in the closed test, 🤖 a help line | 13.5, 13.7, MARKETING 7 |
 | M14 | **No page to send people to** besides the game itself: no "about" page with the video, the store badge, the Discord link and a press kit. | Creators, Reddit and press need one link that explains the game; the game screen can't. | 🟠 | S | 🤖 + 📝 | MARKETING 6 idea 10 |
 
+**Status (2026-11-06, the owner said "fix them" before the second playtest round):**
+| # | Status |
+|---|---|
+| M1 | ⏳ Testers will play the new version again; the form is ready to paste: [`PLAYTEST_FORM.md`](PLAYTEST_FORM.md). |
+| M2 | ✅ `index.html` has a description and preview tags; the picture is `public/share-card.jpg` (made by `tools/store_assets.py`). The preview shows only after the website is pushed. |
+| M3 | ✅ The home screen says "A co-op puzzle game for two friends, each on their own phone." and links to the About page. The Feel Lab link is gone from the home screen (`?lab` still works). |
+| M4 | ✅ The invite says "Play Hot Boy & Cool Girl with me: a co-op puzzle game, you on your phone and me on mine. Free, no download, no account. Room ABCD". |
+| — | ✅ **Bug found and fixed:** inside the Android app, "Share link" (and homemade-level links) pointed to `https://localhost/…`, a dead link for the friend. Shared links now always point to the website (`WEB_URL` in `src/game/links.ts`). |
+| M5 | ✅ On an iPhone website the offer says the full game is in the Android app for now and that a friend who owns it on Android opens every chapter, with no Google Play button. The note for website players who reach Chapter 3+ before launch is still for the launch post. |
+| M6 | ⏳ The "Send feedback" link is built but hidden until a support email is set (`SUPPORT_EMAIL` in `src/game/links.ts`, plus the privacy and about pages). Needs the owner's address. |
+| M7 | ⬜ Discord: the owner's step. |
+| M8 | ⬜ Video: the owner films (2.4). |
+| M9 | ✅ After a chapter's last level, the store app asks Google Play for its rating sheet, at most once a month from our side (`src/shop/review.ts`, plugin `@capacitor-community/in-app-review`). It only appears in a copy installed from Google Play (closed test or later). |
+| M10 | ⬜ Age: the owner's decision. |
+| M11 | ⬜ Release steps: the owner's (RELEASE_ANDROID.md). |
+| M12 | ✅ The website's "Get the app" button opens the store with `utm_source=website` (`storeLink()` in `src/game/links.ts`). |
+| M13 | ✅ Every connection error and the "connection dropped" screen say: "Check that both phones are online. On shared or school Wi-Fi, try mobile data instead." |
+| M14 | ✅ `public/about.html`: the hook, how it works, the friend's pass, screenshots, a press kit with image links, contact. Add the video, the store badge, Discord and the email when they exist. |
+
 ## 1.4 Soon after launch (first 1–2 months) 🟠
 | # | Gap | Why it matters | Hurts | Size | Who | Doc |
 |---|---|---|---|---|---|---|
@@ -334,4 +353,5 @@ them for creators and for testers who helped. They are a gift, so creators must 
 ---
 
 ## Changelog
+- 2026-11-06: Built M2–M5, M9, M12–M14 and fixed the app's share link; status table under 1.3; playtest form added.
 - 2026-11-06: First version: gap review (M1–M14, S1–S8, L1–L8) and the launch plan.
