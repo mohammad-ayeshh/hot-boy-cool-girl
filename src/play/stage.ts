@@ -254,6 +254,11 @@ export class Stage {
     this.layout();
   }
 
+  /** The main screen draws its own scene (render/title.ts): the level is hidden and isn't drawn meanwhile. */
+  setVisible(on: boolean): void {
+    this.margins.visible = this.world.visible = this.screenFx.visible = this.hints.visible = on;
+  }
+
   /** `quiet`: no spawn sparkle (the level designer redraws on every brush stroke). */
   setLevel(data: LevelData, quiet = false): void {
     this.quiet = quiet;
@@ -1436,6 +1441,7 @@ export class Stage {
   // ================================================================ main loop
 
   private tick = (ticker: { deltaMS: number }): void => {
+    if (!this.world.visible) return;
     const s = this.settings;
     const realDt = Math.min(ticker.deltaMS / 1000, 0.1);
     let simDt = realDt * s.timeScale;

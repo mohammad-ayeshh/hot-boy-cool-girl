@@ -1,4 +1,4 @@
-// The online game: home → invite → lobby (roles + level pick) → play → results (design doc 11–13).
+// The online game: main screen → co-op → invite → lobby (roles + level pick) → play → results (design doc 11–13).
 // Each phone simulates only its own character; the host's phone is the referee of the world:
 // it starts levels, restarts them after a death and decides when the level is complete.
 import * as device from '../engine/device';
@@ -25,8 +25,9 @@ import { defaults } from '../game/settings';
 import { Session, type SessionStatus } from '../net/session';
 import { normalizeRoomCode } from '../net/room';
 import { Stage, createApp, type HeroEvent, type Snapshot } from '../play/stage';
+import { TitleScene } from '../render/title';
 
-type Screen = 'home' | 'invite' | 'lobby' | 'map' | 'play' | 'results' | 'designer' | 'editor' | 'import';
+type Screen = 'home' | 'coop' | 'settings' | 'invite' | 'lobby' | 'map' | 'play' | 'results' | 'designer' | 'editor' | 'import';
 type Choice = 'next' | 'retry' | 'map';
 interface Finish { time: number; got: number; total: number; deaths: number }
 
@@ -98,6 +99,14 @@ export async function startGame(): Promise<void> {
   });
   stage.controlled = null;
   stage.setLocal({ fire: true, water: true });
+  // The main screen's own scene (11.1): the characters drawn big over the furthest chapter's temple.
+  const title = new TitleScene(app);
+  const titleScreen = (s: Screen) => s === 'home' || s === 'coop' || s === 'settings';
+  /** The furthest chapter this phone has reached: its temple area is the title's background. */
+  const furthestChapter = () => {
+    const mine = Object.keys(loadProgress());
+    return [...CHAPTERS].reverse().find((c) => c.levels[0].rows !== null && isUnlocked(c.levels[0].id, mine))?.n ?? 1;
+  };
 
   const session = new Session({ status: onStatus, message: onMessage });
   const send = (m: Record<string, unknown>) => session.send(m);
@@ -194,6 +203,11 @@ export async function startGame(): Promise<void> {
   }
   // Taps on menus must not leave a stuck touch on the game.
   ui.addEventListener('pointerdown', (e) => { if ((e.target as HTMLElement).closest('button, input, .overlay')) stage.controls.reset(); });
+  // Tap a character on the main screen: he jumps, she flips her hair (11.1, P4).
+  ui.addEventListener('pointerdown', (e) => {
+    if (!title.visible || (e.target as HTMLElement).closest('button, input, a, label, .panel, .menu-main')) return;
+    if (title.tap(e.clientX, e.clientY) && settings.haptics) device.haptic(15);
+  });
 
   // ---------------------------------------------------------------- screens
   function show(s: Screen): void {
@@ -202,8 +216,12 @@ export async function startGame(): Promise<void> {
     if (s !== 'editor' && editor) { editor.close(); editor = null; goHomeStage(); }
     if (s !== 'designer') pendingDelete = '';
     scr.classList.toggle('hidden', playing || s === 'editor');
+    scr.classList.toggle('titled', titleScreen(s));
+    title.visible = titleScreen(s);
+    stage.setVisible(!titleScreen(s));
+    if (titleScreen(s)) title.setChapter(furthestChapter());
     hud.classList.toggle('hidden', !playing);
-    netDot.classList.toggle('hidden', s === 'home' || s === 'designer' || s === 'editor' || s === 'import');
+    netDot.classList.toggle('hidden', titleScreen(s) || s === 'designer' || s === 'editor' || s === 'import');
     if (!playing) { closeMenu(); stage.showHints = false; clearTimeout(riddleTimer); riddleEl.classList.add('hidden'); }
     syncBanner();
     render();
@@ -213,7 +231,7 @@ export async function startGame(): Promise<void> {
 
   /** Menu music (15.4b): title on home, your own layer in the lobby until your friend arrives. */
   function updateMusic(): void {
-    if (screen === 'home') { music.setPresence(null, false); music.setMode('title'); }
+    if (titleScreen(screen)) { music.setPresence(null, false); music.setMode('title'); }
     else if (screen === 'invite' || screen === 'lobby') { music.setPresence(myElem, session.connected); music.setMode('lobby'); }
     else if (screen === 'map' || screen === 'results' || screen === 'designer' || screen === 'editor' || screen === 'import') music.setMode('map');
     else music.setMode('level');
@@ -221,6 +239,8 @@ export async function startGame(): Promise<void> {
 
   function render(): void {
     if (screen === 'home') scr.innerHTML = homeHtml();
+    else if (screen === 'coop') scr.innerHTML = coopHtml();
+    else if (screen === 'settings') scr.innerHTML = settingsHtml();
     else if (screen === 'invite') scr.innerHTML = inviteHtml();
     else if (screen === 'lobby') scr.innerHTML = lobbyHtml();
     else if (screen === 'map') scr.innerHTML = mapHtml();
@@ -229,24 +249,66 @@ export async function startGame(): Promise<void> {
     else if (screen === 'import') scr.innerHTML = importHtml();
   }
 
+  /** The main screen (11.1): the title, the game modes as stone tiles, ⚙ Settings. The characters are drawn by the title scene. */
   function homeHtml(): string {
     const ios = /iPhone|iPad/.test(navigator.userAgent) && !device.isStandalone();
     // A stranger from a clip or the store must get it in seconds: two people, two phones (MARKETING_PLAN M3).
     // One line, not a tutorial (11.2). The Feel Lab stays at ?lab but isn't advertised to players.
-    const about = device.isNativeApp() ? `${WEB_URL}about.html` : 'about.html';
-    return `<div class="panel">
-      <h1><span class="hot">Hot Boy</span> &amp; <span class="cool">Cool Girl</span></h1>
+    // Only modes the doc allows; every "Soon" tile is a promise, so there are just two (11.1).
+    const soon = (m: string, icon: string, name: string) => `<button class="mode soon" data-act="soon" data-m="${m}"><span class="mode-ico">${icon}</span><b>${name}</b><i>Soon</i></button>`;
+    return `<div class="menu-main">
+      <h1 class="logo"><span class="hot">Hot Boy</span> <span class="amp">&amp;</span> <span class="cool">Cool Girl</span></h1>
       <p class="tagline">A co-op puzzle game for two friends, each on their own phone.</p>
-      <input class="name-input" id="name" maxlength="12" placeholder="Your name (optional)" value="${esc(myName)}" autocomplete="off" />
+      <button class="mode mode-big" data-act="coop"><span class="mode-ico">▶</span><span class="mode-txt"><b>Co-op</b><small>Story · ${CHAPTERS.length} chapters</small></span></button>
+      <div class="mode-row">
+        <button class="mode" data-act="designer"><span class="mode-ico">🛠</span><b>Level designer</b></button>
+        ${soon('versus', '⚔', 'Versus race')}
+        ${soon('bonus', '⭐', 'Bonus levels')}
+      </div>
+      <div class="status" id="status"></div>
+      ${ios ? '<p class="small">Tip: Share → “Add to Home Screen” plays fullscreen and keeps your progress safe.</p>' : ''}
+    </div>
+    <button class="corner-btn hud-btn" data-act="settings" aria-label="Settings">⚙</button>`;
+  }
+
+  const nameInput = () => `<input class="name-input" id="name" maxlength="12" placeholder="Your name (optional)" value="${esc(myName)}" autocomplete="off" />`;
+
+  /** Co-op (11.1): your name, then create a room or join one with its code. */
+  function coopHtml(): string {
+    return `<div class="panel coop">
+      <div class="map-head"><button data-act="tohome">← Back</button><h2>Co-op · Story</h2><span></span></div>
+      <p class="small">Each of you on your own phone: one creates a room, the other joins it.</p>
+      ${nameInput()}
       <button class="primary big" data-act="create">Create room</button>
       <div class="row">
         <input class="code-input" id="code" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" />
         <button class="secondary" data-act="join">Join room</button>
       </div>
-      <button data-act="designer">🛠 Level designer</button>
       <div class="status" id="status"></div>
-      ${ios ? '<p class="small">Tip: Share → “Add to Home Screen” plays fullscreen and keeps your progress safe.</p>' : ''}
-      <p class="small"><a href="${about}" target="${device.isNativeApp() ? '_blank' : '_self'}">About the game</a>${SUPPORT_EMAIL ? ` · <a href="${feedbackLink()}">Send feedback</a>` : ''}</p>
+    </div>`;
+  }
+
+  /** Settings (11.1): sound, name, full screen, restore, links, version. No Buy button: the offer stays where 12.6 puts it. */
+  function settingsHtml(): string {
+    // the store app's own address is local, so its pages open on the website
+    const page = (f: string) => (device.isNativeApp() ? `${WEB_URL}${f}` : f);
+    const target = device.isNativeApp() ? '_blank' : '_self';
+    const links = [
+      `<a href="${page('about.html')}" target="${target}">About the game</a>`,
+      `<a href="${page('privacy.html')}" target="${target}">Privacy policy</a>`,
+      ...(SUPPORT_EMAIL ? [`<a href="${feedbackLink()}">Send feedback</a>`] : []),
+    ].join(' · ');
+    const extras = [
+      device.isStandalone() ? '' : `<button data-act="fullscreen">${fsLabel()}</button>`,
+      canBuy() && paywallOn() ? '<button data-act="restore">Restore my purchase</button>' : '',
+    ].join('');
+    return `<div class="panel settings">
+      <div class="map-head"><button data-act="tohome">← Back</button><h2>⚙ Settings</h2><span></span></div>
+      <label class="set-name"><span>Your name</span>${nameInput()}</label>
+      ${prefsHtml()}
+      ${extras ? `<div class="row">${extras}</div>` : ''}
+      <p class="small">${links}</p>
+      <p class="small version">Version ${new Date(__BUILD__).toISOString().slice(0, 10)} · play ${playVersion()}</p>
     </div>`;
   }
 
@@ -456,6 +518,9 @@ export async function startGame(): Promise<void> {
     if (!el) return;
     const act = el.dataset.act;
     if (act === 'create') void create();
+    else if (act === 'coop') show('coop');
+    else if (act === 'settings') show('settings');
+    else if (act === 'soon') toast(`${el.dataset.m === 'versus' ? '⚔ Versus race' : '⭐ Bonus levels'}: coming in a future update.`);
     else if (act === 'join') void join(normalizeRoomCode(($<HTMLInputElement>('#code')).value));
     else if (act === 'share') void shareLink();
     else if (act === 'copy') void copyLink();
@@ -577,7 +642,7 @@ export async function startGame(): Promise<void> {
     mapTab = chapterOf(picked)?.n ?? 1;
     history.replaceState(null, '', location.pathname);
     goHomeStage();
-    show('home');
+    show('coop'); // a new room is one tap away (11.2)
   }
 
   function goHomeStage(): void {
@@ -906,7 +971,7 @@ export async function startGame(): Promise<void> {
       send({ t: 'hello', v: __BUILD__, pv: playVersion(), own: ownsGame() ? 1 : 0, name: myName, done: Object.keys(loadProgress()), id: phoneId() });
       sfx.chime([523.25, 783.99]); // "partner joined" (15.5)
       if (settings.haptics) device.haptic(30);
-      if (screen === 'home' || screen === 'invite') show('lobby');
+      if (titleScreen(screen) || screen === 'invite') show('lobby');
       else updateMusic();
     } else if (s === 'lost') {
       showLost();
@@ -914,7 +979,7 @@ export async function startGame(): Promise<void> {
     } else if (s === 'idle' && info) {
       forgetRoomLevels();
       goHomeStage();
-      show('home');
+      show('coop');
       setStatus(info, true);
     }
     updateNet();
@@ -1134,13 +1199,15 @@ export async function startGame(): Promise<void> {
   initBilling((owned) => { if (owned) ownedNow(); });
 
   // Store app: Android's back button goes one step back, like the screen's own back button (closes a popup,
-  // pauses or resumes a level, results → map → characters → leave the room → home). On the home screen it
+  // pauses or resumes a level, results → map → characters → leave the room → co-op → main screen). On the main screen it
   // sends the app to the background like Home; it never closes the app.
   const BACK: Partial<Record<Screen, string>> = {
     results: '[data-act="choice"][data-c="map"]',
     map: '[data-act="tolobby"]',
     lobby: '[data-act="leave"]',
     invite: '[data-act="leave"]',
+    coop: '[data-act="tohome"]',
+    settings: '[data-act="tohome"]',
     designer: '[data-act="tohome"]',
     import: '[data-act="tohome"]',
     editor: '[data-ed="done"]', // saves first, like tapping Done
@@ -1250,6 +1317,7 @@ export async function startGame(): Promise<void> {
   }
   const linkCode = normalizeRoomCode(new URLSearchParams(location.search).get('room') ?? '');
   if (linkCode.length === 4) {
+    show('coop'); // a room link skips the main screen and joins with no taps (11.2)
     setStatus(`Joining room ${linkCode}…`);
     void join(linkCode); // opening a room link joins automatically (11.1)
   }
