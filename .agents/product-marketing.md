@@ -1,12 +1,13 @@
 # Product Marketing Context
 
-**Document version:** v2
-**Last updated:** 2026-10-31
+**Document version:** v4
+**Last updated:** 2026-11-06
 
 > Read by the marketing skills in `.claude/skills/` before any marketing task. The sources of truth are
 > `docs/GAME_DESIGN.md` (the game) and `docs/MARKETING.md` (money and marketing plan); keep this file in step with them.
 > This is a consumer game, not a B2B product: skip company/decision-maker/ICP questions.
 > Anything marked **(proposed)** is not decided yet: ask the owner before treating it as final.
+> The launch plan (gap review, channels, week-by-week calendar) is `docs/MARKETING_PLAN.md`.
 
 ## Product Overview
 **One-liner:** Two friends, two phones, one temple: fire and water must save each other.
@@ -15,14 +16,15 @@
 **Product type:** Game. Today a free web game (GitHub Pages, opens from a link, no download); next a Capacitor app on Google Play, later the App Store, maybe Steam.
 **Business model (decided 2026-10-31):** No ads, ever. Chapters 1–2 and the level designer are free; one $2.99 purchase (Google Play, in the Android app) unlocks every other chapter forever. **Friend's pass:** if either player in a room owns the game, the room plays everything, so only one of two friends pays. The website is the free demo that leads to the app. Not launched yet.
 
-**What's in the game now (2026-10-31):**
-- 7 chapters, 35 levels, each proven winnable.
+**What's in the game now (2026-11-06):**
+- 7 chapters, 35 levels, each proven winnable. Chapters 8–9 ("Don't touch": if the two touch, both burst into steam; and a finale) are planned and approved but not built, which would make 9 chapters and 45 levels.
 - Buttons, levers, lifts, gates and trapdoors.
 - **Different eyes:** some things are visible to only one player, so you must describe them out loud.
 - **Password gates:** animal carvings hidden across a chapter. Each team gets its own random code, entered on symbol stones by taking turns.
 - **Both mixed (Chapter 7):** each player sees only half of the secret code, so the two must tell each other their half.
 - A level designer: build a level, finish it together to get a ✅, share it by link.
 - A duet soundtrack where each character's music layer gets louder while they move.
+- Each chapter is its own area of the temple with its own background and tune; Chapters 1–6 open with a short riddle on a stone tablet.
 
 ## Target Audience
 **Who plays:** Pairs of friends, couples, siblings, cousins who want something to play *together* on the phones they already have, often on a voice call or sitting together.
@@ -31,6 +33,7 @@
 - Have fun *with* a specific person, not with strangers
 - Start in seconds from a shared link: no accounts, no downloads (web), no ads
 - Feel clever together: solve a puzzle as a team
+**Age:** not decided yet (proposed: 13 and up on Google Play, to stay out of the Families rules). The fire-and-water genre is popular with children and teens, so keep art and copy "stylish, not cute" and never target children in ads.
 **Use cases:**
 - Long-distance friends or couples on a call
 - Two people on the same sofa, each with their own phone
@@ -123,6 +126,7 @@ Not B2B. Two simple player types, both needed (it's co-op):
 ## Goals
 **Business goal:** First prove that strangers love the free chapter, then launch on Google Play with the one-time unlock.
 **Conversion actions, in order:** finish Chapter 1 → invite a friend → come back another day → buy the unlock (`docs/MARKETING.md` section 4).
+**Measurement (no server, no analytics, on purpose):** Play Console statistics, UTM-tagged store links per source, platform stats for clips, Discord counts, and a tester form. See `docs/MARKETING_PLAN.md` 2.1.
 **Current metrics:** None written down yet. Playtests happened (2026-10-31: ~20 people played the levels, 2 the whole game), but the three numbers and quotes are still to be recorded. Don't invent them.
 
 ## Paid Ads (optional)
@@ -140,6 +144,7 @@ Not running ads yet, and no ad budget. **Agent may:** draft, recommend. **Agent 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v4 (2026-11-06): Chapter themes and riddles; Chapters 8–9 planned; age still open; pointer to the launch plan and how we measure.
 - v3 (2026-10-31): Playtests done (results to add).
 - v2 (2026-10-31): Business model decided; mobile-data test passed; ad lead line.
 - v1 (2026-10-31): Initial context, written from GAME_DESIGN.md and MARKETING.md when the marketing skills were installed.

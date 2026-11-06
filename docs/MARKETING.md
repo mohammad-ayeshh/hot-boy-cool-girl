@@ -3,6 +3,9 @@
 *Started 2026-10-24. Section 1 was decided on 2026-10-31; the rest is a plan (💬). Updated 2026-10-31 with ideas from the
 marketing skills installed in `.claude/skills/` (their game context is `.agents/product-marketing.md`).*
 
+**The launch plan** (what's still missing before the game sells well, and what to do each week through launch and the
+first months) is in [`MARKETING_PLAN.md`](MARKETING_PLAN.md), written 2026-11-06.
+
 ## 1. How we make money 🔒
 *Decided 2026-10-31 (design doc 12.6).*
 - **No ads, ever.** The owner hates them, and they break P5 (friends playing in 30 seconds).
@@ -24,8 +27,10 @@ marketing skills installed in `.claude/skills/` (their game context is `.agents/
 ## 3. When to start selling
 Start selling when **a stranger who plays the free chapters wants to pay for the next one.** That is measured, not guessed.
 
-Where we are (2026-10-31):
+Where we are (updated 2026-11-06):
 - ✅ 7 chapters, 35 levels, different eyes and password gates (and both mixed in Chapter 7) are built.
+- ✅ Each chapter has its own background and tune (2026-10-31), and Chapters 1–6 open with a riddle (2026-11-06).
+- 💬 Chapters 8–9 ("Don't touch" and the finale) are planned and approved (design doc 16.11–16.12), not built yet: the game would then have 9 chapters and 45 levels. Chapter 8 needs a two-phone test first.
 - ✅ A two-phone test over mobile data worked and was fun.
 - ✅ Chapter 1 was tested with a friend.
 - ✅ **Playtests done (owner, 2026-10-31):** about 20 people played the levels and 2 played the whole game. *The three numbers below and what testers said aren't written down yet: add them here.*
@@ -89,6 +94,7 @@ Most indie games earn little. What makes a co-op game spread is **people invitin
 - [x] Free/paid decided; offer, friend's pass, settings and update check built; Android project, privacy page and store images ready (2026-10-31)
 - [x] Playtests: ~20 people played the levels, 2 the whole game (2026-10-31). Still to do: write down the three numbers and quotes; set real star times
 - [x] Android app built and running on the owner's phone (2026-10-31)
+- [ ] Go through the "must fix before launch" list (M1–M14) in [`MARKETING_PLAN.md`](MARKETING_PLAN.md) 1.3, one item at a time
 - [ ] Start posting short clips now (section 5); open the Discord founder-led (idea 6)
 - [ ] **Google Play account, signed upload, closed test with 12 testers for 14 days** (`RELEASE_ANDROID.md`) ← next: the 14-day clock is the longest wait, so start it first
 - [ ] Short store video (works on mute)
