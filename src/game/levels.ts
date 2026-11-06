@@ -183,19 +183,24 @@ export const CHAPTER_1: LevelDef[] = [
   },
 ];
 
-export interface Chapter { n: number; name: string; levels: LevelDef[] }
+/** A chapter riddle (11.2): one line for both, or a half for each player (Chapter 5). */
+export type Riddle = string | { fire: string; water: string };
+export interface Chapter { n: number; name: string; levels: LevelDef[]; riddle?: Riddle }
 export const CHAPTERS: Chapter[] = [
-  { n: 1, name: 'The Temple Gate', levels: CHAPTER_1 },
-  { n: 2, name: 'The Flooded Halls', levels: CHAPTER_2 },
-  { n: 3, name: 'The Deep Machine', levels: CHAPTER_3 },
-  { n: 4, name: 'The Summit', levels: CHAPTER_4 },
-  { n: 5, name: 'The Hall of Eyes', levels: CHAPTER_5 },
-  { n: 6, name: 'The Sealed Vault', levels: CHAPTER_6 },
+  { n: 1, name: 'The Temple Gate', levels: CHAPTER_1, riddle: 'What burns one cradles the other. No door opens for one alone.' },
+  { n: 2, name: 'The Flooded Halls', levels: CHAPTER_2, riddle: 'Your key hangs in another’s hand.' },
+  { n: 3, name: 'The Deep Machine', levels: CHAPTER_3, riddle: 'The machine forgets what you only hold, and remembers what you lock.' },
+  { n: 4, name: 'The Summit', levels: CHAPTER_4, riddle: 'What lifts one lowers the other. Choose who rises first.' },
+  { n: 5, name: 'The Hall of Eyes', levels: CHAPTER_5, riddle: { fire: 'Not every eye is shown the same stone…', water: '…trust the voice beside you.' } },
+  { n: 6, name: 'The Sealed Vault', levels: CHAPTER_6, riddle: 'The walls are counting. Remember what they tell you.' },
   { n: 7, name: 'The Whispering Vault', levels: CHAPTER_7 },
 ];
 /** Every official level in play order: finishing one unlocks the next, across chapters (12.2). */
 export const ALL_LEVELS: LevelDef[] = CHAPTERS.flatMap((c) => c.levels);
 export const chapterOf = (id: string): Chapter | undefined => CHAPTERS.find((c) => c.levels.some((l) => l.id === id));
+/** The riddle line one player sees (11.2), or '' for a chapter without one. */
+export const riddleFor = (ch: Chapter, elem: 'fire' | 'water'): string =>
+  !ch.riddle ? '' : typeof ch.riddle === 'string' ? ch.riddle : ch.riddle[elem];
 
 export const findLevel = (id: string): LevelDef | undefined => ALL_LEVELS.find((l) => l.id === id);
 /** Any playable level: an official one, a homemade level shared in this room, or one saved on this phone. */

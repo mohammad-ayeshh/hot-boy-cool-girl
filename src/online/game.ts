@@ -6,7 +6,7 @@ import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
 import type { DeathCause, Elem } from '../game/level';
 import type { MechSync } from '../game/mechanisms';
-import { ALL_LEVELS, CHAPTERS, chapterOf, getLevel, levelData, nextLevel, type LevelDef } from '../game/levels';
+import { ALL_LEVELS, CHAPTERS, chapterOf, getLevel, levelData, nextLevel, riddleFor, type LevelDef } from '../game/levels';
 import { blankLevel, decodeLink, encodeLink, isCustomId, isVerified, levelHash, markVerified, newId, sanitize, type CustomLevel } from '../game/custom';
 import { checkLevel, hasErrors } from '../game/levelCheck';
 import { deleteLevel, forgetRoomLevels, getMyLevel, listLevels, rememberRoomLevel, roomLevel, roomLevels, saveLevel } from '../game/myLevels';
@@ -99,6 +99,7 @@ export async function startGame(): Promise<void> {
     <button class="net-dot hidden" data-act="net" aria-label="Connection"></button>
     <button class="fs-btn hud-btn" data-act="fullscreen"></button>
     <div class="toast hidden"></div>
+    <div class="riddle hidden"></div>
     <div class="overlay screen" id="scr"></div>
     <div class="overlay hidden" id="menu"></div>
     <div class="overlay hidden" id="lost"></div>
@@ -109,6 +110,7 @@ export async function startGame(): Promise<void> {
   const hudInfo = $<HTMLElement>('.hud-info');
   const netDot = $<HTMLElement>('.net-dot');
   const toastEl = $<HTMLElement>('.toast');
+  const riddleEl = $<HTMLElement>('.riddle');
   const menuEl = $<HTMLElement>('#menu');
   const lostEl = $<HTMLElement>('#lost');
   const offerEl = $<HTMLElement>('#offer');
@@ -121,6 +123,30 @@ export async function startGame(): Promise<void> {
     clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => toastEl.classList.add('hidden'), ms);
   };
+
+  // Chapter riddle (11.2): fades in when a chapter's first level starts, and out after a while or on your first touch.
+  const RIDDLE_MS = 7000;
+  const RIDDLE_GRACE_MS = 1500; // a touch this early is still the tap that started the level
+  let riddleTimer = 0;
+  let riddleShownAt = 0;
+  function showRiddle(text: string): void {
+    riddleEl.textContent = text;
+    riddleEl.classList.remove('hidden', 'gone');
+    riddleShownAt = performance.now();
+    clearTimeout(riddleTimer);
+    riddleTimer = window.setTimeout(hideRiddle, RIDDLE_MS);
+  }
+  function hideRiddle(): void {
+    clearTimeout(riddleTimer);
+    if (riddleEl.classList.contains('hidden')) return;
+    riddleEl.classList.add('gone');
+    riddleTimer = window.setTimeout(() => riddleEl.classList.add('hidden'), 800);
+  }
+  const touchHidesRiddle = () => {
+    if (!riddleEl.classList.contains('gone') && performance.now() - riddleShownAt > RIDDLE_GRACE_MS) hideRiddle();
+  };
+  window.addEventListener('pointerdown', touchHidesRiddle);
+  window.addEventListener('keydown', touchHidesRiddle);
 
   // The first touch unlocks sound and (on Android) goes fullscreen.
   let unlocked = false;
@@ -165,7 +191,7 @@ export async function startGame(): Promise<void> {
     scr.classList.toggle('hidden', playing || s === 'editor');
     hud.classList.toggle('hidden', !playing);
     netDot.classList.toggle('hidden', s === 'home' || s === 'designer' || s === 'editor' || s === 'import');
-    if (!playing) { closeMenu(); stage.showHints = false; }
+    if (!playing) { closeMenu(); stage.showHints = false; clearTimeout(riddleTimer); riddleEl.classList.add('hidden'); }
     syncBanner();
     render();
     updateFsButton();
@@ -262,7 +288,7 @@ export async function startGame(): Promise<void> {
     return `<div class="panel wide map-panel">
       <div class="map-head"><button data-act="tolobby">← Characters</button><div class="tabs">${CHAPTERS.map((c) => tab(c.n, `Ch ${c.n}`)).join('')}${tab('mine', '🛠 Mine')}</div><span class="small">Room ${session.code}</span></div>
       ${mapTab !== 'mine'
-        ? `<div class="map-chapter">Chapter ${ch.n} · ${ch.name}</div><div class="temple-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>`
+        ? `<div class="map-chapter">Chapter ${ch.n} · ${ch.name}</div>${riddleFor(ch, myElem) ? `<div class="map-riddle">${riddleFor(ch, myElem)}</div>` : ''}<div class="temple-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>`
         : mineHtml()}
       <div class="row">
         <button class="${readyMe ? 'secondary' : 'primary'} big" data-act="ready">${readyMe ? 'Ready ✓ (tap to undo)' : `Ready: ${pl?.name ?? ''}`}</button>
@@ -633,6 +659,9 @@ export async function startGame(): Promise<void> {
     if (id === ALL_LEVELS[0].id) stage.hintZones(); // zone hints on the first level only (6.3)
     resetRound();
     show('play');
+    const ch = chapterOf(id);
+    const riddle = ch && ch.levels[0].id === id ? riddleFor(ch, myElem) : '';
+    if (riddle) showRiddle(riddle);
   }
 
   function resetRound(): void {

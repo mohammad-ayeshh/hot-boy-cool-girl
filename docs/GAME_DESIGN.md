@@ -347,6 +347,16 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 
 ### 11.2 Flow rules
 - **No tutorial screens.** The first levels *are* the tutorial: they teach by design, with short hints drawn into the level itself.
+- **Chapter riddles** *(decided 2026-11-06)*. When a chapter's first level starts, a short riddle fades in at the top like a carved stone tablet, on both phones. It hints at the chapter's new idea in a mysterious way and never explains it plainly. It fades after a few seconds, or as soon as you touch the controls, and doesn't come back on a restart. The level map shows it in small text under the chapter name, so you can read it again. In Chapter 5 each player sees only **their half** of it, so the two halves have to be read out loud. Only Chapters 1–6 have one; Chapter 7 and later have none (the owner's choice).
+
+  | Chapter | Riddle |
+  |---|---|
+  | 1 | *What burns one cradles the other. No door opens for one alone.* |
+  | 2 | *Your key hangs in another's hand.* |
+  | 3 | *The machine forgets what you only hold, and remembers what you lock.* |
+  | 4 | *What lifts one lowers the other. Choose who rises first.* |
+  | 5 | Hot Boy: *Not every eye is shown the same stone…* · Cool Girl: *…trust the voice beside you.* |
+  | 6 | *The walls are counting. Remember what they tell you.* |
 - **Dying restarts the level instantly** for both players, after the short death effect (about 1 s). No "game over" screen, no menu to click through (P5).
 - **Pause doesn't freeze the game** (it's online). Your partner sees a small "partner is in the menu" icon.
 - **If a player disconnects**, the other sees "Waiting for partner…", and the same room code works to rejoin. The details come in the online rules topic.
@@ -632,7 +642,7 @@ Every level must follow all of these, plus the pillars, the level metrics (7.7) 
 | D1 | **Both players are needed** | Each player helps the other at least once. Nobody spends the level just waiting (P1). |
 | D2 | **One new idea per level** | Introduce one new thing at a time. Never two new things at once. |
 | D3 | **Teach → test → twist** | First meet a new thing where it's safe, then use it with a little risk, then combine it with something you already know. |
-| D4 | **Teach without words** | The level itself shows the idea. Hints are tiny and drawn into the level (a glowing arrow, a symbol), never text boxes. |
+| D4 | **Teach without words** | The level itself shows the idea. Hints are tiny and drawn into the level (a glowing arrow, a symbol), never text boxes. The one exception is the **chapter riddle** (11.2): a mysterious line at the start of a chapter, never an instruction. |
 | D5 | **Readable at the start** | From the first second you can see the doors, the hazards and the mechanisms, and start planning (P2). |
 | D6 | **No unfair surprises** | No hidden traps, no blind jumps, no death you couldn't see coming. |
 | D7 | **Both stay busy** | Paths split and meet again so both players are doing something most of the time. |
@@ -952,3 +962,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-31 | **Chapter themes decided (9.3):** one temple, one journey. Each chapter is its own area of the temple with its own background and music (jungle gate, flooded halls, deep machine, summit sky, hall of eyes, sealed vault, whispering vault). Only the scenery changes; gameplay colors and shapes stay the same, and backgrounds stay dark and muted. Built in two steps: backgrounds, then music. |
 | 2026-10-31 | **Chapter themes built (9.3):** every chapter has its own background (still scenery, moving parts and a floating air layer, all behind the level) and its own tune (key, chords, speed, drums and a texture such as drips, wind or whispers), while the duet stays. Gem and stone notes follow each tune's key. Chapter 6's background uses vault doors instead of animal carvings so it can't be mistaken for the code. Feel Lab › World › Living background turns the moving scenery off. |
 | 2026-10-31 | **Connection and menu (13.3, 13.5, 13.7):** "Leave room" on the waiting screen right away (was after 2 minutes); "Hold for the level map" in the pause menu takes both players to the map; Wi-Fi hiccups wait 15 s before counting as a drop, and position updates are skipped instead of piling up. Still free: the public PeerJS servers. Android app: the back button goes one screen back, and sound pauses when the app is hidden. |
+| 2026-11-06 | **Chapter riddles (11.2, D4):** the first level of Chapters 1–6 opens with a short riddle on a carved stone tablet that hints at the chapter's new idea without explaining it. It fades after a few seconds or on your first touch, and the level map keeps it under the chapter name. In Chapter 5 each player sees half of it. Chapter 7 and later chapters get no riddle (the owner's choice). D4 now allows this one kind of text. |
