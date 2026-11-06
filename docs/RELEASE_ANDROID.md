@@ -25,6 +25,16 @@ npm run app:open
 - `app:open` opens the project in Android Studio. Plug in your phone with USB debugging on (Settings › About phone › tap "Build number" 7 times › Developer options › USB debugging) and press the green ▶ Run button.
 - Purchases don't work yet in this test build; that needs step 4.
 
+**Easier: the test APK from GitHub (no Android Studio, no cable).** Every push to `main` builds the app on GitHub
+(`.github/workflows/android-apk.yml`) and puts it on one fixed link. Open it on the phone, download, tap the file and allow
+"install unknown apps" for your browser once:
+https://github.com/mohammad-ayeshh/hot-boy-cool-girl/releases/download/apk/hot-boy-cool-girl.apk
+- It's signed with the project's **test key** (the `ANDROID_TEST_KEYSTORE` secret on GitHub), never the Google Play key, so
+  each new APK installs over the last one and keeps your progress. Without the secret every build gets a random key and
+  you'd have to uninstall before installing the next one.
+- Purchases don't work in it. **Uninstall it before installing the app from Google Play** (same app, different key).
+- Building takes about 5 minutes after a push: see the **Actions** tab on GitHub.
+
 ## 3. Make the upload file (signed app bundle)
 1. In Android Studio: **Build › Generate Signed App Bundle or APK › Android App Bundle**.
 2. **Create new** key store. Save it **outside** the project folder, and **back up the file and both passwords** (a password manager plus a second copy). Losing them makes updates very hard.

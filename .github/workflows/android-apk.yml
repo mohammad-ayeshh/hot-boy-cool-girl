@@ -1,0 +1,64 @@
+name: Android test APK
+
+# Builds an installable test APK of the store app (Capacitor, android/) on every push to main and puts it on
+# one fixed download link, so a phone can always grab the newest build:
+#   https://github.com/mohammad-ayeshh/hot-boy-cool-girl/releases/download/apk/hot-boy-cool-girl.apk
+# It's a test build, not the Google Play release: it's signed with the project's test key (the
+# ANDROID_TEST_KEYSTORE secret), so each new APK installs over the last one. See docs/RELEASE_ANDROID.md.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # to update the "apk" release
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - run: npm ci
+      - run: npm run app:sync
+
+      # The same key every build: Android only installs an update signed like the installed app.
+      - name: Use the project's test signing key
+        env:
+          TEST_KEYSTORE: ${{ secrets.ANDROID_TEST_KEYSTORE }}
+        run: |
+          if [ -n "$TEST_KEYSTORE" ]; then
+            mkdir -p ~/.android
+            echo "$TEST_KEYSTORE" | base64 -d > ~/.android/debug.keystore
+          else
+            echo "::warning::No ANDROID_TEST_KEYSTORE secret: this APK can't install over an earlier one."
+          fi
+
+      - run: ./gradlew assembleDebug --no-daemon
+        working-directory: android
+
+      - name: Publish on the fixed download link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk hot-boy-cool-girl.apk
+          notes="Newest test build of the Android app: commit ${GITHUB_SHA::7}, built $(date -u '+%Y-%m-%d %H:%M') UTC.
+
+          Download on your phone: https://github.com/${GITHUB_REPOSITORY}/releases/download/apk/hot-boy-cool-girl.apk
+          Not the Google Play version: purchases don't work here. Uninstall it before installing the app from Google Play."
+          gh release view apk > /dev/null 2>&1 || gh release create apk --prerelease --title "Android test APK" --notes "$notes" --target "$GITHUB_SHA"
+          gh release upload apk hot-boy-cool-girl.apk --clobber
+          gh release edit apk --notes "$notes"
