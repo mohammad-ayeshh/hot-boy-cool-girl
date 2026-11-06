@@ -17,7 +17,7 @@
 **Business model (decided 2026-10-31):** No ads, ever. Chapters 1–2 and the level designer are free; one $2.99 purchase (Google Play, in the Android app) unlocks every other chapter forever. **Friend's pass:** if either player in a room owns the game, the room plays everything, so only one of two friends pays. The website is the free demo that leads to the app. Not launched yet.
 
 **What's in the game now (2026-11-06):**
-- 7 chapters, 35 levels, each proven winnable. Chapters 8–9 ("Don't touch": if the two touch, both burst into steam; and a finale) are planned and approved but not built, which would make 9 chapters and 45 levels.
+- 9 chapters, 45 levels, each proven winnable. Chapter 8 is "Don't touch" (if the two touch, both burst into steam) and Chapter 9 is the finale that mixes everything, with a small wordless ending. Chapter 8 still needs a two-phone test.
 - Buttons, levers, lifts, gates and trapdoors.
 - **Different eyes:** some things are visible to only one player, so you must describe them out loud.
 - **Password gates:** animal carvings hidden across a chapter. Each team gets its own random code, entered on symbol stones by taking turns.

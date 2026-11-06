@@ -9,6 +9,18 @@ export const HITBOX_W = 0.7; // looks ~1 tile wide: forgiving (7.4)
 export const HITBOX_H = 1.35; // looks ~1.5 tiles tall; fits 2-tile tunnels
 const EPS = 1e-4;
 
+/** Don't touch (16.7): the partner starts to hiss within this distance (T3, tiles between the bodies' middles). */
+export const TOUCH_NEAR = 2;
+/**
+ * Don't touch (16.7, T2): a *clear* overlap, at least half the width and half the height of a body.
+ * A brush or a near miss is survived (7.4). Takes feet positions (x = middle, y = feet).
+ */
+export function touching(a: { x: number; y: number }, b: { x: number; y: number }): boolean {
+  const ox = HITBOX_W - Math.abs(a.x - b.x);
+  const oy = HITBOX_H - Math.abs(a.y - b.y);
+  return ox >= HITBOX_W / 2 && oy >= HITBOX_H / 2;
+}
+
 export interface Input {
   dir: -1 | 0 | 1;
   jumpPressed: boolean; // went down since the last step

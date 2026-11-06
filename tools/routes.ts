@@ -3,6 +3,7 @@
 import { enteredAt, gateOpen, gateShut, heard, jump, pause, platAt, say, to, until, type Cmd, type Route } from './sim.ts';
 import { CHAPTER_6 } from '../src/game/chapter6.ts';
 import { CHAPTER_7 } from '../src/game/chapter7.ts';
+import { CHAPTER_9 } from '../src/game/chapter9.ts';
 import type { LevelDef } from '../src/game/levels.ts';
 import type { Animal } from '../src/game/mechanisms.ts';
 
@@ -14,17 +15,18 @@ export const TEST_CODE: Animal[] = ['frog', 'bat', 'bat', 'monkey'];
  * in the gap next to its shelf, jumps up onto the stone, and steps back down (a repeat = step off and on again, G11).
  * Hidden stones (7-5, W3) are real for both (E5), so the robot plays them the same way.
  */
-function enterCode(level: LevelDef, code: Animal[], fire: Cmd[], water: Cmd[]): Route {
+function enterCode(level: LevelDef, code: Animal[], fire: Cmd[], water: Cmd[], left: 'fire' | 'water' = 'fire'): Route {
+  const [l, r] = left === 'fire' ? [fire, water] : [water, fire];
   const stones = level.mechs!.flatMap((m) => (m.kind === 'stone' ? [m] : []));
   const gates = [13, 18]; // the vault gates: a shelf next to one is climbed from its other side
   code.forEach((animal, i) => {
     const s = stones.find((st) => st.animal === animal)!;
     const fromLeft = !gates.includes(s.x - 1);
     const stand = fromLeft ? s.x - 0.7 : s.x + 1.7;
-    (s.x < 16 ? fire : water).push(enteredAt(i), to(stand), jump(s.x + 0.5), enteredAt(i + 1), to(stand));
+    (s.x < 16 ? l : r).push(enteredAt(i), to(stand), jump(s.x + 0.5), enteredAt(i + 1), to(stand));
   });
-  fire.push(gateOpen(3), to(14.5));
-  water.push(gateOpen(4), to(17.5));
+  l.push(gateOpen(3), to(14.5));
+  r.push(gateOpen(4), to(17.5));
   return { fire, water };
 }
 
@@ -49,8 +51,21 @@ export function whisperRoute(code: Animal[]): Route {
   return enterCode(CHAPTER_7[4], code, fire, water);
 }
 
+/**
+ * Level 9-5 for any code: 7-5 with the roles swapped, and Don't touch. Up top she opens his trapdoor on the way and
+ * stands on the gate button only he sees; he leaps over her, crosses the stones only she sees, and walks over the
+ * lever that opens her trapdoor. In the vault she has the left half and he the right.
+ */
+export function heartRoute(code: Animal[]): Route {
+  const water: Cmd[] = [to(10.5), say('she holds'), until('he is past the gate', (w) => w.body.fire.x > 15.6), to(7.5),
+    until('she is down', (w) => w.body.water.y > 15.9)];
+  const fire: Cmd[] = [heard('she holds'), gateOpen(1), jump(12.6, { at: 8.6 }), to(15.4), jump(16.6), to(17.4), jump(20.6, { at: 17.4 }), to(21.4),
+    jump(24.6, { at: 21.4 }), to(26.6), until('he is down', (w) => w.body.fire.y > 15.9)];
+  return enterCode(CHAPTER_9[4], code, fire, water, 'water');
+}
+
 /** Password vaults the robot plays with many codes, not just TEST_CODE (route_check.ts). */
-export const CODE_ROUTES: Record<string, (code: Animal[]) => Route> = { '6-5': vaultRoute, '7-5': whisperRoute };
+export const CODE_ROUTES: Record<string, (code: Animal[]) => Route> = { '6-5': vaultRoute, '7-5': whisperRoute, '9-5': heartRoute };
 
 export const ROUTES: Record<string, Route> = {
   '1-1': {
@@ -234,6 +249,65 @@ export const ROUTES: Record<string, Route> = {
     water: [heard('he holds'), gateOpen(0), to(8.6), jump(7.2), jump(8.6), to(11.8), say('locked'), to(16.5)],
   },
   '7-5': whisperRoute(TEST_CODE),
+
+  // ---- Chapter 8: Don't touch (16.7). The robot fails the level if the two ever clearly overlap.
+  '8-1': {
+    fire: [to(13.5), until('she is on the shelf', (w) => w.body.water.y < 13.1 && w.body.water.x > 15), to(23.4), jump(24.6), jump(22.5),
+      say('he holds'), heard('she holds'), gateOpen(1), to(18.5)],
+    water: [to(17.6), jump(15.9), until('he is past', (w) => w.body.fire.x > 19), to(14.2), to(8.4), jump(7.0), jump(9.8), heard('he holds'), gateOpen(0),
+      to(15.5), say('she holds'), until('he is at his door', (w) => w.body.fire.x < 18.9), to(13.5)],
+  },
+  '8-2': {
+    fire: [to(15.6), say('he is in'), platAt(0, 1), to(18.5), say('he is up'), heard('she is in'), to(16.4), jump(11.5), to(11.5), say('he holds'),
+      until('she is off the lift', (w) => w.body.water.x > 17 && w.body.water.y < 7.1), to(14.4), platAt(0, 0), jump(17.5), to(22.5)],
+    water: [heard('he is in'), to(9.5), heard('he is up'), to(12.5), platAt(0, 0), to(15.6), say('she is in'), heard('he holds'), platAt(0, 1),
+      to(18.5), to(26.5)],
+  },
+  '8-3': {
+    fire: [until('she is out of the water', (w) => w.body.water.x > 13.5), to(9.4), jump(13.6, { at: 9.4 }), to(20.2), heard('she is at her door'),
+      jump(25.0, { at: 20.4 }), to(26.5)],
+    water: [to(15.4), jump(19.6, { at: 15.4 }), to(22.5), say('she is at her door')],
+  },
+  '8-4': {
+    fire: [heard('she holds 1'), gateOpen(0), jump(11.5, { at: 6.8 }), to(12.5), say('he holds 1'), heard('she holds 2'), gateOpen(1),
+      jump(17.6, { at: 12.6 }), to(18.5), say('he holds 2'), until('she is past', (w) => w.body.water.x > 20), to(23.5)],
+    water: [to(8.5), say('she holds 1'), heard('he holds 1'), jump(14.5, { at: 10.4 }), to(14.5), say('she holds 2'), heard('he holds 2'),
+      jump(20.6, { at: 16.4 }), to(26.5)],
+  },
+  '8-5': {
+    fire: [until('she is on the shelf', (w) => w.body.water.y < 13.1), to(26.2), heard('she is in'), to(27.5), heard('she is up'), to(20.4), platAt(0, 0),
+      to(5.4), say('he is in'), heard('she holds the top'), platAt(0, 1), to(17.5), say('he holds 1'), heard('she holds 2'),
+      jump(23.8, { at: 19.6 }), to(27.5)],
+    water: [to(15.6), jump(13.9), say('she waits'), until('he is past', (w) => w.body.fire.x > 17), to(12.2), to(5.4), say('she is in'), platAt(0, 1), to(3.6), say('she is up'), heard('he is in'), to(2.5), say('she holds the top'),
+      until('he is off the lift and away', (w) => w.body.fire.x > 9 && w.body.fire.y < 7.1), to(4.3), platAt(0, 0), jump(7.5), heard('he holds 1'), gateOpen(0),
+      jump(20.6, { at: 15.8 }), to(21.5), say('she holds 2'), until('he is past', (w) => w.body.fire.x > 25.5), to(24.5)],
+  },
+
+  // ---- Chapter 9: the finale (TEST_CODE for the carvings and the vault; 9-2…9-5 are Don't touch levels)
+  '9-1': {
+    fire: [to(17.4), heard('her lever is on'), gateOpen(1), to(21.5), say('he holds'), until('she is up', (w) => w.body.water.y < 9.1 && w.body.water.x > 26),
+      to(26.5)],
+    water: [to(17.4), say('her lever is on'), gateOpen(0), to(22.4), jump(25.0), say('she is on'), heard('he holds'), platAt(0, 1), to(29.5)],
+  },
+  '9-2': {
+    fire: [jump(6.0), to(7.4), jump(11.6, { at: 7.4 }), to(12.4), jump(16.6, { at: 12.4 }), to(17.4), jump(21.6, { at: 17.4 }), to(22.4), jump(24.6, { at: 22.4 }),
+      say('he is across'), to(24.4), jump(25.8), jump(23.4), to(19.5)],
+    water: [heard('he is across'), until('he is on the platform', (w) => w.body.fire.y < 9.1), jump(25.8), to(24.4), jump(22.0), to(21.2),
+      jump(16.8, { at: 21.2 }), to(16.2), jump(11.8, { at: 16.2 }), to(11.2), jump(7.0, { at: 11.2 }), jump(6.0), jump(8.6), to(12.5)],
+  },
+  '9-3': {
+    fire: [until('she is out of the water', (w) => w.body.water.x > 14.4), to(10.6), jump(14.4, { at: 10.6 }), jump(17.5), jump(19.6), to(21.4),
+      heard('she is at her door'), jump(26.0, { at: 21.6 }), to(27.5)],
+    water: [to(8.4), jump(11.6, { at: 8.4 }), to(14.4), jump(15.6), jump(17.5), jump(19.6), to(23.5), say('she is at her door')],
+  },
+  '9-4': {
+    fire: [heard('she holds'), jump(6.9), say('he is on'), platAt(0, 1), to(16.4), jump(17.6), to(21.5), say('he holds the middle'), heard('she is on'), jump(17.6), to(14.2), platAt(1, 0),
+      to(13.5), say('he holds the trapdoor'), heard('she holds the top'), to(16.4), jump(17.6), jump(15.2), to(6.5)],
+    water: [to(11.5), say('she holds'), heard('he holds the middle'), to(13.4), jump(16.6, { at: 13.4 }), to(22.4), jump(24.9), say('she is on'), platAt(1, 0),
+      heard('he holds the trapdoor'), gateOpen(0), to(19.4), jump(18.0), jump(19.5), to(19.5), say('she holds the top'),
+      until('he is up and away', (w) => w.body.fire.y < 4.1 && w.body.fire.x < 13), to(12.5)],
+  },
+  '9-5': heartRoute(TEST_CODE),
 };
 
 /**

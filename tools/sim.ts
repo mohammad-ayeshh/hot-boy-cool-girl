@@ -2,7 +2,7 @@
 // (mechanisms.ts), stepped in the same order as src/play/stage.ts, with no drawing.
 // Both characters are driven by a written solution (tools/routes.ts), so `npm run check:routes`
 // proves every level can be won (decision log 2026-10-21: the checker alone can't see that).
-import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, type Input } from '../src/game/body.ts';
+import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, touching, type Input } from '../src/game/body.ts';
 import { ROWS, Level, parseLevel, type Elem, type Liquid, type Rect } from '../src/game/level.ts';
 import { CARVING_LIGHT, Mechanisms, carvingDistance, type MechDef, type MechEvent, type Pattern } from '../src/game/mechanisms.ts';
 import { defaults } from '../src/game/settings.ts';
@@ -26,6 +26,8 @@ export class World {
   stoneLog: string[] = [];
   /** Which carvings lit up (someone came close enough), by index in mech.carvings. */
   carvingsSeen = new Set<number>();
+  /** Don't touch (16.7): a clear overlap bursts both. One "screen" here, so the true overlap counts (T2). */
+  apart = false;
 
   constructor(rows: readonly string[], mechs: MechDef[], pattern?: Pattern) {
     const data = parseLevel(rows, mechs, undefined, pattern);
@@ -65,6 +67,9 @@ export class World {
         const cx = Math.min(Math.max(g.x, b.left), b.right), cy = Math.min(Math.max(g.y, b.top), b.y);
         if (Math.hypot(g.x - cx, g.y - cy) < 0.4) g.alive = false;
       }
+    }
+    if (this.apart && touching(this.body.fire, this.body.water)) {
+      return this.die('fire', `touched Cool Girl at x ${this.body.fire.x.toFixed(1)}: both burst into steam`);
     }
     this.mech.updateLevers(ELEMS.map((e) => feetOf(this.body[e])), this.time * 1000, []);
     this.mech.carvings.forEach((c, i) => {
@@ -191,8 +196,9 @@ export type Route = Record<Elem, Cmd[]>;
 export interface Result { won: boolean; time: number; gems: string; why: string; trace: string[]; world: World }
 
 /** Play the level with the solution. Wins when both stand in their doors at the same time. */
-export function play(rows: readonly string[], mechs: MechDef[], route: Route, opt: { trace?: boolean; limit?: number; pattern?: Pattern; goal?: (w: World) => boolean } = {}): Result {
+export function play(rows: readonly string[], mechs: MechDef[], route: Route, opt: { trace?: boolean; limit?: number; pattern?: Pattern; apart?: boolean; goal?: (w: World) => boolean } = {}): Result {
   const w = new World(rows, mechs, opt.pattern);
+  w.apart = !!opt.apart;
   const pc: Record<Elem, number> = { fire: 0, water: 0 };
   const since: Record<Elem, number> = { fire: 0, water: 0 };
   const trace: string[] = [];

@@ -3,12 +3,12 @@
 // mechanisms look the same everywhere. Everything here stays dark and muted: no bright orange, cyan, violet or gold.
 
 /** Which far-depths scenery a theme draws (world.ts). */
-export type Scenery = 'jungle' | 'flooded' | 'machine' | 'summit' | 'eyes' | 'vault' | 'caves';
+export type Scenery = 'jungle' | 'flooded' | 'machine' | 'summit' | 'eyes' | 'vault' | 'caves' | 'pipes' | 'heart';
 
 /** Floating bits in the air layer (9.1 layer 2), behind the level. */
 export interface Air {
-  /** float: fireflies wandering; fall: dust settling; drip: drops falling fast; wind: specks blown sideways; drift: slow wisps */
-  kind: 'float' | 'fall' | 'drip' | 'wind' | 'drift';
+  /** float: fireflies wandering; fall: dust settling; drip: drops falling fast; wind: specks blown sideways; drift: slow wisps; rise: steam rising */
+  kind: 'float' | 'fall' | 'drip' | 'wind' | 'drift' | 'rise';
   colors: readonly number[];
   /** particles per second */
   rate: number;
@@ -102,6 +102,24 @@ export const THEMES: readonly Theme[] = [
     scenery: 'caves', far: 0x0f151c, farEdge: 0x18212b, rune: 0x16202a,
     air: { kind: 'drift', colors: [0xaab4c0, 0x8e99a6], rate: 1, size: [12, 22], alpha: 0.16 },
     margin: [0x070a0d, 0x0c1116, 0x040608],
+  },
+  {
+    chapter: 8, name: 'The Steam Halls',
+    sky: [0x17110e, 0x080605],
+    stone: { deep: 0x100b09, dark: 0x1f1712, mid: 0x3d2f26, light: 0x6e5848 },
+    top: null, hang: 'drips', hangColor: 0x5e544e,
+    scenery: 'pipes', far: 0x241a15, farEdge: 0x33261e, rune: 0x2b201a,
+    air: { kind: 'rise', colors: [0x9a948f, 0x7f7a76], rate: 1.4, size: [10, 20], alpha: 0.12 },
+    margin: [0x100b09, 0x18120e, 0x090605],
+  },
+  {
+    chapter: 9, name: 'The Heart of the Temple',
+    sky: [0x16100f, 0x080505],
+    stone: { deep: 0x0e0a0a, dark: 0x1d1615, mid: 0x3a2f2c, light: 0x6a5a54 },
+    top: null, hang: null, hangColor: 0,
+    scenery: 'heart', far: 0x221917, farEdge: 0x31241f, rune: 0x2a201d,
+    air: { kind: 'float', colors: [0xb5a49a, 0x978880], rate: 1.2, size: [3, 5], alpha: 0.3 },
+    margin: [0x0e0a09, 0x161110, 0x080505],
   },
 ];
 

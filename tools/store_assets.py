@@ -99,7 +99,7 @@ def main(raw, out):
         ("1-fire-and-water", band(load(raw, "01-fire-and-water"), "Fire and water. Save each other.", "A co-op puzzle platformer for two phones")),
         ("2-different-eyes", screenshot_eyes(raw)),
         ("3-secret-code", band(load(raw, "03-vault"), "Crack your team's secret code.", "Every pair of friends gets a different one")),
-        ("4-hold-the-button", band(load(raw, "04-hold-the-button"), "You hold the button. I'll go.", "35 levels across 7 temple chapters")),
+        ("4-hold-the-button", band(load(raw, "04-hold-the-button"), "You hold the button. I'll go.", "45 levels across 9 temple chapters")),
         ("5-only-one-pays", card(raw)),
     ]
     for name, im in shots:

@@ -7,7 +7,7 @@ import * as device from '../engine/device';
 import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
 import { Controls } from '../engine/input';
-import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, type JumpStats, type Phys } from '../game/body';
+import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, TOUCH_NEAR, derive, touching, type JumpStats, type Phys } from '../game/body';
 import { COLS, ROWS, LIQUID_DEPTH, Level, type DeathCause, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
 import { CARVING_DARK, CARVING_LIGHT, Mechanisms, carvingDistance, type Feet, type MechDef, type MechEvent, type MechSync, type Rune } from '../game/mechanisms';
 import { drawAnimal } from '../render/animals';
@@ -47,6 +47,11 @@ export interface StageHooks {
   localLever?(i: number, on: boolean): void;
   /** A character simulated on this phone stepped onto symbol stone `i` (16.7). */
   localStone?(i: number): void;
+  /**
+   * Don't touch (16.7, T2): this phone sees its character clearly overlapping the partner (as shown here).
+   * Called every step while it lasts; the online game asks the partner's phone whether it saw the same.
+   */
+  localTouch?(): void;
 }
 
 export interface StageOptions {
@@ -155,6 +160,12 @@ export class Stage {
   levelTime = 0;
   completed = false;
   fps = 0;
+  /** The ending (16.12): 0..1, how lit the heart of the temple is behind the last level. */
+  private heartGlow = 0;
+  private heartTarget = 0;
+  /** Don't touch (16.7, T3): 0..1, how close the two are (1 = touching), for the hiss and steam. */
+  private steamNear = 0;
+  private steamT = 0;
 
   private readonly glowTex = makeGlowTexture(64);
   private readonly margins = new Graphics();
@@ -324,7 +335,7 @@ export class Stage {
    * or the gate) flashes into view, and stays until the restart.
    */
   private revealKiller(h: Hero, cause: DeathCause, gate: number): void {
-    if (!this.viewer || h.elem !== this.viewer) return;
+    if (!this.viewer || h.elem !== this.viewer || cause === 'steam') return; // the partner is never hidden (E2)
     if (cause === 'crush') {
       const d = this.mech.gates[gate]?.def;
       if (!d || this.seesMech(d, gate)) return;
@@ -447,6 +458,7 @@ export class Stage {
     this.trails.clear();
     this.levelTime = 0;
     this.completed = false;
+    this.heartTarget = 0;
     this.slowMo = 0;
     this.controls.reset();
   }
@@ -481,6 +493,11 @@ export class Stage {
       else if (ev.k === 'land') this.onLand(h, ev.v);
       else this.onTurn(h);
     });
+  }
+
+  /** Don't touch (16.7, T2): both phones saw the touch, so this phone's character bursts into steam. */
+  touchDeath(): void {
+    for (const e of ELEMS) if (this.heroes[e].local) this.die(this.heroes[e], 'steam');
   }
 
   remoteDeath(elem: Elem, cause: DeathCause): void {
@@ -564,10 +581,23 @@ export class Stage {
     return { got: this.gems.filter((g) => !g.alive).length, total: this.gems.length };
   }
 
-  /** Both are in their doors: slow-motion moment, doors burst with light, victory poses (8.2, 14.4). */
-  celebrate(): void {
+  /**
+   * Both are in their doors: slow-motion moment, doors burst with light, victory poses (8.2, 14.4).
+   * `finale`: the last level of the game (16.12): the heart behind it lights up and fire and water sparks swirl together.
+   */
+  celebrate(finale = false): void {
     if (this.completed) return;
     this.completed = true;
+    if (finale) {
+      this.heartTarget = 1;
+      const ds = this.doors;
+      const mx = ds.length ? (ds.reduce((a, d) => a + d.x, 0) / ds.length) * T : (COLS / 2) * T;
+      const my = ds.length ? (ds.reduce((a, d) => a + d.y, 0) / ds.length - 1.2) * T : (ROWS / 2) * T;
+      for (let k = 0; k < 2; k++) {
+        this.fx.emit({ x: mx, y: my, count: 70, colors: k ? WATER_FX : FIRE_FX, speed: [120, 380], life: [1, 2], size: [3, 8], angle: k ? -Math.PI / 4 : (-3 * Math.PI) / 4, spread: 0.9, gravity: -40, drag: 0.35 });
+      }
+      this.fx.emit({ x: mx, y: my, count: 40, colors: STEAM, speed: [20, 120], life: [1.2, 2.2], size: [12, 28], angle: -Math.PI / 2, spread: 1.2, gravity: -60, drag: 0.3, alpha: 0.35 });
+    }
     this.slowMo = 0.9;
     if (this.settings.flash) this.flashA = 0.35;
     if (this.settings.zoomPulse) this.zoomK = 0.03;
@@ -725,7 +755,11 @@ export class Stage {
     if (s.splash && cause !== 'crush') this.pools.splash(h.body.x, 1.6);
     if (s.deathFx) {
       const fx = this.fx;
-      if (cause === 'crush') {
+      if (cause === 'steam') {
+        // fire met water (16.7, T1): a big cloud of steam, plus a puff of the character's own color
+        fx.emit({ x, y, count: 50, colors: STEAM, speed: [30, 170], life: [0.8, 1.6], size: [12, 30], angle: -Math.PI / 2, spread: 1.3, gravity: -140, drag: 0.25, alpha: 0.5 });
+        fx.emit({ x, y, count: 24, colors: h.elem === 'fire' ? FIRE_FX : WATER_FX, speed: [80, 260], life: [0.3, 0.7], size: [3, 8], spread: Math.PI, gravity: 400 });
+      } else if (cause === 'crush') {
         // squashed by a gate: stone dust bursts out sideways, plus a puff of the character's own color
         const fy = h.body.y * T - 4;
         fx.emit({ x, y: fy, count: 40, colors: STONE_DUST, speed: [60, 260], life: [0.4, 0.9], size: [4, 10], angle: 0, spread: 0.5, gravity: 200, drag: 0.2, alpha: 0.7 });
@@ -840,7 +874,7 @@ export class Stage {
 
       // near danger (14.4)
       const dist = this.settings.nearDanger ? this.level.distanceToLiquid(b.x, b.y - 0.4, DEADLY[e], 2.5, this.sees) : Infinity; // a hidden danger gives no hint (E3)
-      const target = clamp(1 - (dist - 0.3) / 1.7, 0, 1);
+      const target = Math.max(clamp(1 - (dist - 0.3) / 1.7, 0, 1), this.settings.nearDanger ? this.steamNear : 0);
       h.danger += (target - h.danger) * Math.min(1, STEP * 8);
 
       // gems (each player only their own color)
@@ -863,6 +897,7 @@ export class Stage {
       const excite = h.victory >= 0 ? 1 : b.grounded ? Math.min(1, sp / this.phys.run) * 0.8 : 1;
       h.excite += (excite - h.excite) * Math.min(1, STEP * 6);
     }
+    this.stepApart();
     // levers: flipped by characters on this phone walking into them
     const events: MechEvent[] = [];
     this.mech.updateLevers(ELEMS.filter((e) => this.heroes[e].local && this.isAlive(e)).map((e) => feetOf(this.heroes[e].body)), now, events);
@@ -881,6 +916,31 @@ export class Stage {
         }
       }
     }
+  }
+
+  /**
+   * Don't touch (16.7): within TOUCH_NEAR both hiss and steam (T3); a clear overlap bursts both (T1).
+   * With both characters on this phone (Feel Lab) the overlap is final; online, the partner's phone must agree (T2).
+   */
+  private stepApart(): void {
+    const f = this.heroes.fire, w = this.heroes.water;
+    const live = this.level.data.apart && !this.completed && f.alive && w.alive && !f.dying && !w.dying;
+    const d = live ? Math.hypot(f.body.x - w.body.x, (f.body.y - w.body.y) * 0.8) : Infinity;
+    this.steamNear = clamp(1 - (d - 0.5) / (TOUCH_NEAR - 0.5), 0, 1);
+    if (!live) return;
+    this.steamT -= STEP;
+    if (this.steamNear > 0.05 && this.steamT <= 0) {
+      const n = this.steamNear;
+      this.steamT = 0.2 - n * 0.13;
+      const mx = (f.body.x + w.body.x) / 2 * T, my = ((f.body.y + w.body.y) / 2 - 0.75) * T;
+      if (this.settings.nearDanger) {
+        this.fx.emit({ x: mx + (Math.random() - 0.5) * 12, y: my, count: 1 + Math.round(n * 3), colors: STEAM, speed: [20, 70], life: [0.4, 0.9], size: [6, 14], angle: -Math.PI / 2, spread: 0.7, gravity: -90, alpha: 0.25 + 0.35 * n });
+      }
+      sfx.sizzle(n, this.panX(mx / T));
+    }
+    if (!touching(f.body, w.body)) return;
+    if (f.local && w.local) { this.die(f, 'steam'); this.die(w, 'steam'); }
+    else if (f.local || w.local) this.opts.hooks?.localTouch?.();
   }
 
   /** Buttons, platforms and gates move; riders are carried; nobody gets stuck inside a platform. */
@@ -1408,7 +1468,8 @@ export class Stage {
     this.trails.update(simDt);
     this.dust.update(simDt);
     if (s.scenery) {
-      drawScenery(this.scenery, this.theme, this.simTime);
+      this.heartGlow += (this.heartTarget - this.heartGlow) * Math.min(1, realDt * 1.5);
+      drawScenery(this.scenery, this.theme, this.simTime, this.heartGlow);
       for (this.airDue += realDt * this.theme.air.rate; this.airDue >= 1; this.airDue--) this.air.emit(airParticle(this.theme));
       this.air.update(realDt);
     }

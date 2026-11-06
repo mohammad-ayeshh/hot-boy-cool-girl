@@ -536,6 +536,8 @@ Two rules keep the game readable (P2, 4.1):
 | 5 | The Hall of Eyes | Pale stone carved with giant eyes that slowly blink | Mysterious, floating chimes |
 | 6 | The Sealed Vault | Deep underground: great round vault doors, tall sealed niches, heavy pillars, dust | Low, heavy, ancient drums and drones |
 | 7 | The Whispering Vault | Coldest and darkest: grey-blue stone, hanging rocks, pale drifting wisps | Very quiet, breathy "whisper" sounds, rare chimes |
+| 8 | The Steam Halls | Dark rusty-brown stone, old pipes along the walls, slow grey steam puffs rising | A steady steam-engine "chuff", low plucks, chimes with a hiss texture *(added 2026-11-06)* |
+| 9 | The Heart of the Temple | Deep dark stone with faint carvings (no animals, so nothing can be mistaken for the code), and a slow, dim pulsing glow far behind: the heart | The home theme from Chapter 1 comes back, slower and bigger, so the journey ends where it began *(added 2026-11-06)* |
 
 Every chapter keeps the duet (15.4): only the key, speed and instruments change. The home screen and map keep today's music. Built in two steps, checked with the owner in between: backgrounds first, then music.
 
@@ -551,6 +553,8 @@ Every chapter keeps the duet (15.4): only the key, speed and instruments change.
 | 5 | E minor drifting to C minor and B | 68 | rare drums, plucks from the chords | slow floating chimes | — |
 | 6 | E Phrygian: Em – F – Em – Dm | 78 | a big, deep ancient drum, low plucks | slow chimes | — |
 | 7 | F♯ minor, quieter overall | 64 | a soft pulse, rare plucks | rare long chimes, big echo | breathy whispers |
+| 8 | G minor: Gm – E♭ – B♭ – F | 96 | a steam-engine "chuff" on every beat, low plucks | chimes on the beat | a steam hiss now and then |
+| 9 | A minor: the home theme's chords (Am – F – C – G) | 72 | hand drums, plucks | chimes with a long echo; airy flute pads | — |
 
 Gem notes and the symbol-stone notes follow the playing tune's scale, so they always fit the music (15.4). The tunes are first versions: the owner listens on the phone and asks for changes.
 
@@ -756,7 +760,7 @@ These sketches are a starting point. The real levels are built and tuned in the 
 |---|---|---|---|
 | **Different eyes** | Some things (platforms, buttons, levers, gates, even the exit or your partner) are visible on only one player's screen. You have to tell each other what you see. | ✅ Great for P1: talking becomes the puzzle | Easy: each phone already draws its own screen |
 | **Password gates** | Symbols (letters, numbers, animals, shapes) are hidden through a chapter's levels. A gate at the end opens only if you enter them. | ✅ Works well mixed with "different eyes": each player sees half the code | Easy–medium. The code should change every playthrough, so it can't be looked up online. Players should also be able to note symbols in a journal, in case they come back days later. |
-| **Don't touch** | If the two characters touch, both die. | ⚠️ Risk to P3/P6: online, each phone sees the partner slightly late, so a touch you didn't see on your screen would feel unfair. It needs a forgiving rule (only a clear overlap counts) and a test on two real phones. | Medium |
+| **Don't touch** | If the two characters touch, both die. *Designed 2026-11-06: see "Don't touch: design" below and Chapter 8 (16.11).* | ⚠️ Risk to P3/P6: online, each phone sees the partner slightly late, so a touch you didn't see on your screen would feel unfair. It needs a forgiving rule (only a clear overlap counts) and a test on two real phones. | Medium |
 | **Chained together** | A chain links the two. One stands as the anchor while the other hangs and swings. | ⚠️ Big risk to P6: your movement would depend on your partner's delayed position over the network, which can cause rubber-banding. It must be prototyped first (Feel Lab, then two phones). | Hard: the hardest idea on this list |
 | **1v1 race** | A mirrored level cut in half; each player races their own half against the clock, and the faster one wins. | ❌ Breaks P1 ("together or not at all") if it is a chapter. It can live as a separate **Versus mode** next to the story. | Medium |
 | **Story and lore** | A short story told through each chapter: why the two are in the temple, what's at the summit. | ✅ Told with pictures and the temple itself, little or no text (D4) | Easy–medium (mostly art and writing) |
@@ -812,6 +816,29 @@ More ideas from the same talk:
 | G14 | Can homemade levels use symbol stones? | **Yes, with the maker's own pattern** 🔒 *(changed 2026-10-24 by the owner; was "not yet")*. A homemade level is a single level, so its code lives inside that level: the maker **picks a fixed pattern** (2–4 animals, repeats allowed), places the **symbol stones** and places the **carvings** that reveal it, all in the same level. The code is the same every time that level is played (only official chapters use random codes, G3). Harder to build, accepted on purpose. Details in 16.3. |
 
 **Build notes (not questions):** the route robot (D13) plays password levels with a fixed test code, since the real code is random. The code travels from the host like other room data (13.1) and is saved on both phones next to progress (12.4). Official and homemade levels use the same stone mechanism: a correct pattern turns a rune on (it stays on). In official level 6-5 the pattern comes from the team's saved random code; in a homemade level it comes from the level itself.
+
+#### Don't touch: design 🔒
+*Designed one question at a time with the owner, 2026-11-06. The first chapter that uses it is 16.11.*
+
+| # | Question | Decision |
+|---|---|---|
+| T1 | What happens? | **Fire meets water: both burst into steam** 🔒. In a "Don't touch" level, if the two characters clearly overlap, both die in a cloud of steam and the level restarts for both, like any death (13.3). No penalty (12). In every other level they still walk through each other (7.3). |
+| T2 | How is it kept fair online (P3, P6)? | **Both screens must agree** 🔒. A touch counts only when the bodies overlap clearly: by at least **half their width and half their height** (a brush or a near miss is survived, 7.4). Each phone checks its own character against the partner *as shown on its own screen*, and tells the other phone when it sees a clear overlap. **Only when both phones saw one** (within half a second of each other) do both burst. If only one screen saw it, nothing happens. So a death always shows on both screens, and close calls stay exciting instead of unfair. The cost: the burst comes about 0.1 s after the overlap, while the phones check with each other. In the Feel Lab and the route robot both characters are on one screen, so the true overlap is used. |
+| T3 | How do players know a level uses it (P2, D4)? | **Hiss and steam when close** 🔒. In a Don't touch level, when the two are within about 2 tiles, both characters hiss and throw off steam, stronger the closer they get (like the "near danger" reaction, 14.4). Levels without the rule look and sound exactly as before. No text. |
+| T4 | Can homemade levels use it? | **Later** 🔒. First the rule is tested on two real phones in Chapter 8 (D12). Once it feels fair, the level designer gets a simple on/off switch; the ✅ rule stays the same (16.3). |
+
+**Level rules for Don't touch** (keep these in mind when building):
+- The two starts and the two doors are at least **3 tiles apart**, so nobody starts in danger and the team can finish together (D10).
+- **"Fits only one"** is shown by a 1-tile-wide shaft or ledge: two 0.7-tile bodies can't stand in it side by side without a clear overlap.
+- **Jumping over a friend who stands still** is always safe with a full jump (it clears them by about 2 tiles). Passing while *both* move is where the screens can disagree, so levels never require it.
+- A level is a Don't touch level as a whole (it doesn't switch on and off inside a level).
+
+**As built (2026-11-06):**
+- A level sets `apart`. A "clear overlap" means the two bodies overlap by at least half their width (0.35 tiles) and half their height (0.68 tiles); the check is `touching()` in `src/game/body.ts`, used by the game and the route robot alike.
+- **T2 online:** while a phone sees its own character clearly overlapping the partner (as drawn on that phone), it tells the other phone a few times a second (a new `touch` message, so the play version's `PROTOCOL` went from 1 to 2). A phone bursts its own character only when both phones saw a touch within half a second of each other; the usual death message then shows the partner's burst too. In the Feel Lab both characters are on one phone, so the overlap is final.
+- **T3:** within 2 tiles both characters get their "near danger" look (14.4), steam puffs rise between them and a soft hiss grows louder the closer they get. The death is a big steam cloud with a hiss for both (`steam` cause).
+- The route robot plays Don't touch levels with the rule on and fails a level if the two ever clearly overlap. `npm run check:routes` also tests the rule itself in a flat room: walking into each other bursts both, a full jump over a friend who stands still is safe, a brush at the edge is survived, and without the rule they walk through each other.
+- Try it alone in the Feel Lab: `?lab=8-1` (swap with 🔥/💧).
 
 How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 
@@ -880,6 +907,51 @@ How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 **Proven winnable:** every level passes the route robot; 7-5 is played with the test code **and 45 other codes**, like 6-5.
 
 **Star times** are first guesses (D12). Level 5's target time (100 s) allows for wrong guesses and for guiding each other onto hidden stones.
+
+### 16.11 Chapter 8: The Steam Halls 🔒
+*Planned and approved by the owner 2026-11-06.* Teaches **Don't touch** (16.7, T1–T4): fire meets water and both burst into steam. One new idea per level, simplest first; level 3 is a breather and level 5 the exam (D2, D3, D11). Every level of the chapter is a Don't touch level. A paid chapter (12.6).
+
+| # | Name | New idea | How it plays |
+|---|---|---|---|
+| 1 | **Keep Apart** | **Touching kills** | You start on opposite sides and must swap places. One hops onto a small step and waits while the other walks underneath. A button swap (Chapter 1 style). Nothing else can kill you. |
+| 2 | **One at a Time** | A lift that **fits only one** | You can't ride it together, so one rides up while the other holds the button, then the lift is sent back for the partner. |
+| 3 | **Leapfrog** | Breather: **jump over your friend** | An easy gem run on one narrow path: one stands still, the other leaps over them. |
+| 4 | **Tight Squeeze** | The helper is **in the way** | The gate button sits in the only corridor. The holder must stay still on it, so the other jumps over them and through the gate (let go too early and the gate crushes). |
+| 5 | **The Steam Halls** | Exam: everything from Chapter 8 | Swapping sides, the one-person lift, and leaping over the button holder. |
+
+**Must happen before the chapter is final (D12, T2):** a test on **two real phones** over the internet, to check that the "both screens agree" rule feels fair.
+
+**How they were built (2026-11-06):** sketches in [`docs/levels/chapter8.png`](levels/chapter8.png).
+- 8-1: he starts on the left, she on the right; his door is reached from the right end of the door ledge and hers from the left, so they must swap sides. Under the ledge a little shelf (3 up, with a 2-tile walkway underneath) lets one wait while the other walks below. Up top he holds her gate open from his porch, then she holds his gate open from a button between the doors.
+- 8-2: the lift waits flush with the floor in a pocket one tile wide: you walk in until the wall stops you, which also centers you for the 1-wide shaft. She holds the bottom button while he rides up; then he jumps to the button on the left ledge and holds it to bring her up.
+- 8-3: a low gem corridor with a water pool and a lava pool. She starts in front, but his door is past hers, so he leaps over her at her door. The fire gems hang where his leaps go.
+- 8-4: a relay through two gates in a 5-tile-high corridor. Each gate has a button two tiles before it and two tiles after it. The holder stands still on the near button; the other leaps over them through the open gate onto the far button; then they swap. Letting go too early crushes (10.2).
+- 8-5: below, a 6-tile lava pool guards the lift button, so only he can hold it, while the one-person lift is on the far left; they swap sides in the hall (one waits on the shelf). Then she holds the top button for his ride, and up top they leap over each other through a relay gate to the doors.
+
+**Proven winnable:** every level passes the route robot with the touch rule on. **Star times** are first guesses (D12).
+
+### 16.12 Chapter 9: The Heart of the Temple 🔒
+*Planned and approved by the owner 2026-11-06.* The finale: **no new rule**. Each level mixes ideas players already know, and the chapter has **its own team code** (password gates, G1–G13): one carving in each of levels 1–4, the symbol stones at the final gate in level 5. Some carvings are seen by only one player (as in Chapter 7). A paid chapter (12.6).
+
+| # | Name | Mix | How it plays |
+|---|---|---|---|
+| 1 | **The Long Way Back** | Warm-up: Chapters 1–4 | Swapped levers, a trapdoor and a lift. Carving 1, seen by both. Not a Don't touch level. |
+| 2 | **Steam and Shadows** | Different eyes + Don't touch | You cross hidden stepping stones toward each other and must not meet in the middle. Carving 2, seen only by Cool Girl. |
+| 3 | **The Last Rest** | Breather (D11) | A gem run with hidden gems and a leapfrog (Don't touch). Carving 3, seen only by Hot Boy. |
+| 4 | **The Turning Gears** | Counterweight lifts + a trapdoor + pools, Don't touch | One rune sends one lift up as the other comes down. The button that holds the trapdoor open sits right beside the hole, so the climber jumps up through it and lands past their friend (a vertical leapfrog). Carving 4, seen by both. *(Changed 2026-11-06 with the owner while building: was "the two lifts pass each other", but two lifts side by side always keep the riders more than half a body apart, so under T2 they could never touch.)* |
+| 5 | **The Heart of the Temple** | Final exam: everything | A climb with hidden things and Don't touch, then the split vault (4 stones each side, 2 per side seen only by the partner, like 7-5). The gate opens onto the doors at the heart of the temple. |
+
+**How they were built (2026-11-06):** sketches in [`docs/levels/chapter9.png`](levels/chapter9.png).
+- 9-1 (not a Don't touch level): two lanes, each gate opened by the lever in the other lane (2-1). Up in the top right he holds a button that opens a trapdoor and brings her lift up through it. Carving 1 sits by that button.
+- 9-2: he starts on the left bank and she on the right, but his door can only be reached from the right bank and hers from the left (a wall splits the door ledge). They cross the same poison pit on three hidden stones (he sees the middle one, she sees the two outer ones), so they have to go one at a time. Carving 2 (only she sees it) is on the wall where she lands.
+- 9-3: a gem run over a lava pool, a water pool and a little hill, with one hidden gem each. Carving 3 (only he sees it) is on the hilltop; at the end he leaps over her at her door.
+- 9-4: the counterweight (like 4-2) brings both from the bottom floor to the middle one. A trapdoor leads to the door hall; it is held open from below, then from above by a button right beside the hole, so the second climber pops up beside their friend and must land on the other side. Carving 4 is by the doors.
+- 9-5: the 7-5 vault with the roles swapped and Don't touch on. She holds the gate button only he sees; he leaps over her, crosses stones only she sees and opens her trapdoor. In the vault she has the left half and he the right; on each side 2 stones are seen only by the partner.
+
+**Proven winnable:** every level passes the route robot; 9-5 is played with the test code **and 45 other codes**, like 6-5 and 7-5. **Star times** are first guesses (D12).
+
+**The ending (story, 16.7):** small and wordless (D4). Level 9-5's background shows the glowing heart of the temple. When both reach their doors in 9-5, a short celebration plays (the heart lights up, fire and water sparks swirl together) and the results screen says "You reached the heart of the temple". A bigger story (pictures between chapters) can come later as its own project.
+*As built:* the whole of Chapter 9 shows the heart (great carved rings with marks of every earlier area, and a slow, dim two-beat glow). Finishing the last official level lights the heart up, sends fire and water sparks swirling out of the doors with a cloud of steam, and adds "🔥💧 You reached the heart of the temple." to the results.
 
 ---
 
@@ -963,3 +1035,7 @@ We'll go through these in order and fill in a section for each.
 | 2026-10-31 | **Chapter themes built (9.3):** every chapter has its own background (still scenery, moving parts and a floating air layer, all behind the level) and its own tune (key, chords, speed, drums and a texture such as drips, wind or whispers), while the duet stays. Gem and stone notes follow each tune's key. Chapter 6's background uses vault doors instead of animal carvings so it can't be mistaken for the code. Feel Lab › World › Living background turns the moving scenery off. |
 | 2026-10-31 | **Connection and menu (13.3, 13.5, 13.7):** "Leave room" on the waiting screen right away (was after 2 minutes); "Hold for the level map" in the pause menu takes both players to the map; Wi-Fi hiccups wait 15 s before counting as a drop, and position updates are skipped instead of piling up. Still free: the public PeerJS servers. Android app: the back button goes one screen back, and sound pauses when the app is hidden. |
 | 2026-11-06 | **Chapter riddles (11.2, D4):** the first level of Chapters 1–6 opens with a short riddle on a carved stone tablet that hints at the chapter's new idea without explaining it. It fades after a few seconds or on your first touch, and the level map keeps it under the chapter name. In Chapter 5 each player sees half of it. Chapter 7 and later chapters get no riddle (the owner's choice). D4 now allows this one kind of text. |
+| 2026-11-06 | **Don't touch designed (16.7, T1–T4):** if the two characters clearly overlap (half their width and half their height), both burst into steam. Online, a touch counts **only when both phones saw it**, so close calls are survived and a death always shows on both screens. Both hiss and steam when within about 2 tiles, only in Don't touch levels. The level designer gets the switch later, after a two-phone test. |
+| 2026-11-06 | **Chapter 8 "The Steam Halls" planned and approved (16.11):** Keep Apart, One at a Time, Leapfrog, Tight Squeeze, The Steam Halls. Every level is a Don't touch level. Needs a two-phone test before it is final. |
+| 2026-11-06 | **Chapter 9 "The Heart of the Temple" planned and approved (16.12):** the finale, no new rule. Its own team code with carvings in levels 1–4 and the vault in level 5; levels mix eyes, password gates, lifts, trapdoors and Don't touch. A small wordless ending in 9-5. Themes and tunes for both chapters added to 9.3. The game will have **9 chapters, 45 levels**. |
+| 2026-11-06 | **Don't touch, Chapter 8 "The Steam Halls" and Chapter 9 "The Heart of the Temple" built (16.7, 16.11, 16.12).** The game now has **9 chapters and 45 levels**, all passing the route robot (9-5 with 46 codes). A touch counts online only when both phones saw it (a new message: `PROTOCOL` 2). Both chapters have their own background (steam pipes; the heart) and tune (a steam-engine chuff; the home theme slower). Finishing 9-5 plays the small ending. Changed while building, with the owner: 9-4 uses a trapdoor leapfrog instead of "two lifts passing", which could never be dangerous under T2. Store and marketing texts now say 45 levels. Still needed: a two-phone test of Don't touch (D12, T2); star times are guesses. |

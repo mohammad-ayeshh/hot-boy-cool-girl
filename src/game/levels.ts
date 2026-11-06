@@ -10,6 +10,8 @@ import { CHAPTER_4 } from './chapter4.ts';
 import { CHAPTER_5 } from './chapter5.ts';
 import { CHAPTER_6 } from './chapter6.ts';
 import { CHAPTER_7 } from './chapter7.ts';
+import { CHAPTER_8 } from './chapter8.ts';
+import { CHAPTER_9 } from './chapter9.ts';
 
 export interface LevelDef {
   id: string;
@@ -30,6 +32,8 @@ export interface LevelDef {
    * Each carving shows the animal for its dots (dots 1 = first animal), and the pattern's code is the team code.
    */
   teamCode?: number;
+  /** Don't touch (16.7, T1): touching the partner bursts both into steam. A level has it as a whole. */
+  apart?: boolean;
 }
 
 export const CHAPTER_1: LevelDef[] = [
@@ -194,6 +198,8 @@ export const CHAPTERS: Chapter[] = [
   { n: 5, name: 'The Hall of Eyes', levels: CHAPTER_5, riddle: { fire: 'Not every eye is shown the same stone…', water: '…trust the voice beside you.' } },
   { n: 6, name: 'The Sealed Vault', levels: CHAPTER_6, riddle: 'The walls are counting. Remember what they tell you.' },
   { n: 7, name: 'The Whispering Vault', levels: CHAPTER_7 },
+  { n: 8, name: 'The Steam Halls', levels: CHAPTER_8 },
+  { n: 9, name: 'The Heart of the Temple', levels: CHAPTER_9 },
 ];
 /** Every official level in play order: finishing one unlocks the next, across chapters (12.2). */
 export const ALL_LEVELS: LevelDef[] = CHAPTERS.flatMap((c) => c.levels);
@@ -217,7 +223,9 @@ export function withCode(def: LevelDef, code?: Animal[]): { mechs: MechDef[]; pa
 
 export const levelData = (def: LevelDef, code?: Animal[]): LevelData => {
   const { mechs, pattern } = withCode(def, code);
-  return { ...parseLevel(def.rows!, mechs, def.seen, pattern), theme: chapterOf(def.id)?.n };
+  const data: LevelData = { ...parseLevel(def.rows!, mechs, def.seen, pattern), theme: chapterOf(def.id)?.n };
+  if (def.apart) data.apart = true;
+  return data;
 };
 export const nextLevel = (id: string): LevelDef | undefined => {
   const i = ALL_LEVELS.findIndex((l) => l.id === id);

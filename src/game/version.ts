@@ -5,7 +5,7 @@ import { CHAPTERS } from './levels.ts';
 import { defaults } from './settings.ts';
 
 /** Bump by hand whenever the messages between the two phones change (src/online/game.ts, src/net/). */
-export const PROTOCOL = 1;
+export const PROTOCOL = 2; // 2: Don't touch (16.7) adds the 'touch' message
 
 let cached = '';
 /** "<protocol>-<fingerprint of every official level and the default physics>": the same on both phones = can play. */

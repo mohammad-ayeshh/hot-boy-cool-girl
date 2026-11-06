@@ -32,8 +32,9 @@ Everything here is true today; don't add claims we can't prove (no "best", no pl
 > • Different eyes: some stones, buttons and traps are visible on only one phone. Describe what you see and guide each other through.
 > • The Sealed Vault: animal carvings are hidden across the chapter. Every pair of friends gets its own secret code, entered on symbol stones by taking turns.
 > • The Whispering Vault: each of you sees only half of the secret code. Say your half out loud, or the vault stays shut.
+> • The Steam Halls: fire meets water. If you touch, you both burst into steam, so take turns and leap over each other.
 >
-> 35 LEVELS IN 7 TEMPLE CHAPTERS
+> 45 LEVELS IN 9 TEMPLE CHAPTERS
 > Lifts, levers, trapdoors, crushing gates, lava, water and poison, built to be readable at a glance and fair to play.
 >
 > MAKE YOUR OWN LEVELS

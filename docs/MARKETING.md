@@ -28,9 +28,9 @@ first months) is in [`MARKETING_PLAN.md`](MARKETING_PLAN.md), written 2026-11-06
 Start selling when **a stranger who plays the free chapters wants to pay for the next one.** That is measured, not guessed.
 
 Where we are (updated 2026-11-06):
-- ✅ 7 chapters, 35 levels, different eyes and password gates (and both mixed in Chapter 7) are built.
+- ✅ 9 chapters, 45 levels: different eyes, password gates (both mixed in Chapter 7), Don't touch (Chapter 8) and the finale (Chapter 9) are built (2026-11-06).
 - ✅ Each chapter has its own background and tune (2026-10-31), and Chapters 1–6 open with a riddle (2026-11-06).
-- 💬 Chapters 8–9 ("Don't touch" and the finale) are planned and approved (design doc 16.11–16.12), not built yet: the game would then have 9 chapters and 45 levels. Chapter 8 needs a two-phone test first.
+- 💬 Chapter 8 ("Don't touch") still needs a test on two real phones over the internet before it is final (design doc 16.11, T2).
 - ✅ A two-phone test over mobile data worked and was fun.
 - ✅ Chapter 1 was tested with a friend.
 - ✅ **Playtests done (owner, 2026-10-31):** about 20 people played the levels and 2 played the whole game. *The three numbers below and what testers said aren't written down yet: add them here.*

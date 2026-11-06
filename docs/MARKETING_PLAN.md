@@ -41,7 +41,7 @@ Google's reviews take longer, launch in **early January** instead. Chapters 8–
 ## 1.1 What's already strong (don't redo it)
 - **The core idea is clear and different:** one player per phone, joined by a link, fire and water helping each other.
   "Different eyes" and the team codes are puzzles where *talking is the puzzle*; few phone games do that.
-- **Enough content for $2.99:** 7 chapters and 35 levels, every one proven winnable by the route robot (D13), plus a free
+- **Enough content for $2.99:** 9 chapters and 45 levels, every one proven winnable by the route robot (D13), plus a free
   level designer. Two playtesters finished the whole game.
 - **A fair, friendly price:** Chapters 1–2 free, one $2.99 unlock, the friend's pass ("only one of you pays"), no ads (12.6).
 - **Look and sound:** a background and a tune for each chapter (9.3), the reacting duet music (15.4), chapter riddles (11.2),
@@ -112,7 +112,7 @@ In the order to go through them. Each has one recommendation.
 - **Using the other fire/water game's name** in keywords, tags, clips or replies (L4).
 
 ## 1.7 Other areas checked (no gap that blocks sales)
-- **Content amount:** 35 levels for $2.99 (25 paid levels plus the designer) is fair. How long the whole game takes is
+- **Content amount:** 45 levels for $2.99 (35 paid levels plus the designer) is fair. How long the whole game takes is
   **to measure**: ask the 2 players who finished it.
 - **Replay value:** stars, a fresh team code on every vault playthrough (G3), and the designer. Real star times (S3) and
   sharing homemade levels (S7) are the cheap improvements.
@@ -326,7 +326,7 @@ them for creators and for testers who helped. They are a gift, so creators must 
 
 ## 2.11 Decisions for the owner
 1. Each item in 1.3 (M1–M14): yes, no or later. Gone through one at a time.
-2. Launch with 35 levels and ship Chapters 8–9 as the first big update (recommended), or wait for 45?
+2. Launch with 35 levels and ship Chapters 8–9 as the first big update (recommended), or wait for 45? *(2026-11-06: Chapters 8–9 are now built, so the game has 45 levels; Chapter 8 still needs a two-phone test.)*
 3. The title: keep "Co-op" or switch to "2 Player" (2.5)?
 4. Which 1–2 extra languages, and who checks them?
 5. Each post, message, upload and the `PAYWALL_LIVE` switch: a yes each time.

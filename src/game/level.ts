@@ -6,8 +6,8 @@ export const ROWS = 18;
 export type Liquid = 'lava' | 'water' | 'poison';
 export type Tile = 'empty' | 'stone' | Liquid;
 export type Elem = 'fire' | 'water';
-/** What killed a character: a deadly liquid, or a closing gate. */
-export type DeathCause = Liquid | 'crush';
+/** What killed a character: a deadly liquid, a closing gate, or touching the partner in a Don't touch level (16.7, T1). */
+export type DeathCause = Liquid | 'crush' | 'steam';
 
 /** Liquids sit a little lower than the floor, so feet visibly dip in (and stepping out uses the step-up helper). */
 export const LIQUID_DEPTH = 0.2;
@@ -33,6 +33,8 @@ export interface LevelData {
   pattern?: Pattern;
   /** The chapter whose look (9.3) the level uses; absent = Chapter 1's. */
   theme?: number;
+  /** Don't touch (16.7, T1–T4): if the two clearly overlap, both burst into steam. */
+  apart?: boolean;
 }
 
 const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P: 'poison' };

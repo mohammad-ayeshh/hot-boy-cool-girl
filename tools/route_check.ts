@@ -5,7 +5,7 @@
 import { ALL_LEVELS, findLevel, withCode } from '../src/game/levels.ts';
 import { VAULT_MECHS, VAULT_PATTERN, VAULT_ROWS } from '../src/game/labLevel.ts';
 import { ANIMALS, Mechanisms, type Animal, type MechEvent, type MechSync } from '../src/game/mechanisms.ts';
-import { play, type World } from './sim.ts';
+import { jump, play, to, type Route, type World } from './sim.ts';
 import { CODE_ROUTES, ROUTES, TEST_CODE, VAULT_ROUTE } from './routes.ts';
 
 const args = process.argv.slice(2);
@@ -18,7 +18,7 @@ for (const l of ALL_LEVELS) {
   if (!l.rows) continue;
   if (!route) { console.log(`FAIL  ${l.id} ${l.name}: no written solution in tools/routes.ts`); failed++; continue; }
   const { mechs, pattern } = withCode(l, TEST_CODE); // password levels play with a fixed test code (16.7 build notes)
-  const r = play(l.rows, mechs, route, { trace: verbose, pattern });
+  const r = play(l.rows, mechs, route, { trace: verbose, pattern, apart: l.apart });
   if (verbose) console.log(r.trace.join('\n'));
   // Password levels (16.7): every carving is on the path (G9), and the vault takes exactly the code, no wrong steps.
   const w = r.world;
@@ -43,11 +43,29 @@ for (const [id, routeFor] of Object.entries(CODE_ROUTES)) {
   const bad: string[] = [];
   for (const code of codes) {
     const { mechs, pattern } = withCode(vault, code);
-    const r = play(vault.rows, mechs, routeFor(code), { pattern });
+    const r = play(vault.rows, mechs, routeFor(code), { pattern, apart: vault.apart });
     if (!r.won || r.world.stoneLog.join() !== code.join()) bad.push(`${code.join(' ')}: ${r.why || r.world.stoneLog.join(',')}`);
   }
   console.log(`${bad.length ? 'FAIL' : 'PASS'}  ${id} with ${codes.length} different codes${bad.length ? `: ${bad.slice(0, 3).join(' | ')}` : ' (one side only, repeats, 40 random)'}`);
   if (bad.length) failed++;
+}
+// Don't touch (16.7, T1–T2): in a flat room, walking into each other bursts both; a full jump over a friend who
+// stands still is safe; a brush at the edge is survived; and in a normal level they still walk through each other (7.3).
+if (!only.length || only.includes('touch')) {
+  const wall = '################################';
+  const room = [wall, ...Array(15).fill('#..............................#'), '#....h.........c...............#', wall];
+  const tests: [string, Route, boolean, boolean][] = [
+    ['walking into each other bursts both', { fire: [to(20)], water: [to(4)] }, true, false],
+    ['jumping over a friend who stands still is safe', { fire: [to(13.4), jump(18.6, { at: 13.4 }), to(20.5)], water: [] }, true, true],
+    ['a brush at the edge is survived', { fire: [to(14.95)], water: [] }, true, true],
+    ["without Don't touch they walk through each other", { fire: [to(20)], water: [to(4)] }, false, true],
+  ];
+  for (const [what, route, apart, survive] of tests) {
+    const r = play(room, [], route, { apart, goal: () => true });
+    const ok = survive ? !r.world.dead : !!r.world.dead?.includes('steam');
+    console.log(`${ok ? 'PASS' : 'FAIL'}  don't touch: ${what}${ok ? '' : ` (${r.world.dead ?? 'nobody died'})`}`);
+    if (!ok) failed++;
+  }
 }
 // The password-gate test room (?lab=vault): a right step, a wrong one that must reset everything (G7),
 // a repeated animal entered by stepping off and on again (G11), and the gate opening at the end.

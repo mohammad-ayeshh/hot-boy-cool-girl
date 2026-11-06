@@ -139,6 +139,51 @@ const SCENERY: Record<Theme['scenery'], (g: Graphics, th: Theme) => void> = {
     }
     pillars(g, th, 3, 80, 150);
   },
+  // Ch 8: old pipes along the walls, with flanges and valve wheels (the steam puffs: drawScenery)
+  pipes(g, th) {
+    pillars(g, th, 3, 60, 170);
+    for (const [y, w] of [[118, 22], [300, 14], [470, 26]] as const) {
+      g.rect(0, y, W, w).fill({ color: th.far, alpha: 0.85 });
+      g.rect(0, y + 3, W, 2).fill({ color: th.farEdge, alpha: 0.5 });
+      for (let x = 50 + hash(y, 171) * 60; x < W; x += 150) g.rect(x, y - 4, 12, w + 8).fill({ color: th.farEdge, alpha: 0.6 });
+    }
+    for (let i = 0; i < 6; i++) {
+      const x = 70 + i * 170 + hash(i, 172) * 40, w = 12 + hash(i, 173) * 8;
+      g.rect(x, 0, w, H).fill({ color: th.far, alpha: 0.75 });
+      for (let y = 60 + hash(i, 174) * 40; y < H; y += 180) g.rect(x - 4, y, w + 8, 10).fill({ color: th.farEdge, alpha: 0.5 });
+    }
+    for (let i = 0; i < 4; i++) {
+      const cx = 140 + i * 260 + hash(i, 175) * 60, cy = i % 2 ? 307 : 129, r = 22;
+      g.circle(cx, cy, r).stroke({ width: 4, color: th.farEdge, alpha: 0.6 });
+      for (let k = 0; k < 3; k++) {
+        const a = (k / 3) * Math.PI * 2 + i;
+        g.moveTo(cx, cy).lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r).stroke({ width: 3, color: th.farEdge, alpha: 0.5 });
+      }
+    }
+  },
+  // Ch 9: the heart of the temple: great carved rings, with faint marks of every area on the way (no animals,
+  // so nothing can be mistaken for the code). Its slow glow is drawn by drawScenery.
+  heart(g, th) {
+    pillars(g, th, 4, 54, 180);
+    const cx = W / 2, cy = H * 0.42;
+    for (const [r, w] of [[260, 5], [200, 3], [140, 4]] as const) g.circle(cx, cy, r).stroke({ width: w, color: th.farEdge, alpha: 0.45 });
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2;
+      g.moveTo(cx + Math.cos(a) * 145, cy + Math.sin(a) * 145).lineTo(cx + Math.cos(a) * 195, cy + Math.sin(a) * 195).stroke({ width: 3, color: th.farEdge, alpha: 0.35 });
+    }
+    // marks of the journey around the ring: an arch, a gear, a mountain, an eye, a vault door, a hanging rock, a pipe wheel
+    const line = { width: 3, color: th.farEdge, alpha: 0.4 };
+    for (let k = 0; k < 7; k++) {
+      const a = -Math.PI / 2 + ((k + 0.5) / 7) * Math.PI * 2, x = cx + Math.cos(a) * 230, y = cy + Math.sin(a) * 230, r = 16;
+      if (k === 0) g.moveTo(x - r, y + r).lineTo(x - r, y).quadraticCurveTo(x, y - r * 1.4, x + r, y).lineTo(x + r, y + r).stroke(line);
+      else if (k === 1) { g.circle(x, y, r).stroke(line); g.circle(x, y, r * 0.35).stroke(line); }
+      else if (k === 2) g.moveTo(x - r, y + r * 0.6).lineTo(x - r * 0.2, y - r * 0.8).lineTo(x + r * 0.3, y).lineTo(x + r, y + r * 0.6).stroke(line);
+      else if (k === 3) g.moveTo(x - r, y).quadraticCurveTo(x, y - r, x + r, y).quadraticCurveTo(x, y + r, x - r, y).stroke(line);
+      else if (k === 4) { g.circle(x, y, r).stroke(line); g.moveTo(x - r, y).lineTo(x + r, y).stroke(line); }
+      else if (k === 5) g.poly([x - r * 0.6, y - r, x + r * 0.6, y - r, x, y + r]).stroke(line);
+      else { g.circle(x, y, r * 0.8).stroke(line); g.moveTo(x, y - r * 0.8).lineTo(x, y + r * 0.8).stroke(line); }
+    }
+  },
   // Ch 7: a cold cave: hanging rocks and rising ones, far and near (the fog drifts: drawScenery)
   caves(g, th) {
     const layers = [[0, th.far, 22], [1, lerpColor(th.far, th.sky[1], 0.5), 16]] as const;
@@ -152,8 +197,11 @@ const SCENERY: Record<Theme['scenery'], (g: Graphics, th: Theme) => void> = {
   },
 };
 
-/** The moving part of the scenery (gears, blinking eyes, fog, twinkling stars), redrawn every frame. `time` in seconds. */
-export function drawScenery(g: Graphics, th: Theme, time: number): void {
+/**
+ * The moving part of the scenery (gears, blinking eyes, fog, twinkling stars, steam, the heart's glow), redrawn every
+ * frame. `time` in seconds; `glow` 0..1 lights the heart up (Chapter 9's ending, 16.12).
+ */
+export function drawScenery(g: Graphics, th: Theme, time: number, glow = 0): void {
   g.clear();
   const fog = (n: number, y0: number, y1: number, speed: number, color: number, alpha: number) => {
     for (let i = 0; i < n; i++) {
@@ -168,6 +216,26 @@ export function drawScenery(g: Graphics, th: Theme, time: number): void {
     case 'caves':
       fog(5, H * 0.2, H * 0.9, 5, 0x9aa6b4, 0.035);
       break;
+    case 'pipes':
+      // steam puffing out of vents along the pipes
+      for (let i = 0; i < 7; i++) {
+        const vx = 60 + hash(i, 230) * (W - 120), vy = [118, 300, 470][i % 3];
+        for (let k = 0; k < 3; k++) {
+          const p = (time * (0.25 + hash(i, 231) * 0.15) + hash(i, 232) + k / 3) % 1;
+          g.ellipse(vx + p * 30 * (hash(i, 233) - 0.5), vy - p * 130, 10 + p * 34, 7 + p * 22).fill({ color: 0x9a948f, alpha: 0.07 * (1 - p) });
+        }
+      }
+      break;
+    case 'heart': {
+      // a slow heartbeat far behind: two soft beats, then rest; brighter (but still muted) when the ending plays
+      const cx = W / 2, cy = H * 0.42, ph = time % 2.2;
+      const beat = Math.exp(-((ph - 0.15) ** 2) / 0.01) + 0.6 * Math.exp(-((ph - 0.5) ** 2) / 0.01);
+      const color = lerpColor(0x7a5f55, 0xc9b6a8, glow);
+      for (const [r, a] of [[130, 0.03], [90, 0.05], [55, 0.08]] as const) {
+        g.circle(cx, cy, r * (1 + 0.04 * beat + 0.5 * glow)).fill({ color, alpha: a * (1 + 0.8 * beat) * (1 + 3 * glow) });
+      }
+      break;
+    }
     case 'summit':
       for (let i = 0; i < 14; i++) {
         const a = 0.5 + 0.5 * Math.sin(time * (0.8 + hash(i, 210)) + i * 2.1);
@@ -228,6 +296,7 @@ export function airParticle(th: Theme): EmitOptions {
     case 'float': return { ...base, x, y: H * (0.1 + Math.random() * 0.85), speed: [5, 18], life: [2.5, 4.5], gravity: -3, drag: 0.9 };
     case 'fall': return { ...base, x, y: Math.random() * H * 0.8, speed: [3, 10], angle: Math.PI / 2, spread: 0.6, life: [3, 5], gravity: 4 };
     case 'drip': return { ...base, x, y: T + Math.random() * H * 0.4, speed: [0, 10], angle: Math.PI / 2, spread: 0.1, life: [0.6, 1.1], gravity: 500 };
+    case 'rise': return { ...base, x, y: H * (0.5 + Math.random() * 0.5), speed: [8, 18], angle: -Math.PI / 2, spread: 0.4, life: [3, 5], gravity: -6, drag: 0.5 };
     case 'wind': return { ...base, x: x - W * 0.2, y: Math.random() * H, speed: [60, 130], angle: 0.15, spread: 0.25, life: [2, 4] };
     case 'drift': return { ...base, x, y: H * (0.2 + Math.random() * 0.7), speed: [6, 16], angle: Math.random() < 0.5 ? 0 : Math.PI, spread: 0.4, life: [4, 7] };
   }

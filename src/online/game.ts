@@ -71,6 +71,9 @@ export async function startGame(): Promise<void> {
   let pendingDelete = '';
   let verifiedNow = false;
   let gemElems: Elem[] = [];
+  // Don't touch (16.7, T2): when each phone last saw a clear overlap; both must see one within TOUCH_AGREE ms
+  let myTouchT = -Infinity, partnerTouchT = -Infinity, touchSentT = -Infinity;
+  const TOUCH_AGREE = 500;
 
   const stage = new Stage(app, settings, levelData(ALL_LEVELS[0]), {
     sandbox: false,
@@ -81,6 +84,14 @@ export async function startGame(): Promise<void> {
       localLever: (i, on) => send({ t: 'lever', n: round, i, on }),
       // Symbol stones (16.7): the guest asks the host; the host's state goes out at once (13.1).
       localStone: (i) => { if (session.isHost) sendWorld(); else send({ t: 'stone', n: round, i }); },
+      // Don't touch (16.7, T2): tell the partner's phone (a few times a second while it lasts); burst only if it saw one too.
+      localTouch: () => {
+        if (screen !== 'play') return;
+        const now = performance.now();
+        myTouchT = now;
+        if (now - touchSentT > 100) { touchSentT = now; send({ t: 'touch', n: round }); }
+        if (now - partnerTouchT < TOUCH_AGREE) stage.touchDeath();
+      },
     },
   });
   stage.controlled = null;
@@ -319,6 +330,11 @@ export async function startGame(): Promise<void> {
     return !saved || (!!saved.copy && (levelHash(saved) !== levelHash(l) || isVerified(saved) !== isVerified(l)));
   }
 
+  /** The last official level (16.12): its finish plays the small ending. */
+  function isFinale(): boolean {
+    return !isCustomId(level.id) && level.id === ALL_LEVELS[ALL_LEVELS.length - 1].id;
+  }
+
   function resultsHtml(): string {
     if (!finish) return '';
     const stars = starsFor(finish.got === finish.total, finish.time, level.targetTime);
@@ -334,6 +350,7 @@ export async function startGame(): Promise<void> {
         <span>💎 ${finish.got}/${finish.total}</span>
         <span>💀 ${finish.deaths}</span>
       </div>
+      ${isFinale() ? '<div class="status ok">🔥💧 You reached the heart of the temple.</div>' : ''}
       ${custom && verifiedNow ? `<div class="status ok">✅ Level verified with ${esc(partnerName || 'your friend')}! It can be shared by link now.</div>` : ''}
       ${custom && canKeep(custom) ? `<button data-act="keep">💾 ${getMyLevel(custom.id) ? 'Update my copy' : 'Keep a copy of this level'}</button>` : ''}
       <div class="row">
@@ -720,7 +737,7 @@ export async function startGame(): Promise<void> {
 
   function doFinish(data: Finish): void {
     finish = data;
-    stage.celebrate();
+    stage.celebrate(isFinale());
     music.swell();
     if (isCustomId(level.id)) verifyTogether(level as CustomLevel, data.time);
     const stars = starsFor(data.got === data.total, data.time, level.targetTime);
@@ -979,6 +996,12 @@ export async function startGame(): Promise<void> {
         break;
       case 'ev':
         if (n === round) stage.remoteEvent(partner, m.e as HeroEvent);
+        break;
+      case 'touch':
+        if (n === round && screen === 'play') {
+          partnerTouchT = performance.now();
+          if (partnerTouchT - myTouchT < TOUCH_AGREE) stage.touchDeath();
+        }
         break;
       case 'die':
         if (n === round && screen === 'play') {

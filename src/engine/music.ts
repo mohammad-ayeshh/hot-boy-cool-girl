@@ -18,8 +18,8 @@ interface Tune {
   /** A pentatonic scale from about A3 up (the first 5 notes are one octave): melodies and gem notes. */
   scale: number[];
   bpm: number;
-  /** Hot Boy's drums: hand drums, soft toms, clockwork ticks, sparse, a heavy ancient drum, or almost nothing. */
-  drums: 'hand' | 'soft' | 'clock' | 'sparse' | 'heavy' | 'whisper';
+  /** Hot Boy's drums: hand drums, soft toms, clockwork ticks, sparse, a heavy ancient drum, almost nothing, or a steam engine's chuff. */
+  drums: 'hand' | 'soft' | 'clock' | 'sparse' | 'heavy' | 'whisper' | 'chuff';
   /** 16th steps with a pluck, how likely each one plays, and an octave shift */
   plucks: number[];
   pluckChance: number;
@@ -35,7 +35,7 @@ interface Tune {
   /** echo feedback (0..0.7) */
   echo: number;
   pad: 'warm' | 'flute';
-  texture?: 'drips' | 'wind' | 'breath';
+  texture?: 'drips' | 'wind' | 'breath' | 'hiss';
   /** overall loudness in levels */
   level: number;
 }
@@ -63,6 +63,13 @@ const TUNES: Record<number, Tune> = {
   // 7 The Whispering Vault: F♯ minor, very quiet: breathy whispers, a soft pulse and rare chimes
   7: { chords: [[54, 57, 61], [54, 57, 62], [54, 59, 62], [54, 57, 61]], roots: [54, 50, 47, 54], scale: [57, 59, 61, 64, 66, 69, 71, 73, 76],
     bpm: 64, drums: 'whisper', plucks: [4, 12], pluckChance: 0.4, arpEvery: 4, arpChance: 0.55, bellLen: 2.2, echo: 0.6, pad: 'warm', texture: 'breath', level: 0.8 },
+  // 8 The Steam Halls: G minor, Gm – E♭ – B♭ – F, a steady steam-engine chuff, low plucks and a hiss now and then
+  8: { chords: [[55, 58, 62], [55, 58, 63], [53, 58, 62], [53, 57, 60]], roots: [43, 39, 46, 41], scale: [58, 60, 62, 65, 67, 70, 72, 74, 77],
+    bpm: 96, drums: 'chuff', plucks: [0, 4, 8, 12], pluckChance: 0.6, pluckOctave: -12, arpEvery: 4, arpChance: 0.8, bellLen: 1, echo: 0.35, pad: 'warm',
+    texture: 'hiss', level: 0.95 },
+  // 9 The Heart of the Temple: the home theme (A minor, Am – F – C – G) comes back, slower and bigger, with airy pads
+  9: { chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], roots: [45, 41, 48, 43], scale: [57, 60, 62, 64, 67, 69, 72, 74, 76],
+    bpm: 72, drums: 'hand', plucks: [0, 6, 8, 14], pluckChance: 0.75, arpEvery: 2, arpChance: 1, bellLen: 1.5, echo: 0.5, pad: 'flute', level: 1.05 },
 };
 const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -278,6 +285,7 @@ class Music {
     if (tune.texture === 'drips' && rnd(bar * 17 + i) > 0.93) this.drip(t, L.base.gain);
     if (tune.texture === 'wind' && i === 0 && bar % 2 === 0) this.whoosh(t, barLen * 2, 500, 0.6, 0.05, L.base.gain);
     if (tune.texture === 'breath' && i % 8 === 0 && rnd(bar * 3 + i) > 0.55) this.whoosh(t, barLen * 0.6, 2400, 2.5, 0.035, L.base.gain);
+    if (tune.texture === 'hiss' && i === 6 && bar % 2 === 1) this.whoosh(t, barLen * 0.4, 3600, 1.2, 0.025, L.base.gain);
 
     // --- fire: drums + plucks
     this.drums(calm ? 'calm' : tune.drums, bar, i, t, L.fire.gain);
@@ -335,6 +343,11 @@ class Music {
         break;
       case 'whisper':
         if (i === 0 && bar % 2 === 0) this.drum(t, 0.4, true, dest);
+        break;
+      case 'chuff':
+        // a steam engine: a soft thump on the beat and a short breathy "chuff" on every quarter
+        if (i === 0 || i === 8) this.drum(t, i === 0 ? 0.8 : 0.5, true, dest);
+        if (i % 4 === 0) this.whoosh(t, 0.12, i % 8 === 0 ? 1500 : 1900, 0.9, i % 8 === 0 ? 0.05 : 0.035, dest);
         break;
     }
   }

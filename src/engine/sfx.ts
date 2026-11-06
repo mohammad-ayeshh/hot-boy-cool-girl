@@ -150,7 +150,12 @@ export function death(e: Elem, cause: DeathCause, pan: number, gain = 1): void {
   const ac = ctx();
   if (!ac) return;
   const o = out(ac, pan, gain);
-  if (cause === 'crush') {
+  if (cause === 'steam') {
+    // fire met water (16.7, T1): a big burst of steam, the same for both
+    hiss(ac, o, 'highpass', 3000, 1200, 0.6, 0.8, 0.5, 0, 0.01);
+    hiss(ac, o, 'lowpass', 1200, 300, 1, 0.5, 0.3);
+    tone(ac, o, e === 'fire' ? 'sawtooth' : 'sine', e === 'fire' ? 240 : 560, e === 'fire' ? 70 : 200, 0.3, 0.06, 0.05); // a yelp in their own voice
+  } else if (cause === 'crush') {
     tone(ac, o, 'sine', 110, 38, 0.35, 0.22); // heavy stone thud
     hiss(ac, o, 'lowpass', 1400, 200, 1, 0.3, 0.3); // crunch
     tone(ac, o, e === 'fire' ? 'sawtooth' : 'sine', e === 'fire' ? 260 : 620, e === 'fire' ? 90 : 220, 0.2, 0.06, 0.04); // a squeak in their own voice
@@ -165,6 +170,13 @@ export function death(e: Elem, cause: DeathCause, pan: number, gain = 1): void {
     for (let i = 0; i < 5; i++) tone(ac, o, 'sine', vary(300 + i * 90), vary(700 + i * 120), 0.06, 0.12, i * 0.05); // boiling bubbles
     tone(ac, o, 'sine', 520, 180, 0.5, 0.08, 0.28, 0.08); // evaporating sigh
   }
+}
+
+/** Don't touch (16.7, T3): a short hiss between the two, louder the closer they are (n 0..1). */
+export function sizzle(n: number, pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  hiss(ac, out(ac, pan, 1), 'highpass', vary(4500), 3000, 0.7, 0.18, 0.02 + 0.1 * n * n);
 }
 
 // Gem notes are in the music's key (15.4): each chapter's tune has its own scale (9.3).
