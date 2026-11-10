@@ -181,11 +181,11 @@ export class CharacterView extends Container {
     const g = this.upperG.clear();
     const swing = run ? Math.sin(ph) * 3 : 0;
     const air = !p.grounded && a;
-    const crossed = (a && p.grounded && !run) || p.victory >= 0; // arms crossed while waiting
+    const hips = (a && p.grounded && !run) || p.victory >= 0; // hands on hips while waiting
     // hair ribbon flows behind her (drawn first so it's behind the body)
     const hairCol = C(COOL.main);
     // back arm
-    if (crossed) limb(g, -3.5, -10.5, 3.5, -6.5, C(mix(COOL.main, 0x000000, 0.25)), 3.2);
+    if (hips) hipsBack(g, C);
     else {
       const hb = air ? { x: -8, y: p.vy < 0 ? -6 : -14 } : { x: -3 - swing, y: -0.5 };
       limb(g, -3.5, -10.5, hb.x, hb.y, C(mix(COOL.main, 0x000000, 0.25)), 3.2);
@@ -195,10 +195,8 @@ export class CharacterView extends Container {
     g.roundShape([{ x: -4.8, y: 0 }, { x: 4.8, y: 0 }, { x: 2.6, y: -6.5 }, { x: 4, y: -12 }, { x: -4, y: -12 }, { x: -2.6, y: -6.5 }], 2).fill(C(COOL.main));
     g.poly([0.5, -1, 3.5, -1, 1.8, -6.5, 3, -11, 0.5, -11]).fill({ color: C(COOL.light), alpha: 0.55 });
     // front arm
-    if (crossed) {
-      limb(g, 3.8, -10.5, -3, -7.2, C(COOL.main), 3.2);
-      g.circle(-3, -7.2, 2).fill(C(COOL.light));
-    } else {
+    if (hips) hipsFront(g, C);
+    else {
       const hf = air ? { x: 8, y: p.vy < 0 ? -6 : -15 } : { x: 3 + swing, y: -0.5 };
       limb(g, 3.8, -10.5, hf.x, hf.y, C(COOL.main), 3.2);
       g.circle(hf.x, hf.y, 2.1).fill(C(COOL.light));
@@ -251,12 +249,44 @@ export class CharacterView extends Container {
     else h.moveTo(3.5, 5.4).quadraticCurveTo(6.5, 6.4, 8.8, 4.2).stroke({ width: 1.4, color: ink, cap: 'round' }); // smirk
     // sunglasses: resting on her head, they drop onto her face when the level is done 😎
     const k = p.victory >= 0 ? easeOutBack(Math.min(1, Math.max(0, (p.victory - 0.3) / 0.25))) : 0;
-    const gx1 = -3 + 2.6 * k, gy1 = -12.5 + 11 * k, gx2 = 3 + 1.4 * k, gy2 = -12 + 10.6 * k;
-    h.roundRect(gx1, gy1, 5.2, 3, 1.3).fill(C(SHADES));
-    h.roundRect(gx2, gy2, 5.2, 3, 1.3).fill(C(SHADES));
-    h.moveTo(gx1 + 5.2, gy1 + 0.8).lineTo(gx2, gy2 + 1).stroke({ width: 1, color: C(SHADES) });
-    h.moveTo(gx1 + 1.2, gy1 + 0.5).lineTo(gx1 + 3, gy1 + 1.5).stroke({ width: 0.8, color: C(COOL.core), alpha: 0.9 });
+    // Seen from the side: only the near lens shows (the far one is behind her face), with its arm running back to her ear.
+    const lerp = (a: number, b: number) => a + (b - a) * k;
+    const cx = lerp(3.6, 6.6), cy = lerp(-10.3, 0.4); // lens middle: up on her head → over her eye
+    const rot = lerp(-0.5, 0); // tilted to follow the top of her head
+    const cos = Math.cos(rot), sin = Math.sin(rot);
+    const at = (x: number, y: number) => ({ x: cx + x * cos - y * sin, y: cy + x * sin + y * cos });
+    const ear = { x: lerp(-5, -3), y: lerp(-8.6, -1.2) };
+    const hinge = at(-2.6, -0.9);
+    h.moveTo(hinge.x, hinge.y).lineTo(ear.x, ear.y).stroke({ width: 1.1, color: C(SHADES), cap: 'round' }); // the arm
+    h.roundShape([at(-2.9, -1.6), at(3.1, -1.6), at(2.7, 1.1), at(0.6, 1.9), at(-2.4, 1.4)], 1).fill(C(SHADES)); // the lens
+    const b0 = at(3, -1.1), b1 = at(4, -0.6);
+    h.moveTo(b0.x, b0.y).lineTo(b1.x, b1.y).stroke({ width: 1, color: C(SHADES), cap: 'round' }); // the bridge, toward her nose
+    const s0 = at(-1.6, -0.9), s1 = at(0.2, 0.4);
+    h.moveTo(s0.x, s0.y).lineTo(s1.x, s1.y).stroke({ width: 0.8, color: C(COOL.core), alpha: 0.9, cap: 'round' }); // shine
   }
+}
+
+// ------------------------------------------------------------------ Cool Girl's waiting pose: hands on hips
+const ARM = mix(COOL.main, COOL.light, 0.45); // lighter than her dress, so the arms read against it
+const ARM_BACK = mix(COOL.main, 0x000000, 0.2);
+const line = (g: Graphics, pts: number[], color: number, width: number, alpha = 1) => {
+  g.moveTo(pts[0], pts[1]);
+  for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]);
+  g.stroke({ width, color, alpha, cap: 'round', join: 'round' });
+};
+
+/** The back arm, behind her body (drawn before the torso): elbow out behind her, hand on her hip. */
+function hipsBack(g: Graphics, C: (c: number) => number): void {
+  line(g, [-3.5, -10.5, -8, -6.5, -4, -2.2], C(ARM_BACK), 3.2);
+  g.circle(-4, -2.2, 1.9).fill(C(ARM_BACK));
+}
+
+/** The front arm, with a thin dark edge: elbow out in front, hand on her hip. */
+function hipsFront(g: Graphics, C: (c: number) => number): void {
+  const pts = [3.8, -10.5, 8.6, -6.6, 4.2, -2.2];
+  line(g, pts, C(COOL.ink), 4.6, 0.55);
+  line(g, pts, C(ARM), 3.2);
+  g.circle(4.2, -2.2, 1.9).fill(C(COOL.light));
 }
 
 function easeOutBack(t: number): number {

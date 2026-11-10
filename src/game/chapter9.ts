@@ -16,9 +16,9 @@ export const CHAPTER_9: LevelDef[] = [
       '################################',
       '#................#.............#',
       '#................#.............#',
-      '#................#.........r.b.#',
       '#................#.............#',
-      '#..............................#',
+      '#................#.............#',
+      '#..........................r.b.#',
       '#......r.......................#',
       '#.............r................#',
       '#.h.......................H..C.#',
@@ -237,7 +237,7 @@ export const CHAPTER_9: LevelDef[] = [
     mechs: [
       // up top (7-5 with the roles swapped): she opens his trapdoor (square) and holds the gate button only he sees
       // (circle); he leaps over her, crosses stones only she sees, and opens her trapdoor (triangle)
-      { kind: 'lever', x: 5, y: 8, rune: 'square' },
+      { kind: 'lever', x: 11, y: 8, rune: 'square' }, // past her button, under his leap: only she steps on it
       { kind: 'gate', x: 7, y: 9, w: 2, h: 1, rune: 'triangle' },
       { kind: 'button', x: 10, y: 8, rune: 'circle', seen: 'fire' },
       { kind: 'gate', x: 14, y: 5, w: 1, h: 4, rune: 'circle' },

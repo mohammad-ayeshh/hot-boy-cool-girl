@@ -35,6 +35,10 @@ const NAMES: Record<Elem, string> = { fire: '🔥 Hot Boy', water: '💧 Cool Gi
 const other = (e: Elem): Elem => (e === 'fire' ? 'water' : 'fire');
 const $ = <E extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as E;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+/** Opening the solo test (?solo) once marks this device as the owner's: its button then shows in Settings. */
+const isTester = (): boolean => {
+  try { return localStorage.getItem('hbcg.tester.v1') === '1'; } catch { return false; }
+};
 const SNAPSHOT_MS = 33; // ~30 per second (13.2)
 const RESTART_DELAY_MS = 1100; // death effect, then restart for both (13.3)
 
@@ -301,6 +305,8 @@ export async function startGame(): Promise<void> {
     const extras = [
       device.isStandalone() ? '' : `<button data-act="fullscreen">${fsLabel()}</button>`,
       canBuy() && paywallOn() ? '<button data-act="restore">Restore my purchase</button>' : '',
+      // the owner's solo test (src/lab/soloTest.ts): shown in dev, or once ?solo was opened on this device
+      import.meta.env.DEV || isTester() ? '<a class="btn" href="?solo">🧪 Test levels alone</a>' : '',
     ].join('');
     return `<div class="panel settings">
       <div class="map-head"><button data-act="tohome">← Back</button><h2>⚙ Settings</h2><span></span></div>

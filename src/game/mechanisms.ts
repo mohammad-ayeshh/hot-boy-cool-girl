@@ -38,7 +38,8 @@ type StoneDef = Extract<MechDef, { kind: 'stone' }>;
 type CarvingDef = Extract<MechDef, { kind: 'carving' }>;
 
 export interface ButtonState { def: ButtonDef; pressed: boolean; sink: number }
-export interface LeverState { def: LeverDef; on: boolean; angle: number; holdUntil: number }
+/** `on` here: the characters (by key) standing on it right now, so standing still doesn't flip it again. */
+export interface LeverState { def: LeverDef; on: boolean; angle: number; holdUntil: number; standing: Set<string> }
 export interface PlatformState { def: PlatformDef; p: number; rect: Rect; dx: number; dy: number; moving: boolean }
 export interface GateState { def: GateDef; open: number; rect: Rect; moving: boolean }
 /** `on`: which characters stand on it now (a stone counts when someone steps onto it); `flash`: a wrong step. */
@@ -110,7 +111,7 @@ export class Mechanisms {
     this.solids.length = 0;
     for (const d of this.defs) {
       if (d.kind === 'button') this.buttons.push({ def: d, pressed: false, sink: 0 });
-      else if (d.kind === 'lever') this.levers.push({ def: d, on: false, angle: -1, holdUntil: 0 });
+      else if (d.kind === 'lever') this.levers.push({ def: d, on: false, angle: -1, holdUntil: 0, standing: new Set() });
       else if (d.kind === 'platform') {
         const rect = { x0: d.x, y0: d.y, x1: d.x + d.w, y1: d.y + PLATFORM_THICK };
         this.platforms.push({ def: d, p: 0, rect, dx: 0, dy: 0, moving: false });
@@ -149,17 +150,21 @@ export class Mechanisms {
     });
   }
 
-  /** Levers: flipped by walking into them (only characters simulated on this phone flip them). */
-  updateLevers(local: Feet[], now: number, events: MechEvent[]): void {
+  /**
+   * Levers: stepping onto one flips it, whichever way you come from (owner's rule, 2026-11-10). Standing on it
+   * doesn't flip it again: step off and back on for that. Only characters simulated on this phone flip them.
+   */
+  updateLevers(local: { key: string; feet: Feet }[], now: number, events: MechEvent[]): void {
     this.levers.forEach((l, i) => {
       const { x, y } = l.def;
-      for (const f of local) {
-        if (!f.grounded || Math.abs(f.y - (y + 1)) > 0.08 || f.right < x + 0.25 || f.left > x + 0.75 || Math.abs(f.vx) < 1) continue;
-        const on = f.vx > 0; // pushed right = on
-        if (on === l.on) continue;
-        l.on = on;
+      for (const { key, feet: f } of local) {
+        const on = f.grounded && Math.abs(f.y - (y + 1)) < 0.08 && f.right > x + 0.25 && f.left < x + 0.75;
+        if (on === l.standing.has(key)) continue;
+        if (!on) { l.standing.delete(key); continue; }
+        l.standing.add(key);
+        l.on = !l.on;
         l.holdUntil = now + 700; // ignore older host corrections for a moment
-        events.push({ k: 'lever', i, on, local: true });
+        events.push({ k: 'lever', i, on: l.on, local: true });
       }
     });
   }

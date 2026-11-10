@@ -29,7 +29,7 @@ export const CHAPTER_2: LevelDef[] = [
       '################################',
     ],
     mechs: [
-      { kind: 'lever', x: 2, y: 7, rune: 'triangle' },
+      { kind: 'lever', x: 1, y: 7, rune: 'triangle' }, // in the dead end: step on, step back off
       { kind: 'lever', x: 7, y: 15, rune: 'circle' },
       { kind: 'gate', x: 18, y: 4, w: 1, h: 4, rune: 'circle' },
       { kind: 'gate', x: 16, y: 10, w: 1, h: 6, rune: 'triangle' },
@@ -105,7 +105,7 @@ export const CHAPTER_2: LevelDef[] = [
     id: '2-4',
     name: 'Send It Back',
     idea: 'two levers, one lift: it moves while either lever is on',
-    targetTime: 40,
+    targetTime: 20, // owner's pick 2026-11-10
     rows: [
       '################################',
       '#..............................#',

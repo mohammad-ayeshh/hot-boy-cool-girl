@@ -316,9 +316,9 @@ Every button or lever and the thing it controls show the **same gold rune symbol
 | Gems 🟧🟦 | Each player collects only their own color |
 | Exit doors 🟧🟦 | One per player. The level ends when **both** stand at their own door at the same time |
 | Pressure button 🟨 | Active **only while someone stands on it**: the classic "you hold it, I go" co-op move (P1) |
-| Lever 🟨 | Pushed left or right by walking into it; it stays where you left it |
+| Lever 🟨 | **Flips on or off each time a character steps onto it**, from either side (changed 2026-11-10; it used to depend on the walking direction). Standing on it doesn't flip it again: step off and back on for that. It stays where you left it |
 | Moving platform / elevator 🟨 | Moves while its linked button is held, or by lever position |
-| Stone gate 🟨 | Slides open or closed, linked to a button or lever. **A closing gate never stops: anyone standing under it is crushed** (dies, and the level restarts for both). Brushing its side is forgiven |
+| Stone gate 🟨 | Slides open or closed, linked to a button or lever. **A closing gate never stops: anyone standing under it is crushed** (dies, and the level restarts for both). Even a little under its edge counts (never pushed aside, 2026-11-10); only standing right beside it is safe |
 
 ### 10.3 Set 2: once the basics work
 | Block | Why later |
@@ -508,7 +508,7 @@ Stylized slim figures with a **big head (about half head, half body)**, arms and
 | Moment | 🔥 Hot Boy | 💧 Cool Girl |
 |---|---|---|
 | Walking | Fast and bouncy, leaning forward, embers flying | Smooth glide, no bounce, hair flowing |
-| Waiting | Taps his foot, punches the air, then waves "come on!" at his partner | Crosses her arms and leans; after a while rolls her eyes: "whenever you're ready" |
+| Waiting | Taps his foot, punches the air, then waves "come on!" at his partner | Hands on her hips (owner's pick 2026-11-10, was crossed arms); after a while rolls her eyes: "whenever you're ready" |
 | Jumping | Explosive takeoff with a burst of sparks | Graceful arc with a small splash ring |
 | Landing | Heavy stomp, sparks splash out | Soft landing with a ripple |
 | **Near the deadly liquid** | **Flame shrinks and sputters**: scared but acting tough | **Starts steaming and bubbling**: the only time she loses her cool |
@@ -669,8 +669,8 @@ Every level must follow all of these, plus the pillars, the level metrics (7.7) 
 | D13 | **Proven winnable** | Every level has a written solution (`tools/routes.ts`) that a robot plays with the real game physics. `npm run check:routes` must pass before a level ships. *Added 2026-10-21 after level 1-5 shipped unwinnable.* |
 
 **Lessons learned while building Chapters 2–4** (keep these in mind for new levels):
-- **Levers turn on when pushed right and off when pushed left.** So a lever that must stay on should be the last thing you pass while walking right. Never make players walk back left over it. A dead end that points left works well: walk in, turn around, and the lever flips on as you leave. So does a little shelf you drop off the far end of.
-- **A ferry or lift sent with a lever should leave toward the left.** The second rider then walks left onto it, past the lever, without flipping it on by accident (2-4, 2-5).
+- **Every step onto a lever flips it** (since 2026-11-10). So never put a lever in a corridor that both players, or one player twice, must walk through: each pass flips it again. Put it in a dead end against a wall (step on, step back off: one flip), on a little shelf, or somewhere only one player goes (6-5, 7-5 and 9-5 moved theirs for this).
+- **A ferry or lift sent with a lever:** the rider steps off the lever onto the lift without crossing the lever again (2-4, 2-5).
 - **No pool or gap right at the mouth of a low tunnel.** You can't jump without headroom, so you'd fall in every time.
 - **Mind the ceiling over a climb.** A 2- or 3-tile climb needs room for your head above the spot you're jumping from (this is what broke 1-5).
 - **Symbol stones go on their own shelves, never in a row on the floor** *(added 2026-10-24 while building password gates)*. A stone counts the moment you stand on it, so walking along a row of stones would press every one you cross, and a wrong one resets the code (G7). Put each stone on a 1-tile shelf 3 tiles up (a full jump) with a 2-tile walkway under it: you walk *under* the stones you don't want and jump *up* onto the one you do. The Feel Lab vault room (`?lab=vault`) shows this layout.
@@ -1051,3 +1051,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-11-06 | **Chapter 9 "The Heart of the Temple" planned and approved (16.12):** the finale, no new rule. Its own team code with carvings in levels 1–4 and the vault in level 5; levels mix eyes, password gates, lifts, trapdoors and Don't touch. A small wordless ending in 9-5. Themes and tunes for both chapters added to 9.3. The game will have **9 chapters, 45 levels**. |
 | 2026-11-06 | **Don't touch, Chapter 8 "The Steam Halls" and Chapter 9 "The Heart of the Temple" built (16.7, 16.11, 16.12).** The game now has **9 chapters and 45 levels**, all passing the route robot (9-5 with 46 codes). A touch counts online only when both phones saw it (a new message: `PROTOCOL` 2). Both chapters have their own background (steam pipes; the heart) and tune (a steam-engine chuff; the home theme slower). Finishing 9-5 plays the small ending. Changed while building, with the owner: 9-4 uses a trapdoor leapfrog instead of "two lifts passing", which could never be dangerous under T2. Store and marketing texts now say 45 levels. Still needed: a two-phone test of Don't touch (D12, T2); star times are guesses. |
 | 2026-11-06 | **Main menu designed (11.1, 11.2):** a main screen with the two characters drawn big in code (shading, rim light, shadows, each lighting the wall; tap them for a jump or a hair flip) over the furthest chapter's blurred background, and the modes as stone tiles: Co-op · Story and Level designer, plus Versus race and Bonus levels as "Soon". Co-op leads to Create / Join room (name box there and in Settings). A ⚙ Settings page: sound, music, vibration, name, full screen, Restore my purchase (app only, no Buy button), About / Privacy / Feedback links, version. Room links still join with no taps; leaving a room returns to the Co-op screen. No AI art (14.1, L4). |
+| 2026-11-10 | **Owner's playtest fixes:** (1) **Levers flip on each step-on, from either side**, and standing on one doesn't flip it again (10.1); vault levers in 6-5, 7-5 and 9-5 moved to where only one player goes, and 2-1's lever into its dead end. Play version `PROTOCOL` 3. (2) **A closing gate crushes anyone even a little under it**, never pushes them aside (the old forgiveness let the movement code shove a player through the gate); standing right beside it is still safe. (3) 2-4 three stars under 20 s. (4) 3-1's doors had no gap between them: Hot Boy's door moved one tile left. (5) Unreachable gems fixed: 9-1's two gems over the doors moved down, and 7-1's high blue gem moved one tile left (checked with the real physics). (6) Cool Girl's waiting pose is now **hands on hips** (owner's pick of 4 drawn options), and her sunglasses show one lens from the side. Also built: the solo test (`?solo`) for trying every level alone. |

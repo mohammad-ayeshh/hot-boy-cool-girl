@@ -44,7 +44,7 @@ const TOOLS: (ToolInfo | '|')[] = [
   { id: 'doorWater', icon: '<span class="door c-water">▯</span>', label: 'Door', hint: 'Tap where Cool Girl’s door stands.' },
   '|',
   { id: 'button', icon: '⏺', label: 'Button', hint: 'Tap a floor tile for a button: powered while someone stands on it. Tap again to remove.' },
-  { id: 'lever', icon: '⟋', label: 'Lever', hint: 'Tap a floor tile for a lever: stays where it was pushed. Tap again to remove.' },
+  { id: 'lever', icon: '⟋', label: 'Lever', hint: 'Tap a floor tile for a lever: each step onto it flips it on or off. Tap again to remove.' },
   { id: 'platform', icon: '▬', label: 'Platform', hint: `Platform: drag sideways for its width (up to ${MAX_PLATFORM}), then tap where it moves to.` },
   { id: 'gate', icon: '▮', label: 'Gate', hint: 'Gate: drag a box. It slides open while its rune is powered.' },
   '|',

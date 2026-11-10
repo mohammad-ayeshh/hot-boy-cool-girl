@@ -166,7 +166,7 @@ export const CHAPTER_6: LevelDef[] = [
     ],
     mechs: [
       // up top: he opens her trapdoor (square), she opens his (triangle), and he holds the gate for her (circle)
-      { kind: 'lever', x: 5, y: 8, rune: 'square' },
+      { kind: 'lever', x: 1, y: 8, rune: 'square' }, // behind them, where only he goes (stepping on flips a lever)
       { kind: 'gate', x: 7, y: 9, w: 2, h: 1, rune: 'triangle' },
       { kind: 'button', x: 12, y: 8, rune: 'circle' },
       { kind: 'gate', x: 14, y: 5, w: 1, h: 4, rune: 'circle' },

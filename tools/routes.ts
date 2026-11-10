@@ -32,7 +32,7 @@ function enterCode(level: LevelDef, code: Animal[], fire: Cmd[], water: Cmd[], l
 
 /** Level 6-5 for any code. Up top: he holds the gate button for her, each opens the other's trapdoor with a lever. */
 export function vaultRoute(code: Animal[]): Route {
-  const fire: Cmd[] = [to(12.5), say('he holds'), until('she is past the gate', (w) => w.body.water.x > 15.6), to(7.5),
+  const fire: Cmd[] = [to(1.6), to(12.5), say('he holds'), until('she is past the gate', (w) => w.body.water.x > 15.6), to(7.5),
     until('he is down', (w) => w.body.fire.y > 15.9)];
   const water: Cmd[] = [heard('he holds'), gateOpen(1), to(16.2), jump(19.6, { at: 16.2 }), to(21.2), to(23.9),
     until('she is down', (w) => w.body.water.y > 15.9)];
@@ -44,7 +44,7 @@ export function vaultRoute(code: Animal[]): Route {
  * she climbs onto the poison pit, crosses on the stones only he sees, and walks over the lever that opens his trapdoor.
  */
 export function whisperRoute(code: Animal[]): Route {
-  const fire: Cmd[] = [to(12.5), say('he holds'), until('she is past the gate', (w) => w.body.water.x > 15.6), to(7.5),
+  const fire: Cmd[] = [to(1.6), to(12.5), say('he holds'), until('she is past the gate', (w) => w.body.water.x > 15.6), to(7.5),
     until('he is down', (w) => w.body.fire.y > 15.9)];
   const water: Cmd[] = [heard('he holds'), gateOpen(1), to(15.4), jump(16.6), to(17.4), jump(20.6, { at: 17.4 }), to(21.4),
     jump(24.6, { at: 21.4 }), to(26.6), until('she is down', (w) => w.body.water.y > 15.9)];
@@ -57,7 +57,7 @@ export function whisperRoute(code: Animal[]): Route {
  * lever that opens her trapdoor. In the vault she has the left half and he the right.
  */
 export function heartRoute(code: Animal[]): Route {
-  const water: Cmd[] = [to(10.5), say('she holds'), until('he is past the gate', (w) => w.body.fire.x > 15.6), to(7.5),
+  const water: Cmd[] = [to(11.5), to(10.5), say('she holds'), until('he is past the gate', (w) => w.body.fire.x > 15.6), to(7.5),
     until('she is down', (w) => w.body.water.y > 15.9)];
   const fire: Cmd[] = [heard('she holds'), gateOpen(1), jump(12.6, { at: 8.6 }), to(15.4), jump(16.6), to(17.4), jump(20.6, { at: 17.4 }), to(21.4),
     jump(24.6, { at: 21.4 }), to(26.6), until('he is down', (w) => w.body.fire.y > 15.9)];
@@ -91,8 +91,8 @@ export const ROUTES: Record<string, Route> = {
 
   // ---- Chapter 2
   '2-1': {
-    fire: [to(1.6), to(5.5), to(11.4), jump(14.6, { at: 11.4 }), to(17.2), gateOpen(0), to(22.4), jump(26.5)],
-    water: [to(6.4), to(10.4), jump(14.6, { at: 11.4 }), to(15.2), gateOpen(1), to(22.4), jump(23.8), jump(25.8), to(28.5)],
+    fire: [to(1.8), to(5.5), to(11.4), jump(14.6, { at: 11.4 }), to(17.2), gateOpen(0), to(22.4), jump(26.5)],
+    water: [to(7.5), to(10.4), jump(14.6, { at: 11.4 }), to(15.2), gateOpen(1), to(22.4), jump(23.8), jump(25.8), to(28.5)],
   },
   '2-2': {
     fire: [to(9.5), until('she is through her gate', (w) => w.body.water.x > 8.6), gateOpen(1), to(10.5), jump(11.8), jump(14.0), jump(16.8), to(25.5)],
@@ -104,20 +104,20 @@ export const ROUTES: Record<string, Route> = {
       until('he is through', (w) => w.body.fire.x > 23.5), jump(25.6, { at: 22.6 }), jump(27.2), to(29.5)],
   },
   '2-4': {
-    fire: [jump(21.5), say('he is on'), platAt(0, 1), to(9.4), say('he is up'), heard('she is on'), to(6.6), to(8.0), heard('she is up'), to(6.2), jump(3.5, { at: 6.2 }), to(3.5)],
-    water: [heard('he is on'), to(27.8), heard('he is up'), to(26.4), platAt(0, 0), jump(21.5), say('she is on'), platAt(0, 1), to(9.4), say('she is up'), to(1.5)],
+    fire: [jump(21.5), say('he is on'), platAt(0, 1), to(9.4), say('he is up'), heard('she is on'), to(7.5), heard('she is up'), to(6.2), jump(3.5, { at: 6.2 }), to(3.5)],
+    water: [heard('he is on'), to(27.5), heard('he is up'), to(26.4), to(27.5), to(26.4), platAt(0, 0), jump(21.5), say('she is on'), platAt(0, 1), to(9.4), say('she is up'), to(1.5)],
   },
   '2-5': {
-    fire: [jump(27.6), to(30.3), gateOpen(0), to(22.4), jump(20.5), jump(18.3), say('he is on the ferry'), platAt(0, 1), jump(10.0), say('he is across'),
-      heard('she is on the ferry'), to(9.4), to(10.5), jump(7.5), to(7.5), heard('she holds the top'), jump(5.5), to(3.5)],
-    water: [jump(26.8), to(30.3), gateOpen(1), to(20.6), heard('he is on the ferry'), to(22.4), heard('he is across'), to(20.6), platAt(0, 0), jump(18.3), say('she is on the ferry'),
+    fire: [jump(27.6), to(30.3), gateOpen(0), to(22.4), jump(20.5), jump(18.3), say('he is on the ferry'), platAt(0, 1), jump(10.5), say('he is across'),
+      heard('she is on the ferry'), to(9.5), to(10.5), jump(7.5), to(7.5), heard('she holds the top'), jump(5.5), to(3.5)],
+    water: [jump(26.8), to(30.3), gateOpen(1), to(22.4), heard('he is on the ferry'), to(21.5), heard('he is across'), to(22.4), to(21.5), to(20.6), platAt(0, 0), jump(18.3), say('she is on the ferry'),
       platAt(0, 1), jump(10.0), jump(8.4), gateOpen(2), jump(5.5), to(5.5), say('she holds the top'), until('he is up', (w) => w.body.fire.y < 9.1 && w.body.fire.x < 6.9), to(1.5)],
   },
 
   // ---- Chapter 3
   '3-1': {
     fire: [to(14.6), say('he is on the lift'), platAt(0, 1), to(17.5), say('he is down'), heard('she is on the lift'), to(18.5),
-      until('she is off the lift', (w) => w.body.water.x > 18 && w.body.water.y > 15.9), to(19.4), jump(22.6, { at: 19.4 }), to(26.5)],
+      until('she is off the lift', (w) => w.body.water.x > 18 && w.body.water.y > 15.9), to(19.4), jump(22.6, { at: 19.4 }), to(25.5)],
     water: [to(6.4), jump(9.6, { at: 6.4 }), heard('he is on the lift'), to(11.5), heard('he is down'), to(9.6), platAt(0, 0), to(14.6), say('she is on the lift'),
       platAt(0, 1), to(22.4), jump(25.6, { at: 22.4 }), to(27.5)],
   },

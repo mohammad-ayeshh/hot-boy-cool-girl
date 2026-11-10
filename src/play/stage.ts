@@ -905,7 +905,7 @@ export class Stage {
     this.stepApart();
     // levers: flipped by characters on this phone walking into them
     const events: MechEvent[] = [];
-    this.mech.updateLevers(ELEMS.filter((e) => this.heroes[e].local && this.isAlive(e)).map((e) => feetOf(this.heroes[e].body)), now, events);
+    this.mech.updateLevers(ELEMS.filter((e) => this.heroes[e].local && this.isAlive(e)).map((e) => ({ key: e, feet: feetOf(this.heroes[e].body) })), now, events);
     // symbol stones: only steps of characters on this phone count; the partner's arrive over the network
     if (this.mech.stones.length && !this.completed) {
       this.mech.updateStones(ELEMS.filter((e) => this.heroes[e].local && this.isAlive(e)).map((e) => ({ key: e, feet: feetOf(this.heroes[e].body) })), now, events);
@@ -957,11 +957,12 @@ export class Stage {
     m.updateButtons(alive.map((h) => feetOf(h.body)), events);
     const locals = alive.filter((h) => h.local);
     const riding = locals.map((h) => m.platformUnder(feetOf(h.body)));
-    // A closing gate crushes whoever is under it the moment it reaches their head (brushing its side is forgiven, 7.4).
+    // A closing gate crushes whoever is under any part of it the moment it reaches their head: even a little under
+    // its edge is deadly, never pushed aside (owner's rule, 2026-11-10). Only standing right beside it is safe.
     const crushed = new Map<Hero, number>();
     const crush = (r: Rect, gate: number) => {
       if (this.completed) return;
-      for (const h of locals) if (r.x0 < h.body.right - 0.12 && r.x1 > h.body.left + 0.12 && r.y0 < h.body.y && r.y1 > h.body.top + 0.04) crushed.set(h, gate);
+      for (const h of locals) if (r.x0 < h.body.right && r.x1 > h.body.left && r.y0 < h.body.y && r.y1 > h.body.top) crushed.set(h, gate);
     };
     m.update(STEP, crush, events);
     for (const [h, gate] of crushed) this.die(h, 'crush', gate);

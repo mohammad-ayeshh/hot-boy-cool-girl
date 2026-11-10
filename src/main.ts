@@ -3,5 +3,6 @@ import './ui/style.css';
 
 const params = new URLSearchParams(location.search);
 if (params.has('test')) void import('./devtest').then((m) => m.startDeviceTest());
+else if (params.has('solo')) void import('./lab/soloTest').then((m) => m.startSoloTest());
 else if (params.has('lab')) void import('./lab/feelLab').then((m) => m.startFeelLab());
 else void import('./online/game').then((m) => m.startGame());

@@ -71,7 +71,7 @@ export class World {
     if (this.apart && touching(this.body.fire, this.body.water)) {
       return this.die('fire', `touched Cool Girl at x ${this.body.fire.x.toFixed(1)}: both burst into steam`);
     }
-    this.mech.updateLevers(ELEMS.map((e) => feetOf(this.body[e])), this.time * 1000, []);
+    this.mech.updateLevers(ELEMS.map((e) => ({ key: e, feet: feetOf(this.body[e]) })), this.time * 1000, []);
     this.mech.carvings.forEach((c, i) => {
       // a clear margin inside the real lighting distance, so a player a little off the robot's line still lights it
       if (ELEMS.some((e) => carvingDistance(c.def, this.body[e].x, this.body[e].y) < CARVING_LIGHT - 0.6)) this.carvingsSeen.add(i);
@@ -92,7 +92,7 @@ export class World {
     const crush = (r: Rect) => {
       ELEMS.forEach((e) => {
         const b = this.body[e];
-        if (r.x0 < b.right - 0.12 && r.x1 > b.left + 0.12 && r.y0 < b.y && r.y1 > b.top + 0.04) this.die(e, 'crushed by a gate');
+        if (r.x0 < b.right && r.x1 > b.left && r.y0 < b.y && r.y1 > b.top) this.die(e, 'crushed by a gate');
       });
     };
     m.update(STEP, crush, events);

@@ -746,3 +746,16 @@ button.danger { background: var(--danger); border-color: transparent; }
   .mode-row .mode { padding: 6px 4px; }
   .titled .panel.settings { gap: 6px; }
 }
+
+/* Solo test (?solo): the owner tries every level alone */
+.solo-hud { flex-wrap: wrap; justify-content: center; max-width: 96vw; }
+.solo-name { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-flex; align-items: center; color: var(--gold); }
+.solo-panel { width: min(760px, 96vw); }
+.solo-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.solo-lvl { display: grid; gap: 2px; padding: 6px 4px; min-height: 52px; background: rgba(0, 0, 0, 0.25); }
+.solo-lvl b { font-size: 15px; }
+.solo-lvl small { font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.solo-lvl.done { border-color: rgba(120, 220, 140, 0.7); }
+.solo-lvl.done b { color: #8fe3a0; }
+.solo-lvl.on { background: rgba(227, 176, 75, 0.2); border-color: rgba(227, 176, 75, 0.8); }
+.solo-lvl:disabled { opacity: 0.4; }
