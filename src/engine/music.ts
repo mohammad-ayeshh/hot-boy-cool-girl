@@ -70,6 +70,24 @@ const TUNES: Record<number, Tune> = {
   // 9 The Heart of the Temple: the home theme (A minor, Am – F – C – G) comes back, slower and bigger, with airy pads
   9: { chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], roots: [45, 41, 48, 43], scale: [57, 60, 62, 64, 67, 69, 72, 74, 76],
     bpm: 72, drums: 'hand', plucks: [0, 6, 8, 14], pluckChance: 0.75, arpEvery: 2, arpChance: 1, bellLen: 1.5, echo: 0.5, pad: 'flute', level: 1.05 },
+  // 10 The Crumbling Wing (the Trials): D minor, Dm – C – B♭ – A, a line that keeps stepping down; a heavy drum,
+  // low uneven plucks and short dry chimes, quicker than the story's tunes
+  10: { chords: [[57, 62, 65], [55, 60, 64], [53, 58, 62], [52, 57, 61]], roots: [50, 48, 46, 45], scale: [57, 60, 62, 65, 67, 69, 72, 74, 77],
+    bpm: 104, drums: 'heavy', plucks: [0, 3, 6, 10, 13], pluckChance: 0.7, pluckOctave: -12, arpEvery: 2, arpChance: 0.7, bellLen: 0.6, echo: 0.25, pad: 'warm', level: 1 },
+  // 11 The Hourglass Hall (the Trials): E minor, Em – C – Am – B, the fastest tune: a ticking clock and a pluck
+  // pattern that keeps coming back to the same high note, like a second hand
+  11: { chords: [[52, 55, 59], [52, 55, 60], [52, 57, 60], [54, 59, 63]], roots: [52, 48, 45, 47], scale: [57, 59, 62, 64, 67, 69, 71, 74, 76],
+    bpm: 120, drums: 'clock', plucks: [0, 2, 4, 6, 8, 10, 12, 14], pluckChance: 1, ostinato: [0, 4, 2, 4, 1, 4, 3, 4], arpEvery: 4, arpChance: 1,
+    bellLen: 0.5, echo: 0.3, pad: 'flute', level: 0.95 },
+  // 12 The Rising Dark (the Trials): B minor, Bm – G – Em – F♯, slow and heavy with a long echo: a deep drum, a few
+  // low plucks, long chimes and falling drips, while the level itself hurries you
+  12: { chords: [[59, 62, 66], [55, 59, 62], [52, 55, 59], [54, 58, 61]], roots: [47, 43, 40, 42], scale: [57, 59, 62, 64, 66, 69, 71, 74, 76],
+    bpm: 88, drums: 'heavy', plucks: [0, 8, 11], pluckChance: 0.7, pluckOctave: -12, arpEvery: 4, arpChance: 0.8, bellLen: 1.8, echo: 0.55, pad: 'warm',
+    texture: 'drips', level: 1 },
+  // 13 The Last Trial: the home theme (A minor, Am – F – C – G) one last time, at full speed with the heavy drum and quick
+  // chimes: the Trials end where the game began
+  13: { chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], roots: [45, 41, 48, 43], scale: [57, 60, 62, 64, 67, 69, 72, 74, 76],
+    bpm: 112, drums: 'heavy', plucks: [0, 3, 6, 8, 11, 14], pluckChance: 0.85, arpEvery: 2, arpChance: 1, bellLen: 0.8, echo: 0.4, pad: 'flute', level: 1.05 },
 };
 const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 

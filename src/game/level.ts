@@ -12,7 +12,7 @@ export type DeathCause = Liquid | 'crush' | 'steam';
 /** Liquids sit a little lower than the floor, so feet visibly dip in (and stepping out uses the step-up helper). */
 export const LIQUID_DEPTH = 0.2;
 
-import type { MechDef, Pattern } from './mechanisms';
+import type { MechDef, Pattern, Tide } from './mechanisms';
 
 /** Different eyes (16.7): a thing seen by only one player. Absent = both see it. Hidden things are still real (E5). */
 export type Seen = Elem | undefined;
@@ -35,6 +35,8 @@ export interface LevelData {
   theme?: number;
   /** Don't touch (16.7, T1–T4): if the two clearly overlap, both burst into steam. */
   apart?: boolean;
+  /** The rising tide (16.7, V1–V6): poison that rises from the bottom once someone moves. */
+  tide?: Tide;
 }
 
 const CHAR_TILE: Record<string, Tile> = { '#': 'stone', L: 'lava', W: 'water', P: 'poison' };

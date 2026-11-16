@@ -3,7 +3,7 @@
 // mechanisms look the same everywhere. Everything here stays dark and muted: no bright orange, cyan, violet or gold.
 
 /** Which far-depths scenery a theme draws (world.ts). */
-export type Scenery = 'jungle' | 'flooded' | 'machine' | 'summit' | 'eyes' | 'vault' | 'caves' | 'pipes' | 'heart';
+export type Scenery = 'jungle' | 'flooded' | 'machine' | 'summit' | 'eyes' | 'vault' | 'caves' | 'pipes' | 'heart' | 'ruins' | 'hourglass' | 'drowned' | 'sanctum';
 
 /** Floating bits in the air layer (9.1 layer 2), behind the level. */
 export interface Air {
@@ -120,6 +120,43 @@ export const THEMES: readonly Theme[] = [
     scenery: 'heart', far: 0x221917, farEdge: 0x31241f, rune: 0x2a201d,
     air: { kind: 'float', colors: [0xb5a49a, 0x978880], rate: 1.2, size: [3, 5], alpha: 0.3 },
     margin: [0x0e0a09, 0x161110, 0x080505],
+  },
+  // The Trials (16.7): bonus chapters after the story
+  {
+    chapter: 10, name: 'The Crumbling Wing',
+    sky: [0x15140f, 0x080806],
+    stone: { deep: 0x0d0d0a, dark: 0x1c1b16, mid: 0x3b3a31, light: 0x747160 },
+    top: null, hang: null, hangColor: 0,
+    scenery: 'ruins', far: 0x211f19, farEdge: 0x302d24, rune: 0x282620,
+    air: { kind: 'fall', colors: [0xa39a86, 0x857d6c], rate: 4.5, size: [2, 5], alpha: 0.38 },
+    margin: [0x0e0d0a, 0x171611, 0x090806],
+  },
+  {
+    chapter: 11, name: 'The Hourglass Hall',
+    sky: [0x18150e, 0x0a0805],
+    stone: { deep: 0x100e09, dark: 0x211d14, mid: 0x46402e, light: 0x857b5b },
+    top: null, hang: 'chains', hangColor: 0x4f472f,
+    scenery: 'hourglass', far: 0x262115, farEdge: 0x383120, rune: 0x2e2819,
+    air: { kind: 'fall', colors: [0xa89c78, 0x8a8062], rate: 6, size: [1.5, 3.5], alpha: 0.4 },
+    margin: [0x100d08, 0x19150d, 0x0a0805],
+  },
+  {
+    chapter: 12, name: 'The Rising Dark',
+    sky: [0x0c1315, 0x040708],
+    stone: { deep: 0x070b0c, dark: 0x10191b, mid: 0x27373c, light: 0x527077 },
+    top: null, hang: 'drips', hangColor: 0x48636a,
+    scenery: 'drowned', far: 0x0f1a1d, farEdge: 0x1a2a2e, rune: 0x152225,
+    air: { kind: 'rise', colors: [0x86a1a8, 0x69858d], rate: 1.8, size: [3, 7], alpha: 0.18 },
+    margin: [0x070c0d, 0x0c1416, 0x040708],
+  },
+  {
+    chapter: 13, name: 'The Last Trial',
+    sky: [0x121214, 0x060607],
+    stone: { deep: 0x0b0b0d, dark: 0x18181c, mid: 0x33333a, light: 0x65656f },
+    top: null, hang: null, hangColor: 0,
+    scenery: 'sanctum', far: 0x1c1c21, farEdge: 0x2b2b32, rune: 0x232328,
+    air: { kind: 'rise', colors: [0x9c9ca6, 0x7e7e88], rate: 1.6, size: [2, 4], alpha: 0.3 },
+    margin: [0x0b0b0d, 0x131316, 0x060607],
   },
 ];
 

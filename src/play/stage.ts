@@ -9,7 +9,7 @@ import { music } from '../engine/music';
 import { Controls } from '../engine/input';
 import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, TOUCH_NEAR, derive, touching, type JumpStats, type Phys } from '../game/body';
 import { COLS, ROWS, LIQUID_DEPTH, Level, type DeathCause, type Elem, type Gem, type LevelData, type Liquid, type Rect } from '../game/level';
-import { CARVING_DARK, CARVING_LIGHT, Mechanisms, carvingDistance, type Feet, type MechDef, type MechEvent, type MechSync, type Rune } from '../game/mechanisms';
+import { CARVING_DARK, CARVING_LIGHT, CRUMBLE_BACK, CRUMBLE_SHAKE, Mechanisms, carvingDistance, type Feet, type MechDef, type MechEvent, type MechSync, type Rune } from '../game/mechanisms';
 import { drawAnimal } from '../render/animals';
 import type { Settings } from '../game/settings';
 import { ParticleSystem, makeGlowTexture } from '../render/particles';
@@ -47,6 +47,8 @@ export interface StageHooks {
   localLever?(i: number, on: boolean): void;
   /** A character simulated on this phone stepped onto symbol stone `i` (16.7). */
   localStone?(i: number): void;
+  /** A character simulated on this phone stood on crumbling block `i`: it starts to shake (16.7, K5). */
+  localCrumble?(i: number): void;
   /**
    * Don't touch (16.7, T2): this phone sees its character clearly overlapping the partner (as shown here).
    * Called every step while it lasts; the online game asks the partner's phone whether it saw the same.
@@ -189,6 +191,9 @@ export class Stage {
   private readonly heroesLayer = new Container();
   private readonly dust = new ParticleSystem(this.glowTex, 800, 'normal');
   private readonly poolsG = new Graphics();
+  /** The rising tide (16.7): drawn over the characters, like the pools. */
+  private readonly tideG = new Graphics();
+  private tideBubbleT = 0;
   private readonly revealG = new Graphics();
   private readonly fx = new ParticleSystem(this.glowTex, 4000);
   private readonly debug = new Graphics();
@@ -221,7 +226,7 @@ export class Stage {
   constructor(readonly app: Application, readonly settings: Settings, level: LevelData, private opts: StageOptions) {
     this.controls = new Controls(app.canvas, { deadZone: settings.deadZone, anchorFollows: settings.anchorFollows, anchorLeash: settings.anchorLeash });
     this.lights.addChild(this.levelLights);
-    this.world.addChild(this.bg, this.scenery, this.air.view, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.revealG, this.fx.view, this.debug, this.overlay);
+    this.world.addChild(this.bg, this.scenery, this.air.view, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.tideG, this.revealG, this.fx.view, this.debug, this.overlay);
     app.stage.addChild(this.margins, this.world, this.screenFx, this.hints);
     drawBackground(this.bg, this.theme);
     this.heroes = { water: this.makeHero('water'), fire: this.makeHero('fire') };
@@ -271,7 +276,7 @@ export class Stage {
       this.air.clear();
       this.layout();
     }
-    this.mech = new Mechanisms(data.mechs, data.pattern);
+    this.mech = new Mechanisms(data.mechs, data.pattern, data.tide);
     this.level.dynamic = this.mech.solids;
     this.revealed.clear();
     this.revealedGates.clear();
@@ -553,13 +558,20 @@ export class Stage {
     this.mechEvents(events);
   }
 
+  /** The partner's character stood on crumbling block `i`: it starts to shake here too (16.7, K5). */
+  remoteCrumble(i: number): void {
+    const events: MechEvent[] = [];
+    this.mech.shakeCrumble(i, events);
+    this.mechEvents(events);
+  }
+
   mechState(): MechSync {
     return this.mech.state();
   }
 
   correctMech(s: MechSync): void {
     const events: MechEvent[] = [];
-    this.mech.correct(s, performance.now(), events);
+    this.mech.correct(s, performance.now(), events, ELEMS.filter((e) => this.isAlive(e)).map((e) => this.heroes[e].body));
     this.mechEvents(events);
   }
 
@@ -793,6 +805,7 @@ export class Stage {
   private respawnOne(h: Hero): void {
     const sp = this.level.data.spawn[h.elem];
     h.body.place(sp.x, sp.y);
+    this.mech.resetTide(); // Feel Lab: the tide sinks back, so you can try again
     h.hairReset = true;
     h.alive = true;
     h.ownPrev = 0;
@@ -879,7 +892,8 @@ export class Stage {
 
       // near danger (14.4)
       const dist = this.settings.nearDanger ? this.level.distanceToLiquid(b.x, b.y - 0.4, DEADLY[e], 2.5, this.sees) : Infinity; // a hidden danger gives no hint (E3)
-      const target = Math.max(clamp(1 - (dist - 0.3) / 1.7, 0, 1), this.settings.nearDanger ? this.steamNear : 0);
+      const tideGap = this.mech.tide && this.settings.nearDanger ? this.mech.tide.y - b.y : Infinity; // how far the tide is below the feet
+      const target = Math.max(clamp(1 - (Math.min(dist, tideGap) - 0.3) / 1.7, 0, 1), this.settings.nearDanger ? this.steamNear : 0);
       h.danger += (target - h.danger) * Math.min(1, STEP * 8);
 
       // gems (each player only their own color)
@@ -951,11 +965,19 @@ export class Stage {
   /** Buttons, platforms and gates move; riders are carried; nobody gets stuck inside a platform. */
   private stepMechanisms(): void {
     const m = this.mech;
-    if (!m.buttons.length && !m.platforms.length && !m.gates.length && !m.stones.length) return;
+    if (!m.buttons.length && !m.platforms.length && !m.gates.length && !m.stones.length && !m.crumbles.length && !m.timers.length && !m.tide) return;
     const events: MechEvent[] = [];
     const alive = ELEMS.filter((e) => this.isAlive(e)).map((e) => this.heroes[e]);
+    // the rising tide starts when the first character moves away from the start (V2); it stops for the celebration
+    if (m.tide && !m.tide.running && !this.completed) {
+      const sp = this.level.data.spawn;
+      if (alive.some((h) => Math.abs(h.body.x - sp[h.elem].x) > 0.05 || h.body.y < sp[h.elem].y - 0.1)) m.startTide(events);
+    }
+    if (m.tide && this.completed) m.tide.running = false;
     m.updateButtons(alive.map((h) => feetOf(h.body)), events);
     const locals = alive.filter((h) => h.local);
+    // crumbling stones: only this phone's characters start a shake; a block never grows back inside anyone
+    if (m.crumbles.length) m.updateCrumbles(this.completed ? [] : locals.map((h) => feetOf(h.body)), alive.map((h) => h.body), STEP, performance.now(), events);
     const riding = locals.map((h) => m.platformUnder(feetOf(h.body)));
     // A closing gate crushes whoever is under any part of it the moment it reaches their head: even a little under
     // its edge is deadly, never pushed aside (owner's rule, 2026-11-10). Only standing right beside it is safe.
@@ -966,6 +988,14 @@ export class Stage {
     };
     m.update(STEP, crush, events);
     for (const [h, gate] of crushed) this.die(h, 'crush', gate);
+    // the tide catches a character whose feet are clearly under its surface (V4)
+    if (m.tide && !this.completed) {
+      for (const h of locals) {
+        if (crushed.has(h) || !m.tideCovers(h.body.y)) continue;
+        this.die(h, 'poison');
+        crushed.set(h, -1);
+      }
+    }
     locals.forEach((h, i) => {
       if (crushed.has(h)) return;
       const b = h.body;
@@ -1020,6 +1050,34 @@ export class Stage {
         if (ev.local) this.haptic(ev.ok ? 15 : 45);
         if (d && ev.ok && ev.n > 0) this.burst((d.x + 0.5) * T, (d.y + 0.2) * T, [0xffffff, 0xf1e6c8, 0xe3b04b]);
         if (!ev.ok) this.shake(0.15, 0.2);
+      } else if (ev.k === 'crumble') {
+        // crackle and dust while it shakes, a rumble and falling rubble when it goes, a soft knock when it is back
+        if (ev.local) this.opts.hooks?.localCrumble?.(ev.i);
+        const c = this.mech.crumbles[ev.i];
+        if (!this.seesMech(c.def)) continue;
+        sfx.crumble(ev.what, this.panX(c.x));
+        const x = (c.x + 0.5) * T, y = c.y * T;
+        if (ev.what === 'shake') {
+          if (ev.local) this.haptic(12);
+          this.fx.emit({ x, y: y + T, count: 5, colors: STONE_DUST, speed: [10, 50], life: [0.3, 0.7], size: [2, 4], angle: Math.PI / 2, spread: 0.6, gravity: 300, alpha: 0.7 });
+        } else if (ev.what === 'fall') {
+          this.fx.emit({ x, y: y + T / 2, count: 14, colors: [0x2e3d39, 0x55695f, 0x3a4a45], speed: [20, 110], life: [0.5, 1], size: [5, 11], angle: Math.PI / 2, spread: 0.9, gravity: 620, alpha: 1 });
+          this.fx.emit({ x, y: y + T / 2, count: 8, colors: STONE_DUST, speed: [15, 60], life: [0.5, 1], size: [5, 10], spread: Math.PI, gravity: -20, drag: 0.5, alpha: 0.35 });
+          this.fx.emit({ x, y: y + T / 2, count: 3, colors: [0xe3b04b, 0xf1e6c8], speed: [40, 120], life: [0.3, 0.6], size: [2, 3], spread: Math.PI, gravity: 400 });
+        } else this.fx.emit({ x, y: y + T / 2, count: 6, colors: [0xf1e6c8, 0xe3b04b], speed: [10, 40], life: [0.3, 0.6], size: [2, 3], spread: Math.PI });
+      } else if (ev.k === 'timer') {
+        // a click going down, ticking while its time runs (faster near the end), a clunk when it runs out (S3)
+        const d = this.mech.timers[ev.i].def;
+        if (!this.seesMech(d)) continue;
+        sfx.timer(ev.what, ev.left, this.panX(d.x));
+        const me = this.controlled ? this.heroes[this.controlled] : null;
+        if (ev.what === 'down' && me?.local && Math.abs(me.body.x - (d.x + 0.5)) < 0.9) this.haptic(15);
+        if (ev.what === 'out') this.fx.emit({ x: (d.x + 0.5) * T, y: (d.y + 0.8) * T, count: 5, colors: [0xe3b04b, 0x8a6a2a], speed: [20, 60], life: [0.2, 0.5], size: [2, 3], angle: -Math.PI / 2, spread: 0.8, gravity: 300 });
+      } else if (ev.k === 'tide') {
+        // the poison wakes up: a deep rumble and a small shake
+        sfx.tide();
+        this.shake(0.2, 0.5);
+        this.haptic(30);
       } else if (ev.k === 'solved') {
         sfx.solved(0);
         this.haptic(40);
@@ -1231,6 +1289,48 @@ export class Stage {
     }
   }
 
+  /**
+   * The rising tide (16.7, V1): violet poison in every open cell under its surface, with a slow, heavy surface and
+   * popping bubbles (4.4: a darker body, bright bubbles). Always seen by both players.
+   */
+  private drawTide(dt: number): void {
+    const g = this.tideG.clear();
+    const tide = this.mech.tide;
+    if (!tide) return;
+    const y = tide.y, t = this.simTime;
+    const open = (tx: number, ty: number) => this.level.tile(tx, ty) !== 'stone';
+    const runs: [number, number][] = []; // open stretches of the surface row
+    for (let ty = Math.max(0, Math.floor(y)); ty < ROWS; ty++) {
+      for (let x = 0; x < COLS; x++) {
+        if (!open(x, ty)) continue;
+        let e = x;
+        while (e + 1 < COLS && open(e + 1, ty)) e++;
+        const top = Math.max(ty, y) * T;
+        g.rect(x * T, top, (e + 1 - x) * T, (ty + 1) * T - top).fill({ color: 0x4e1677, alpha: 0.9 });
+        if (ty === Math.floor(y)) runs.push([x, e + 1]);
+        x = e;
+      }
+    }
+    const wave = (px: number) => Math.sin(px * 0.045 + t * 1.6) * 1.6 + Math.sin(px * 0.11 - t * 1.1) * 0.8;
+    for (const [x0, x1] of runs) {
+      const pts: number[] = [];
+      for (let px = x0 * T; px <= x1 * T; px += 6) pts.push(px, y * T + wave(px));
+      pts.push(x1 * T, y * T + wave(x1 * T));
+      g.poly([...pts, x1 * T, y * T + 7, x0 * T, y * T + 7]).fill({ color: 0xa23be8, alpha: 0.55 });
+      g.moveTo(pts[0], pts[1]);
+      for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]);
+      g.stroke({ width: 2, color: 0xd17bff, alpha: tide.running ? 1 : 0.8 });
+    }
+    // bubbles pop along the surface: a few while it rests, many while it climbs
+    this.tideBubbleT -= dt;
+    if (runs.length && this.tideBubbleT <= 0) {
+      const rising = tide.running && y > tide.def.to;
+      this.tideBubbleT = rising ? 0.07 : 0.35;
+      const [x0, x1] = runs[Math.floor(Math.random() * runs.length)];
+      this.fx.emit({ x: (x0 + Math.random() * (x1 - x0)) * T, y: y * T, count: 1, colors: VIOLET_FX, speed: [10, rising ? 60 : 30], life: [0.4, 0.9], size: [2, 5], angle: -Math.PI / 2, spread: 0.5, gravity: 60 });
+    }
+  }
+
   /** Brass and gold mechanisms with their linking rune (10.1, 14.6). */
   private drawMechs(dt: number): void {
     const g = this.mechG.clear();
@@ -1238,6 +1338,13 @@ export class Stage {
     const GOLD = 0xe3b04b, BRASS = 0x8a6a2a, IVORY = 0xf1e6c8;
     const WALL = 0x16211f, EDGE = 0x55695f;
     const lit = (rune: Rune) => (m.powered(rune) ? 1 : 0);
+    // Timed switches (16.7, S3): a gold ring around a rune drains as the time runs out, and blinks in the last quarter.
+    const ring = (cx: number, cy: number, r: number, f: number, width = 2) => {
+      const a = f < 0.25 ? 0.55 + 0.45 * Math.sin(this.simTime * 26) : 1;
+      g.circle(cx, cy, r).stroke({ width, color: BRASS, alpha: 0.45 });
+      if (f > 0.001) g.moveTo(cx, cy - r).arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, f)).stroke({ width, color: f < 0.25 ? IVORY : GOLD, alpha: a, cap: 'round' });
+    };
+    const clock = (rune: Rune, cx: number, cy: number, r: number) => { const f = m.runeClock(rune); if (f !== null) ring(cx, cy, r, f); };
     // Carvings (G9): faint on the back wall; gold with a soft chime when either player comes near.
     for (const c of m.carvings) {
       const d = c.def;
@@ -1261,12 +1368,16 @@ export class Stage {
         g.circle(cx, cy + 0.2 * T, 0.75 * T).fill({ color: GOLD, alpha: 0.09 * a });
       }
       g.roundRect(cx - 0.72 * T, cy - 0.7 * T, 1.44 * T, 1.82 * T, 5).fill({ color: 0x0f1a18, alpha: 0.75 }).stroke({ width: 1.5, color: a > 0.5 ? GOLD : EDGE, alpha: 0.35 + 0.5 * a });
-      drawAnimal(g, d.animal, cx, cy, 1.25 * T, EDGE, 0.6 * (1 - a), WALL);
-      if (a > 0.02) drawAnimal(g, d.animal, cx, cy, 1.25 * T, GOLD, a, WALL);
-      const n = Math.max(1, Math.min(4, d.dots));
-      for (let k = 0; k < n; k++) {
-        const dx = (k - (n - 1) / 2) * 0.3 * T;
-        g.circle(cx + dx, cy + 0.88 * T, 0.08 * T).fill({ color: a > 0.5 ? IVORY : EDGE, alpha: 0.55 + 0.45 * a });
+      // From far away it is a blank stone plaque: the animal and its dots appear only while someone is near, so a
+      // carving has to be found, not read from across the screen (16.7, H2).
+      g.roundRect(cx - 0.5 * T, cy - 0.45 * T, T, 1.25 * T, 4).stroke({ width: 1, color: EDGE, alpha: 0.35 * (1 - a) });
+      if (a > 0.02) {
+        drawAnimal(g, d.animal, cx, cy, 1.25 * T, GOLD, a, WALL);
+        const n = Math.max(1, Math.min(4, d.dots));
+        for (let k = 0; k < n; k++) {
+          const dx = (k - (n - 1) / 2) * 0.3 * T;
+          g.circle(cx + dx, cy + 0.88 * T, 0.08 * T).fill({ color: IVORY, alpha: a });
+        }
       }
     }
     // Symbol stones (G2, G13): a carved plaque over a floor slab that sinks, glows and chimes; a wrong one flashes white.
@@ -1287,6 +1398,38 @@ export class Stage {
         g.roundRect(x + 3, top, T - 6, floor - 4 - top + 1, 2).fill({ color: 0xffffff, alpha: 0.7 * s.flash });
       }
     });
+    // Crumbling stones (16.7, K4): a stone block with gold cracks. It shakes and its cracks widen before it falls;
+    // while it is gone a faint outline shows where it will grow back, filling in over the last second.
+    for (const c of m.crumbles) {
+      if (!this.seesMech(c.def)) continue;
+      const gone = c.t >= CRUMBLE_SHAKE;
+      const x0 = c.x * T, y0 = c.y * T;
+      if (gone) {
+        const left = CRUMBLE_SHAKE + CRUMBLE_BACK - c.t; // seconds until it may grow back (below 0: someone is in the way)
+        const soon = clamp(1 - left, 0, 1);
+        const a = left < 0 ? 0.3 + 0.2 * Math.sin(this.simTime * 10) : 0.16 + 0.3 * soon;
+        const k = T * 0.28;
+        for (const [cx, cy, sx, sy] of [[x0 + 2, y0 + 2, 1, 1], [x0 + T - 2, y0 + 2, -1, 1], [x0 + 2, y0 + T - 2, 1, -1], [x0 + T - 2, y0 + T - 2, -1, -1]]) {
+          g.moveTo(cx + sx * k, cy).lineTo(cx, cy).lineTo(cx, cy + sy * k).stroke({ width: 1.5, color: GOLD, alpha: a });
+        }
+        if (soon > 0 && left >= 0) g.roundRect(x0 + 2, y0 + 2 + (T - 4) * (1 - soon), T - 4, (T - 4) * soon, 2).fill({ color: this.theme.stone.light, alpha: 0.35 * soon });
+        continue;
+      }
+      const s = c.t < 0 ? 0 : c.t / CRUMBLE_SHAKE; // 0..1 through the shake
+      const amp = s > 0 ? 0.8 + 2.2 * s : 0;
+      const x = x0 + Math.sin(this.simTime * 71 + c.x * 5) * amp, y = y0 + Math.cos(this.simTime * 53 + c.x * 3) * amp * 0.6 + s * s * 2;
+      // the chapter's own stone (9.3), a touch lighter, so it reads as a block of the level and not as scenery
+      const st = this.theme.stone;
+      g.roundRect(x + 0.5, y + 0.5, T - 1, T - 1, 3).fill(lerpColor(st.mid, st.light, 0.12)).stroke({ width: 1, color: st.light, alpha: 0.7 });
+      g.rect(x + 3, y + 1, T - 6, 2).fill({ color: st.light, alpha: 0.5 });
+      // the cracks: the same on both phones (from the cell), brighter and wider as it shakes
+      const r = (n: number) => { const v = Math.sin((c.x * 12.9898 + c.y * 78.233 + n * 37.719)) * 43758.5453; return v - Math.floor(v); };
+      const col = s > 0 ? lerpColor(GOLD, IVORY, s) : GOLD, wdt = 1.2 + 1.6 * s, al = 0.7 + 0.3 * s;
+      const mx = x + T * (0.35 + 0.3 * r(1)), my = y + T * (0.4 + 0.25 * r(2));
+      g.moveTo(x + T * (0.15 + 0.2 * r(3)), y + 1).lineTo(mx - T * 0.1, y + T * 0.25).lineTo(mx, my).lineTo(mx + T * 0.12, my + T * 0.2).lineTo(x + T * (0.6 + 0.25 * r(4)), y + T - 1).stroke({ width: wdt, color: col, alpha: al });
+      g.moveTo(mx, my).lineTo(mx + T * 0.2, my - T * 0.08).lineTo(x + T - 1, y + T * (0.25 + 0.3 * r(5))).stroke({ width: wdt * 0.8, color: col, alpha: al * 0.85 });
+      if (s > 0.35) g.moveTo(mx - T * 0.1, y + T * 0.25).lineTo(x + 1, y + T * (0.45 + 0.3 * r(6))).stroke({ width: wdt * 0.7, color: col, alpha: al * s });
+    }
     for (const pl of m.platforms) {
       const d = pl.def;
       if (!this.seesMech(d)) continue;
@@ -1300,6 +1443,7 @@ export class Stage {
       g.rect(x + 2, y, w - 4, 3).fill(GOLD);
       g.rect(x + 2, y + h - 3, w - 4, 2).fill({ color: BRASS, alpha: 0.8 });
       drawRune(g, d.rune, x + w / 2, y + h / 2 + 1, 4.5, lit(d.rune) ? IVORY : GOLD, 0.6 + 0.4 * lit(d.rune));
+      clock(d.rune, x + w / 2, y - 12, 7);
     }
     m.gates.forEach((gt, gi) => {
       const d = gt.def;
@@ -1314,6 +1458,25 @@ export class Stage {
         for (let bx = x + 3; bx < x + w - 2; bx += 8) g.poly([bx, bottom, bx + 4, bottom, bx + 2, bottom + 4]).fill(GOLD);
         drawRune(g, d.rune, x + w / 2, Math.min(bottom - 14, y + 14), 6, lit(d.rune) ? IVORY : GOLD, 0.85);
       } else drawRune(g, d.rune, x + w / 2, y - 12, 5, IVORY, 0.9);
+      // on a timed rune the countdown is drawn on the gate itself, so the runner never has to look back (S3)
+      if (d.w > d.h) clock(d.rune, x + w / 2, y - 14, 9);
+      else clock(d.rune, x + w / 2, bottom > y + 1 ? Math.min(bottom - 14, y + 14) : y - 12, 10);
+    });
+    m.timers.forEach((t) => {
+      const d = t.def;
+      if (!this.seesMech(d)) return;
+      // a wide brass switch with two posts (so it never looks like a plain button), its rune inside the clock ring
+      const x = d.x * T, floor = (d.y + 1) * T, cx = x + T / 2;
+      g.roundRect(x + 1, floor - 4, T - 2, 4, 1.5).fill(BRASS);
+      g.rect(x + 1, floor - 9, 3, 6).fill(BRASS).rect(x + T - 4, floor - 9, 3, 6).fill(BRASS);
+      const top = floor - 9 + t.sink * 5;
+      g.roundRect(x + 5, top, T - 10, floor - 4 - top + 1, 2).fill(t.pressed ? IVORY : GOLD);
+      const on = t.pressed || t.left > 0;
+      const f = t.pressed ? 1 : t.left / (m.timerSecs(t) || 1);
+      const ry = floor - 0.95 * T;
+      g.circle(cx, ry, 9).fill({ color: 0x0f1a18, alpha: 0.6 });
+      ring(cx, ry, 9, on ? f : 0, 2.5);
+      drawRune(g, d.rune, cx, ry, 4.2, on ? IVORY : GOLD, on ? 1 : 0.6);
     });
     for (const b of m.buttons) {
       if (!this.seesMech(b.def)) continue;
@@ -1468,6 +1631,7 @@ export class Stage {
     this.pools.update(simDt, this.simTime);
     this.drawDoors(simDt);
     this.drawMechs(simDt);
+    this.drawTide(simDt);
     this.drawGems();
     this.drawReveal(realDt);
     for (const e of ELEMS) this.drawHero(this.heroes[e], alpha, simDt);

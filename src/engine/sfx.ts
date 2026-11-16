@@ -258,6 +258,58 @@ export function gate(opening: boolean, pan: number): void {
   tone(ac, o, 'triangle', opening ? 90 : 120, opening ? 130 : 70, 0.4, 0.06);
 }
 
+// ---- crumbling stones (16.7, K4) ----
+
+/** A crumbling block: a dry crackle as it starts to shake, a rumble as it falls, a soft knock when it grows back. */
+export function crumble(what: 'shake' | 'fall' | 'back', pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  if (what === 'shake') {
+    for (let i = 0; i < 4; i++) tone(ac, o, 'square', vary(900, 0.3), 300, 0.02, 0.035, i * 0.11 + Math.random() * 0.04);
+    hiss(ac, o, 'bandpass', 900, 500, 2, 0.5, 0.06);
+  } else if (what === 'fall') {
+    hiss(ac, o, 'lowpass', 500, 90, 1, 0.45, 0.2);
+    tone(ac, o, 'triangle', vary(110), 45, 0.35, 0.16);
+  } else {
+    tone(ac, o, 'triangle', vary(150), 190, 0.12, 0.08);
+    hiss(ac, o, 'lowpass', 260, 160, 1, 0.15, 0.06);
+  }
+}
+
+// ---- the rising tide (16.7, V2) ----
+
+/** The poison wakes up and starts to rise: a deep, slow rumble with a few thick bubbles. */
+export function tide(): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, 0, 1);
+  hiss(ac, o, 'lowpass', 140, 320, 1, 1.6, 0.22, 0, 0.3);
+  tone(ac, o, 'sine', 48, 62, 1.4, 0.2, 0, 0.3);
+  for (let i = 0; i < 4; i++) tone(ac, o, 'sine', vary(170, 0.3), 320, 0.09, 0.07, 0.3 + i * 0.28 + Math.random() * 0.1);
+}
+
+// ---- timed switches (16.7, S3) ----
+
+/** A timed switch: a click going down, a wind-up as its clock starts, ticks (higher near the end), a clunk when it runs out. */
+export function timer(what: 'down' | 'up' | 'tick' | 'out', left: number, pan: number): void {
+  const ac = ctx();
+  if (!ac) return;
+  const o = out(ac, pan, 1);
+  if (what === 'down') {
+    tone(ac, o, 'square', 1200, 700, 0.03, 0.06);
+    hiss(ac, o, 'lowpass', 300, 120, 1, 0.2, 0.12, 0.02);
+  } else if (what === 'up') {
+    tone(ac, o, 'triangle', 330, 660, 0.14, 0.07);
+  } else if (what === 'tick') {
+    const f = left < 1.5 ? 1900 : 1400;
+    tone(ac, o, 'square', f, f * 0.8, 0.018, left < 1.5 ? 0.05 : 0.035);
+  } else {
+    tone(ac, o, 'triangle', 200, 90, 0.18, 0.16);
+    tone(ac, o, 'square', 700, 400, 0.03, 0.04, 0.02);
+  }
+}
+
 // ---- password gates (16.7): carvings and symbol stones ----
 
 /** A wall carving lights up as someone walks past (G9): a soft two-note chime. */

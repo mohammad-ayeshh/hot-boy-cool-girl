@@ -41,8 +41,9 @@ Google's reviews take longer, launch in **early January** instead. Chapters 8–
 ## 1.1 What's already strong (don't redo it)
 - **The core idea is clear and different:** one player per phone, joined by a link, fire and water helping each other.
   "Different eyes" and the team codes are puzzles where *talking is the puzzle*; few phone games do that.
-- **Enough content for $2.99:** 9 chapters and 45 levels, every one proven winnable by the route robot (D13), plus a free
-  level designer. Two playtesters finished the whole game.
+- **Enough content for $2.99:** 13 chapters and 100 levels (a 65-level story and 35 extra-hard Trials), every one proven
+  winnable by the route robot (D13), plus a free level designer. Two playtesters finished the 45-level version; the new
+  levels are not playtested yet.
 - **A fair, friendly price:** Chapters 1–2 free, one $2.99 unlock, the friend's pass ("only one of you pays"), no ads (12.6).
 - **Look and sound:** a background and a tune for each chapter (9.3), the reacting duet music (15.4), chapter riddles (11.2),
   game-feel effects (8).
@@ -131,8 +132,8 @@ In the order to go through them. Each has one recommendation.
 - **Using the other fire/water game's name** in keywords, tags, clips or replies (L4).
 
 ## 1.7 Other areas checked (no gap that blocks sales)
-- **Content amount:** 45 levels for $2.99 (35 paid levels plus the designer) is fair. How long the whole game takes is
-  **to measure**: ask the 2 players who finished it.
+- **Content amount:** 100 levels for $2.99 (90 paid levels plus the designer) is generous. How long the whole game takes is
+  **to measure**: ask the 2 players who finished the 45-level version, and time the new levels in playtests.
 - **Replay value:** stars, a fresh team code on every vault playthrough (G3), and the designer. Real star times (S3) and
   sharing homemade levels (S7) are the cheap improvements.
 - **Accessibility:** colors never stand alone (4.1), sound is never required (15.1), three controls (6.1). Chapters 5–7 need
@@ -251,7 +252,7 @@ the owner decides):
 | Title (30 max) | "Hot Boy & Cool Girl: Co-op" (26) | **"Hot Boy & Cool Girl: 2 Player"** (29) | The title is Google's strongest search signal (aso skill). People search for "2 player games" in plain words; "co-op" stays in the short and full text. Search volume can't be checked without paid tools, so this is a judgment, not a measurement. |
 | Short description (80 max) | "Two friends, two phones: a co-op puzzle game. Only one of you pays. No ads." (75) | Keep | Says the hook, the friend's pass and no ads. |
 | Full description | Says "2 player", "co-op", "play with friends" plainly | Keep; add one honest line about the connection ("needs internet on both phones") and the levels count once Chapters 8–9 ship | Sets expectations; avoids "doesn't work offline" reviews. |
-| Screenshots | 5 captioned landscape shots | Keep; regenerate the "35 levels" caption when the count changes (`tools/store_assets.py`) | Google allows up to 8 *(skill's claim)*; the first 3 matter most. A stacked "two phones" shot could replace #1 after an experiment (S8). |
+| Screenshots | 5 captioned landscape shots | Keep; regenerate the levels caption when the count changes (`tools/store_assets.py`; "100 levels across 13 temple chapters" since 2026-11-16) | Google allows up to 8 *(skill's claim)*; the first 3 matter most. A stacked "two phones" shot could replace #1 after an experiment (S8). |
 | Video | none | The 30-second video (2.4) | Biggest missing piece. |
 | Ratings | none yet | Review prompt after a win (M9); reply to every review | Ratings are 20% of the aso score *(skill's claim)*. |
 | Contact | GitHub issues | A dedicated free Gmail (M6) | Google shows it publicly. |
@@ -345,7 +346,7 @@ them for creators and for testers who helped. They are a gift, so creators must 
 
 ## 2.11 Decisions for the owner
 1. Each item in 1.3 (M1–M14): yes, no or later. Gone through one at a time.
-2. Launch with 35 levels and ship Chapters 8–9 as the first big update (recommended), or wait for 45? *(2026-11-06: Chapters 8–9 are now built, so the game has 45 levels; Chapter 8 still needs a two-phone test.)*
+2. Launch with 35 levels and ship Chapters 8–9 as the first big update (recommended), or wait for 45? *(2026-11-06: Chapters 8–9 are now built, so the game has 45 levels; Chapter 8 still needs a two-phone test. 2026-11-16: now 100 levels in 13 chapters; the 55 new ones need playtests before launch.)*
 3. The title: keep "Co-op" or switch to "2 Player" (2.5)?
 4. Which 1–2 extra languages, and who checks them?
 5. Each post, message, upload and the `PAYWALL_LIVE` switch: a yes each time.

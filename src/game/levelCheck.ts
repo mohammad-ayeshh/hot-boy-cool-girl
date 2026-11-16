@@ -28,7 +28,7 @@ export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen' | 'pat
   /** Gates and platforms also block, so a start or button can stand on a closed gate. */
   const solidMech = (x: number, y: number) => l.mechs.some((m) =>
     (m.kind === 'gate' && x >= m.x && x < m.x + m.w && y >= m.y && y < m.y + m.h) ||
-    (m.kind === 'platform' && x >= m.x && x < m.x + m.w && y === m.y));
+    ((m.kind === 'platform' || m.kind === 'crumble') && x >= m.x && x < m.x + m.w && y === m.y));
 
   // Start spots and doors: exactly one each, standing on something, with room above.
   for (const ch of 'hcHC') {
@@ -44,17 +44,29 @@ export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen' | 'pat
   }
 
   // Mechanisms.
-  const powers = new Set(l.mechs.filter((m) => m.kind === 'button' || m.kind === 'lever').map((m) => m.rune));
+  const powers = new Set(l.mechs.filter((m) => m.kind === 'button' || m.kind === 'lever' || m.kind === 'timer').map((m) => m.rune));
   if (l.pattern) powers.add(l.pattern.rune); // an entered pattern keeps its rune on (16.7)
   const moved = new Set(l.mechs.filter((m) => m.kind === 'platform' || m.kind === 'gate').map((m) => m.rune));
-  const name = (m: MechDef) => ({ button: 'button', lever: 'lever', platform: 'moving platform', gate: 'gate', stone: 'symbol stone', carving: 'carving' })[m.kind];
+  const name = (m: MechDef) => ({ button: 'button', lever: 'lever', platform: 'moving platform', gate: 'gate', stone: 'symbol stone', carving: 'carving', crumble: 'crumbling stone', timer: 'timed switch' })[m.kind];
   for (const m of l.mechs) {
     if (m.kind === 'carving') {
       // decoration on the back wall: nothing to check here
+    } else if (m.kind === 'crumble') {
+      // crumbling stones (16.7): inside the level, in open air, and never the floor a start, door, button, lever or
+      // symbol stone stands on (it would fall away under them)
+      if (m.w < 1 || m.x < 1 || m.y < 1 || m.x + m.w > COLS - 1 || m.y > ROWS - 2) err(`A ${name(m)} goes outside the level.`, m.x, m.y);
+      for (let xx = m.x; xx < m.x + m.w; xx++) {
+        if (at(xx, m.y) !== '.') err(`A ${name(m)} overlaps something else.`, xx, m.y);
+        if ('hcHC'.includes(at(xx, m.y - 1)) || l.mechs.some((o) => (o.kind === 'button' || o.kind === 'lever' || o.kind === 'stone' || o.kind === 'timer') && o.x === xx && o.y === m.y - 1)) {
+          err(`A ${name(m)} can't be the floor under a start, door, button, lever or symbol stone.`, xx, m.y);
+        }
+        if (inThumbCorner(xx, m.y)) warn(`A ${name(m)} is under a thumb (bottom corners).`, xx, m.y);
+      }
     } else if (m.kind === 'stone') {
       if (stone(m.x, m.y)) err(`A ${name(m)} is inside stone.`, m.x, m.y);
       else if (!stone(m.x, m.y + 1) && !solidMech(m.x, m.y + 1)) err(`A ${name(m)} is floating: put stone under it.`, m.x, m.y);
-    } else if (m.kind === 'button' || m.kind === 'lever') {
+    } else if (m.kind === 'button' || m.kind === 'lever' || m.kind === 'timer') {
+      if (m.kind === 'timer' && !(m.secs >= 1 && m.secs <= 15)) err(`A ${name(m)} needs a time from 1 to 15 seconds.`, m.x, m.y);
       if (stone(m.x, m.y)) err(`A ${name(m)} is inside stone.`, m.x, m.y);
       else if (!stone(m.x, m.y + 1) && !solidMech(m.x, m.y + 1)) err(`A ${name(m)} is floating: put stone under it.`, m.x, m.y);
       if (!moved.has(m.rune)) warn(`A ${name(m)} (${m.rune}) controls nothing: give a platform or gate the same rune.`, m.x, m.y);
@@ -71,7 +83,7 @@ export function checkLevel(l: Pick<CustomLevel, 'rows' | 'mechs' | 'seen' | 'pat
         }
       }
     }
-    if (m.kind !== 'carving' && inThumbCorner(m.x, m.y)) warn(`A ${name(m)} is under a thumb (bottom corners).`, m.x, m.y);
+    if (m.kind !== 'carving' && m.kind !== 'crumble' && inThumbCorner(m.x, m.y)) warn(`A ${name(m)} is under a thumb (bottom corners).`, m.x, m.y);
   }
 
   // Password gates (16.3, 16.7 G14): a pattern, the symbol stones to enter it, and the carvings that reveal it.

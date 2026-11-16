@@ -174,6 +174,20 @@ def draw_level(lv):
             d.line([x + w / 2, y + T - 3, tx + w / 2, ty + T - 3], fill=GOLD, width=1)
             d.rectangle([x, y + T - 6, x + w - 1, y + T - 1], fill=BRASS)
             rune(d, x + w / 2, y + T - 13, o["rune"], 4, GOLD)
+        elif o["kind"] == "crumble":
+            # crumbling stones (16.7): stone blocks with a gold crack; a letter above if only one player sees them
+            for k in range(o["w"]):
+                bx = x + k * T
+                d.rectangle([bx + 1, y + 1, bx + T - 2, y + T - 2], fill=STONE, outline=GOLD, width=1)
+                d.line([bx + 3, y + 2, bx + T / 2, y + T / 2, bx + T - 4, y + T - 3], fill=GOLD, width=1)
+            if o.get("seen"):
+                d.text((x + o["w"] * T / 2, y - 5), "h" if o["seen"] == "fire" else "c", fill=HOT if o["seen"] == "fire" else COOL, font=font(9, True), anchor="mm")
+        elif o["kind"] == "timer":
+            # timed switches (16.7): a wide switch with its seconds in a ring
+            d.rounded_rectangle([x + 1, y + T - 4, x + T - 1, y + T - 1], 2, fill=BRASS)
+            d.ellipse([x + T / 2 - 6, y + T / 2 - 10, x + T / 2 + 6, y + T / 2 + 2], outline=GOLD, width=1)
+            d.text((x + T / 2, y + T / 2 - 4), str(o["secs"]), fill=GOLD, font=font(8, True), anchor="mm")
+            rune(d, x + T / 2, y - 6, o["rune"], 3, GOLD)
         elif o["kind"] == "stone":
             # password gates (16.7): a gold slab with its animal's first two letters
             d.rectangle([x + 1, y + T - 4, x + T - 2, y + T - 1], fill=BRASS)

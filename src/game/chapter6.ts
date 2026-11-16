@@ -1,15 +1,17 @@
 // Chapter 6: The Sealed Vault (design doc 16.9). Teaches Password gates (16.7, G1–G14).
-// Levels 1–4 each carry one carving on the main path (G9); its dots are its place in the team's code (G6),
-// and the animal is filled in from that code when the level starts (`teamCode`, see withCode() in levels.ts).
-// The animals written below are only stand-ins. Level 5 has the split vault: 4 symbol stones per side (G8),
-// each on its own shelf with a walkway under it (16.1). Every level has a route-robot solution (tools/routes.ts).
+// Since 2026-11-14 the chapter has 10 levels (16.7, H1–H2). The 4 carvings sit off the main path in 4 of levels
+// 1–9 (6-1, 6-4, 6-6 and 6-8), and the game never says which. Each one's dots are its place in the team's code (G6);
+// the animal is filled in from that code when the level starts (`teamCode`, see withCode() in levels.ts), so the
+// animals written below are only stand-ins. Level 10 has the split vault: 4 symbol stones per side (G8), each on
+// its own shelf with a walkway under it (16.1). Every level has a route-robot solution (tools/routes.ts), which
+// also proves every carving can be reached.
 import type { LevelDef } from './levels';
 
 export const CHAPTER_6: LevelDef[] = [
   {
     id: '6-1',
     name: 'The First Mark',
-    idea: 'a carving glows as you pass: remember it',
+    idea: 'a carving shows its animal only when you come close: look around, and remember it',
     targetTime: 30,
     teamCode: 6,
     rows: [
@@ -18,7 +20,7 @@ export const CHAPTER_6: LevelDef[] = [
       '#.....................#........#',
       '#.....................#........#',
       '#.....................#........#',
-      '#.....................#........#',
+      '####..................#........#',
       '#.....r....r..........#........#',
       '#.h...................#........#',
       '#####LLL######........#........#',
@@ -33,7 +35,8 @@ export const CHAPTER_6: LevelDef[] = [
       '################################',
     ],
     mechs: [
-      { kind: 'carving', x: 17, y: 12, animal: 'snake', dots: 1 },
+      // up on the ledge above his start: a short climb nobody needs, except to read it
+      { kind: 'carving', x: 2, y: 3, animal: 'snake', dots: 1 },
       { kind: 'button', x: 19, y: 14, rune: 'circle' },
       { kind: 'gate', x: 22, y: 12, w: 1, h: 3, rune: 'circle' },
       { kind: 'button', x: 25, y: 14, rune: 'circle' },
@@ -42,7 +45,7 @@ export const CHAPTER_6: LevelDef[] = [
   {
     id: '6-2',
     name: 'The Lift Shaft',
-    idea: 'ride past the carving: it lights up for you too',
+    idea: 'one holds the lift, the other sends it back with a lever',
     targetTime: 40,
     teamCode: 6,
     rows: [
@@ -68,14 +71,13 @@ export const CHAPTER_6: LevelDef[] = [
     mechs: [
       { kind: 'button', x: 7, y: 15, rune: 'triangle' },
       { kind: 'platform', x: 13, y: 15, w: 2, to: [13, 7], rune: 'triangle' },
-      { kind: 'carving', x: 12, y: 10, animal: 'snake', dots: 2 },
       { kind: 'lever', x: 22, y: 6, rune: 'triangle' },
     ],
   },
   {
     id: '6-3',
     name: 'Resting Hall',
-    idea: 'a breather: gems all around the carving',
+    idea: 'a breather: gems all around',
     targetTime: 25,
     teamCode: 6,
     rows: [
@@ -99,7 +101,6 @@ export const CHAPTER_6: LevelDef[] = [
       '################################',
     ],
     mechs: [
-      { kind: 'carving', x: 14, y: 12, animal: 'snake', dots: 3 },
       { kind: 'button', x: 21, y: 15, rune: 'circle' },
       { kind: 'gate', x: 23, y: 13, w: 1, h: 3, rune: 'circle' },
       { kind: 'lever', x: 25, y: 15, rune: 'circle' },
@@ -108,7 +109,7 @@ export const CHAPTER_6: LevelDef[] = [
   {
     id: '6-4',
     name: 'Behind the Seal',
-    idea: 'the carving waits in a sealed room: open it for each other',
+    idea: 'a sealed room: open it for each other',
     targetTime: 40,
     teamCode: 6,
     rows: [
@@ -135,11 +136,205 @@ export const CHAPTER_6: LevelDef[] = [
       { kind: 'button', x: 18, y: 15, rune: 'circle' },
       { kind: 'gate', x: 22, y: 11, w: 2, h: 1, rune: 'circle' },
       { kind: 'button', x: 26, y: 10, rune: 'circle' },
-      { kind: 'carving', x: 25, y: 8, animal: 'snake', dots: 4 },
+      // the far end of the door room, away from the doors
+      { kind: 'carving', x: 14, y: 8, animal: 'snake', dots: 2 },
     ],
   },
   {
     id: '6-5',
+    name: 'Crossed Keys',
+    idea: 'the lever for your gate is in the other lane: then climb through the trapdoor together',
+    targetTime: 45,
+    teamCode: 6,
+    rows: [
+      '################################',
+      '#...................############',
+      '#...................############',
+      '#..........r........############',
+      '#.......#...........#..........#',
+      '#...................#..........#',
+      '#.h.................#r.b.......#',
+      '####LLL##########..##..........#',
+      '#################..##..........#',
+      '#..................##H.C.......#',
+      '#..................######..#####',
+      '#..........b...................#',
+      '#.......#......................#',
+      '#........................##....#',
+      '#.c......................##....#',
+      '#####WWW########################',
+      '################################',
+      '################################',
+    ],
+    mechs: [
+      // each lane's gate opens with the lever on a shelf in the other lane (like 2-1)
+      { kind: 'gate', x: 14, y: 1, w: 1, h: 6, rune: 'triangle' },
+      { kind: 'gate', x: 14, y: 9, w: 1, h: 6, rune: 'circle' },
+      { kind: 'lever', x: 8, y: 3, rune: 'circle' },
+      { kind: 'lever', x: 8, y: 11, rune: 'triangle' },
+      // the trapdoor to the doors: held from below, then from above by a button right beside the hole (like 6-4)
+      { kind: 'gate', x: 25, y: 10, w: 2, h: 1, rune: 'square' },
+      { kind: 'button', x: 21, y: 14, rune: 'square' },
+      { kind: 'button', x: 24, y: 9, rune: 'square' },
+    ],
+  },
+  {
+    id: '6-6',
+    name: 'The Weighing Room',
+    idea: 'one rune lifts one lift and sinks the other',
+    targetTime: 50,
+    teamCode: 6,
+    rows: [
+      '################################',
+      '#..............................#',
+      '#..............................#',
+      '#.b.....r.....r..b.............#',
+      '#..............................#',
+      '#...C.H........................#',
+      '##########L#W####..............#',
+      '#################..............#',
+      '#################..............#',
+      '#################....r.........#',
+      '#################.b............#',
+      '#################..............#',
+      '#################..............#',
+      '#################..............#',
+      '###########....................#',
+      '###########.............c..h...#',
+      '###########WWWWWW###############',
+      '################################',
+    ],
+    mechs: [
+      // the counterweight (4-2, mirrored): powered, the right lift rises and the left one sinks
+      { kind: 'button', x: 26, y: 15, rune: 'circle' },
+      { kind: 'platform', x: 20, y: 15, w: 3, to: [20, 6], rune: 'circle' },
+      { kind: 'platform', x: 17, y: 6, w: 2, to: [17, 15], rune: 'circle' },
+      { kind: 'button', x: 14, y: 5, rune: 'circle' },
+      // at the end of a low, flooded tunnel: only Cool Girl can wade in
+      { kind: 'carving', x: 11, y: 14, animal: 'snake', dots: 3 },
+    ],
+  },
+  {
+    id: '6-7',
+    name: 'Three Gates',
+    idea: 'a relay through three gates: hold on until your friend is through',
+    targetTime: 40,
+    teamCode: 6,
+    rows: [
+      '################################',
+      '#........#.......#.......#.....#',
+      '#........#.......#.......#.....#',
+      '#........#.......#.......#.....#',
+      '#........#.......#.......#.....#',
+      '#........#.......#.......#.....#',
+      '#........#.......#.......#.....#',
+      '#........#.......#.......#.....#',
+      '#........#.......#.......#.....#',
+      '#..............................#',
+      '#....r.......r.......b.......b.#',
+      '#.h.c.......................H.C#',
+      '#############LL######WW#########',
+      '################################',
+      '################################',
+      '################################',
+      '################################',
+      '################################',
+    ],
+    mechs: [
+      // like 2-3 with a third gate: a button two tiles before and after every gate, and a pool in each middle room
+      { kind: 'button', x: 7, y: 11, rune: 'circle' },
+      { kind: 'gate', x: 9, y: 9, w: 1, h: 3, rune: 'circle' },
+      { kind: 'button', x: 11, y: 11, rune: 'circle' },
+      { kind: 'button', x: 15, y: 11, rune: 'triangle' },
+      { kind: 'gate', x: 17, y: 9, w: 1, h: 3, rune: 'triangle' },
+      { kind: 'button', x: 19, y: 11, rune: 'triangle' },
+      { kind: 'button', x: 23, y: 11, rune: 'square' },
+      { kind: 'gate', x: 25, y: 9, w: 1, h: 3, rune: 'square' },
+      { kind: 'button', x: 27, y: 11, rune: 'square' },
+    ],
+  },
+  {
+    id: '6-8',
+    name: 'The Drowned Archive',
+    idea: 'a water tunnel only she can wade, a lava crawlway only he can crawl',
+    targetTime: 55,
+    teamCode: 6,
+    rows: [
+      '################################',
+      '#.........#.#.#......###########',
+      '#.........#.#.#......###########',
+      '#.........#.#.#......###########',
+      '#.........#.#.#b...r.###########',
+      '#....................###########',
+      '#.b...r..............###########',
+      '#........................b...###',
+      '#..C.H.........ch............###',
+      '#################..###WWWWWW####',
+      '##############.........r.....###',
+      '##############...............###',
+      '##############..######LLLLLL####',
+      '########........################',
+      '########........################',
+      '##########LLLL##################',
+      '################################',
+      '################################',
+    ],
+    mechs: [
+      // three seals (3-4, mirrored): a lever at the end of the water tunnel (only she), one at the end of the lava
+      // crawlway (only he), and a button-and-lever seal at the end
+      { kind: 'lever', x: 28, y: 11, rune: 'circle' },
+      { kind: 'lever', x: 28, y: 8, rune: 'triangle' },
+      { kind: 'gate', x: 14, y: 5, w: 1, h: 4, rune: 'circle' },
+      { kind: 'gate', x: 12, y: 5, w: 1, h: 4, rune: 'triangle' },
+      { kind: 'button', x: 11, y: 8, rune: 'square' },
+      { kind: 'gate', x: 10, y: 5, w: 1, h: 4, rune: 'square' },
+      { kind: 'lever', x: 9, y: 8, rune: 'square' },
+      // down a second shaft off the crawlway, past more lava: a dead end only Hot Boy reaches
+      { kind: 'carving', x: 8, y: 13, animal: 'snake', dots: 4 },
+    ],
+  },
+  {
+    id: '6-9',
+    name: 'The Last Stair',
+    idea: 'hold the stairs up, lock them, then lock the last gate open too',
+    targetTime: 50,
+    teamCode: 6,
+    rows: [
+      '################################',
+      '#..............................#',
+      '#.b.........r..................#',
+      '#..............................#',
+      '#..C.H.........................#',
+      '#######LW####.r................#',
+      '#############..................#',
+      '#############..................#',
+      '#############....b.............#',
+      '#############..................#',
+      '#############..................#',
+      '#############.......r..........#',
+      '#############.........b........#',
+      '#############..................#',
+      '#############..................#',
+      '#############..........c...h...#',
+      '#############PPPPPPPPP##########',
+      '################################',
+    ],
+    mechs: [
+      // the stairway (3-2, mirrored): one button raises three platforms over the poison, a lever at the top locks them
+      { kind: 'button', x: 25, y: 15, rune: 'square' },
+      { kind: 'platform', x: 20, y: 15, w: 2, to: [20, 13], rune: 'square' },
+      { kind: 'platform', x: 17, y: 15, w: 2, to: [17, 10], rune: 'square' },
+      { kind: 'platform', x: 14, y: 15, w: 2, to: [14, 7], rune: 'square' },
+      { kind: 'lever', x: 10, y: 4, rune: 'square' },
+      // and the last gate before the doors (3-3): one holds the button, the other locks it open from the far side
+      { kind: 'button', x: 9, y: 4, rune: 'circle' },
+      { kind: 'gate', x: 6, y: 1, w: 1, h: 4, rune: 'circle' },
+      { kind: 'lever', x: 1, y: 4, rune: 'circle' },
+    ],
+  },
+  // the vault is the chapter's last level (it was 6-5 until 2026-11-12; saved results moved with it, progress.ts)
+  {
+    id: '6-10',
     name: 'The Vault',
     idea: 'enter the four animals in order, taking turns',
     targetTime: 90,

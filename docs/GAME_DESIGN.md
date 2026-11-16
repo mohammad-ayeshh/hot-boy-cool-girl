@@ -330,6 +330,7 @@ Every button or lever and the thing it controls show the **same gold rune symbol
 
 ### 10.4 Set 3: later ideas
 Light beams and mirrors, wind fans, ice floors, portals, timed switches, falling blocks.
+*2026-11-10:* falling blocks became **crumbling stones** and **timed switches** were built too (16.7), both for the bonus chapters ("The Trials").
 
 ## 11. Game flow 🔒
 *Locked 2026-10-17.*
@@ -388,10 +389,10 @@ The path from opening the link to playing must take **under 30 seconds** (P5).
 - **Deaths cost nothing.** Results show a fun death counter ("💀 7"), but no penalty, because dying is part of learning a puzzle (P3, P5).
 
 ### 12.2 Unlocking levels
-- Levels are grouped into **chapters** of 5 levels each (different parts of the temple). *Was "about 8"; changed 2026-10-21 so each chapter fits one map screen.* The map has a tab per chapter.
+- Levels are grouped into **chapters** of 5 levels each (different parts of the temple). *Changed 2026-11-12 (16.7, "The road to 100 levels"): Chapters 6–12 will have 10 levels each, so the map must fit 10 level stones.* *Was "about 8"; changed 2026-10-21 so each chapter fits one map screen.* The map has a tab per chapter.
 - Finishing the last level of a chapter unlocks the first level of the next one.
 - **Finishing a level unlocks the next one**, with any number of stars. You never get stuck because you can't get 3 stars.
-- A few **bonus levels** unlock with stars, as a reward for players who want more challenge.
+- A few **bonus levels** unlock with stars, as a reward for players who want more challenge. *Changed 2026-11-10:* the bonus levels are **The Trials** (16.7): three very hard chapters behind the "Bonus levels" tile, opened by finishing 9-5 instead of by stars.
 
 ### 12.3 Playing with different friends
 - Each phone keeps **its own save**.
@@ -549,6 +550,10 @@ Two rules keep the game readable (P2, 4.1):
 | 7 | The Whispering Vault | Coldest and darkest: grey-blue stone, hanging rocks, pale drifting wisps | Very quiet, breathy "whisper" sounds, rare chimes |
 | 8 | The Steam Halls | Dark rusty-brown stone, old pipes along the walls, slow grey steam puffs rising | A steady steam-engine "chuff", low plucks, chimes with a hiss texture *(added 2026-11-06)* |
 | 9 | The Heart of the Temple | Deep dark stone with faint carvings (no animals, so nothing can be mistaken for the code), and a slow, dim pulsing glow far behind: the heart | The home theme from Chapter 1 comes back, slower and bigger, so the journey ends where it began *(added 2026-11-06)* |
+| 10 ⭐ | The Crumbling Wing (the Trials, 16.7) | A collapsed wing: dusty grey-olive stone, snapped pillars with their fallen pieces beside them, cracks down the back wall, rubble heaps; thin streams of dust and a pebble now and then *(added 2026-11-10)* | Quicker than the story: a chord line that keeps stepping down, a heavy drum, low uneven plucks, short dry chimes |
+| 11 ⭐ | The Hourglass Hall (the Trials) | Dry khaki stone and chains; giant hourglasses in stone frames whose sand slowly runs out and turns over; sand heaps along the floor, fine sand in the air *(added 2026-11-12)* | The fastest tune: a ticking clock, like a second hand |
+| 12 ⭐ | The Rising Dark (the Trials) | The temple is sinking: very dark grey-teal stone, leaning pillars, half a fallen arch, old tide marks with dried drips high on the back wall, a low drifting mist. No violet in the scenery: the only violet is the real tide *(added 2026-11-12)* | Slow and heavy with a long echo, while the level itself hurries you |
+| 13 ⭐ | The Last Trial (the Trials) | The inner sanctum: dark neutral stone, tall plain columns, and one great round window far behind whose spokes carry faint marks of every area on the way; its heart swells very slowly; fine dust rises *(added 2026-11-16)* | The home theme one last time, at full speed with the heavy drum |
 
 Every chapter keeps the duet (15.4): only the key, speed and instruments change. The home screen and map keep today's music. Built in two steps, checked with the owner in between: backgrounds first, then music.
 
@@ -566,6 +571,10 @@ Every chapter keeps the duet (15.4): only the key, speed and instruments change.
 | 7 | F♯ minor, quieter overall | 64 | a soft pulse, rare plucks | rare long chimes, big echo | breathy whispers |
 | 8 | G minor: Gm – E♭ – B♭ – F | 96 | a steam-engine "chuff" on every beat, low plucks | chimes on the beat | a steam hiss now and then |
 | 9 | A minor: the home theme's chords (Am – F – C – G) | 72 | hand drums, plucks | chimes with a long echo; airy flute pads | — |
+| 10 ⭐ | D minor: Dm – C – B♭ – A (stepping down) | 104 | a big, deep drum, low uneven plucks | short dry chimes, little echo | — |
+| 11 ⭐ | E minor: Em – C – Am – B | 120 | clockwork tick-tock, a pluck pattern that keeps returning to one high note | chimes on the beat; airy flute pads | — |
+| 12 ⭐ | B minor: Bm – G – Em – F♯ | 88 | a big, deep drum, a few low plucks | long chimes, long echo | water drops |
+| 13 ⭐ | A minor: the home theme's chords (Am – F – C – G) | 112 | a big, deep drum, quick plucks | quick chimes; airy flute pads | — |
 
 Gem notes and the symbol-stone notes follow the playing tune's scale, so they always fit the music (15.4). The tunes are first versions: the owner listens on the phone and asks for changes.
 
@@ -819,7 +828,7 @@ More ideas from the same talk:
 | G6 | How do players know the order? | **Level order** 🔒. Level 1's symbol is first, level 2's second, and so on. Each carving also has 1–4 dots under it as a reminder. |
 | G7 | What happens on a wrong symbol? | **The stones reset** 🔒. A wrong stone flashes, makes a low thud, and all stones pop back up. No death and no penalty (12); the only cost is time, and with it the ⭐⭐⭐ time star. |
 | G8 | How are the gate's stones laid out? | **Split, 4 on each side** 🔒. A wall splits the gate room: Hot Boy's side has 4 of the 8 animal stones, Cool Girl's side the other 4. Each can step only on their own side's stones, so entering the code is turn-taking ("your turn: the frog!"). Both are needed (P1, D1). |
-| G9 | Where does a symbol sit in its level? | **On the main path, glowing when near** 🔒. Carved into the back wall somewhere you must pass to finish the level. Faint from far away; it lights up gold with a soft chime when either player walks past. It can't be missed, only forgotten, and since finishing a level unlocks the next (12.2), the team always passes all 4. |
+| G9 | Where does a symbol sit in its level? | **On the main path, glowing when near** 🔒. Carved into the back wall somewhere you must pass to finish the level. Faint from far away; it lights up gold with a soft chime when either player walks past. It can't be missed, only forgotten, and since finishing a level unlocks the next (12.2), the team always passes all 4. | *Changed 2026-11-14 (H2): carvings now sit off the main path, in 4 of a chapter's levels 1–9, and from far away show only a blank stone plaque: the animal and its dots appear only while someone is near.*
 | G10 | Can both players see each symbol? | **Both see them in the first password chapter** 🔒, so the idea is taught on its own (D2). A later chapter mixes it with different eyes: each player sees only 2 of the 4 symbols and must share them on the call. |
 | G11 | What rules does the random code follow? | **Fully random** 🔒: any 4 of the 8 animals, repeats allowed (8 × 8 × 8 × 8 = 4,096 codes). A repeated animal is entered by stepping off its stone and on again. ⚠️ Sometimes all 4 animals are on one side, so one player does all the stepping while the other only calls out the code; accepted by the owner, since both still need each other to find and remember the symbols (D1). |
 | G12 | Which code is used with a different friend? | **One code per friend pair** 🔒. Each phone gets a hidden random ID (no account) and remembers a separate code for every partner it plays the chapter with. A new friend means a fresh code for that pair; the old friend's code stays safe. Joining a friend straight at level 5 means replaying levels 1–4 together to find your shared symbols. |
@@ -841,7 +850,7 @@ More ideas from the same talk:
 **Level rules for Don't touch** (keep these in mind when building):
 - The two starts and the two doors are at least **3 tiles apart**, so nobody starts in danger and the team can finish together (D10).
 - **"Fits only one"** is shown by a 1-tile-wide shaft or ledge: two 0.7-tile bodies can't stand in it side by side without a clear overlap.
-- **Jumping over a friend who stands still** is always safe with a full jump (it clears them by about 2 tiles). Passing while *both* move is where the screens can disagree, so levels never require it.
+- **Jumping over a friend who stands still** is always safe with a full jump (it clears them by about 2 tiles). *Added 2026-11-14:* only with headroom, at least 5 tiles of space above the floor (8-4 has exactly 5 and clears by 2.9 tiles). Under a lower ceiling the jump is cut short and lands right beside the friend (16.11, 8-6). Passing while *both* move is where the screens can disagree, so levels never require it.
 - A level is a Don't touch level as a whole (it doesn't switch on and off inside a level).
 
 **As built (2026-11-06):**
@@ -850,6 +859,143 @@ More ideas from the same talk:
 - **T3:** within 2 tiles both characters get their "near danger" look (14.4), steam puffs rise between them and a soft hiss grows louder the closer they get. The death is a big steam cloud with a hiss for both (`steam` cause).
 - The route robot plays Don't touch levels with the rule on and fails a level if the two ever clearly overlap. `npm run check:routes` also tests the rule itself in a flat room: walking into each other bursts both, a full jump over a friend who stands still is safe, a brush at the edge is survived, and without the rule they walk through each other.
 - Try it alone in the Feel Lab: `?lab=8-1` (swap with 🔥/💧).
+
+#### The Trials: bonus chapters for teams who finished the story 💬
+*Proposed 2026-11-10. The owner approved the placement and all three mechanics the same day. The mechanics are built; the levels are not.*
+
+Three **extremely hard** chapters (5 levels each) for skilled teams. Hard means tight timing between the two players, long chains, demanding jumps and several mechanics at once. It never means unfair: every pillar, hard limit, the level metrics (7.7), the thumb zones (5.3) and D6 still hold.
+
+| # | Decision |
+|---|---|
+| R1 | **Behind the "Bonus levels" tile** 🔒 (11.1, 12.2). The story stays 9 chapters and still ends at the heart of the temple (16.12). In the code they are Chapters 10–12 in `CHAPTERS` with a bonus mark, so the solo test, the route robot, themes and tunes work as for any chapter. |
+| R2 | **They open when either player has finished 9-5** 🔒 (12.3). Not with stars as 12.2 first said: star times are still guesses. Part of the one purchase (12.6: "every future chapter"). |
+| R3 | **Rules relaxed on purpose:** D2 (levels mix several ideas; only a chapter's first level shows its new mechanic alone) and D11 (no breather levels). A clean run still fits D9. |
+| R4 | **No password gates:** entering a code again after every death is tedious, not hard. |
+| R5 | **Lag room:** anything timed between the two players must leave room for the partner being shown about 0.1 s late (13.2). The route robot (D13) has to prove each level. |
+
+| Chapter | New mechanic | Status |
+|---|---|---|
+| 10 **The Crumbling Wing** | **Crumbling stones** (below) | **built**, 10 levels (16.13) |
+| 11 **The Hourglass Hall** | **Timed switches** (below) | **built**, 10 levels (16.14) |
+| 12 **The Rising Dark** | **The rising tide** (below) | **built**, 10 levels (16.15) |
+| 13 **The Last Trial** | everything at once, and a password (H5) | **built**, 5 levels (16.16) |
+
+First level ideas (they will change while building):
+- **10:** Fragile Bridge · No Way Back · Steam on Thin Stone (Don't touch) · Blind Bridge (Different eyes) · The Collapse (exam).
+- **11:** Run! · Relay · Catch the Lift · Count Me Down (Different eyes) · The Hourglass (exam, Don't touch).
+- **12:** Higher Ground · Burning Bridges (crumbling) · Last Breath (timed) · Trust Fall (eyes, Don't touch) · The Last Trial (everything).
+
+#### The road to 100 levels 🔒
+*Asked for and decided by the owner 2026-11-12. Nothing of it is built yet; Chapter 10's first five levels are (16.13).*
+
+| # | Decision |
+|---|---|
+| H1 | **100 levels in 13 chapters** 🔒. Chapters 1–5 keep 5 levels (25). Chapters 6–12 grow to **10 levels each** (70). A new **Chapter 13** has 5. The story is Chapters 1–9 (65 levels); the Trials are Chapters 10–13 (35 levels). This changes 12.2 ("5 levels each"): the map gets room for 10 level stones in a chapter. |
+| H2 | **Password chapters (6, 7, 9): 4 carvings, hidden** 🔒. The code stays 4 animals (G5) and the 8 symbol stones stay as they are (G8). The 4 carvings move to **side spots off the main path, in 4 of levels 1–9**, and the game never says which levels. The vault moves to **level 10**. The dots still give the order (G6). This changes G1, G9 ("on the main path, can't be missed") and G13. Known cost, accepted before (16.10): a carving you miss or forget means replaying levels to find it. |
+| H3 | **Nobody loses progress** 🔒. A level that a player could already play stays open after the new levels are added: a level is open when the one before it is finished **or any later level is already finished**, on either phone (12.3). The new levels simply show as unfinished. A saved result for an old vault (6-5, 7-5, 9-5) moves with the vault to level 10. |
+| H4 | **Mechanics are added one at a time** 🔒. From Chapter 10 on, each level adds at most one more mechanic to the mix, until every mechanic is on at once. The ladder is below. |
+| H5 | **Chapter 13 "The Last Trial": everything at once** 🔒 (the owner: "if possible"). **The password gate joins, decided by the owner 2026-11-16:** Chapter 13 has its own team code (carvings in 13-1 to 13-4) and its vault in 13-5 stands above the tide's highest point, after every danger: once the team is in the vault nothing can kill them, so a death never forces the code to be entered again. This is the one exception to R4. |
+
+**The ladder (H4).** C = crumbling stones, S = timed switches, R = the rising tide, E = Different eyes, T = Don't touch, P = password. Buttons, levers, lifts and gates are in every level.
+
+| Chapter | Levels 1–5 | Levels 6–10 |
+|---|---|---|
+| 6 The Sealed Vault | as built, carvings moved (H2) | five more with the story's basic mechanisms; vault at 10 |
+| 7 The Whispering Vault | as built, carvings moved | five more with P + E; vault at 10 |
+| 8 The Steam Halls | as built | five more with T, the last ones T + E |
+| 9 The Heart of the Temple | as built, carvings moved | five more mixing E, T and P; vault and the ending at 10 |
+| 10 The Crumbling Wing | C · C · C+T · C+E · C+T (built) | C+E+T in steps, exam at 10 |
+| 11 The Hourglass Hall | S · S · S+C · S+E · S+T | S+C+T · S+C+E · … · S+C+E+T at 10 |
+| 12 The Rising Dark | R · R+C · R+S · R+E · R+T | R+C+S · R+C+S+E · … · R+C+S+E+T at 10 |
+| 13 The Last Trial | all of C, S, R, E, T in every level; P joins at the end (H5) | — |
+
+**Order of work** (one step at a time, stopping for the owner after each):
+1. Chapter 11, levels 1–5. 2. Chapter 12, levels 1–5.
+3. The plumbing for 10-level chapters: the map, the unlock rule (H3), moving the vaults and their saved results.
+4. Five more levels for each story chapter: 6, 7, 8, 9 (with H2 for 6, 7 and 9).
+5. Five more for each Trial chapter: 10, 11, 12. 6. Chapter 13. 7. Wrap-up: all checks, and the store and marketing texts.
+
+Steps 1–3 are done (2026-11-12 and 2026-11-14). Step 4 is done: Chapters 6 to 9 have their 10 levels (16.9–16.12), so the story now has 65 levels. Step 5 is done: Chapters 10, 11 and 12 have their 10 (16.13–16.15). Step 6 is done: Chapter 13 (16.16). **The game has 100 levels.** Step 7 is done too (2026-11-16): the store and marketing texts say 100 levels in 13 chapters, and everything was pushed to `main`. **What is left is not building but testing:** two-phone playtests of the 55 new levels, real star times, and tuning tide speeds, clock lengths and crumble timing from what players do. The test APK has the solo test in Settings, so the owner can try every level alone on a phone.
+
+**As built: the plumbing for 10-level chapters (step 3, 2026-11-14)**
+- **The vaults are level 10 now:** 6-5, 7-5 and 9-5 became **6-10, 7-10 and 9-10** (same maps, same codes). Their chapters list 5–9 as planned levels (`rows: null`) until those are built.
+- **Planned levels are skipped.** The unlock chain and "Next level" walk only the levels that exist (`BUILT_LEVELS` in `levels.ts`), so 6-4 leads straight to 6-10 for now. The map shows a planned level as a dimmed "soon" stone.
+- **Saved results move with the vaults (H3).** The first time a phone opens the new version, a result saved for 6-5, 7-5 or 9-5 moves to 6-10, 7-10 or 9-10 (`progress.ts`). It happens once per phone, so a result for the new 6-5 later is never moved.
+- **The unlock rule (H3):** a level is open when the built level before it is finished, **or when it or any later level is finished**, on either phone. An old save never loses a level it could play.
+- **The ending moved with the vault:** the story's last level (`FINALE_ID`) is 9-10, which plays the ending and opens the Trials.
+- **The map:** a 10-level chapter has two rows of smaller stones, 1–5 left to right on top and 6–10 back right to left below. With 13 tabs, a phone held sideways shows the chapter tabs as one row you slide; the open chapter stays in view, so Ready fits on the screen.
+- **Tests:** `npm run check:custom` now also checks the rules above with pretend saves (a new player, an old save that reached 7-2, a phone that saw the move already, either phone opening a level). Checked by hand in the browser with an old save, on a desktop screen and at 844 × 390.
+- **Known gap until step 4:** an old player who finished 6-5 (the old vault) skips straight from 6-4 to 6-10 as before; the new 6-5 to 6-9 appear as unfinished levels once they are built, and stay optional for players who are already past them (H3).
+
+#### Crumbling stones: design 🔒
+*Approved by the owner 2026-11-10 and built the same day. First used in Chapter 10.*
+
+| # | Question | Decision |
+|---|---|---|
+| K1 | What is it? | **A stone block that falls away after you stand on it** 🔒. Any character standing on it starts it. It never kills by itself: what is under it does. |
+| K2 | How do you see it coming (D6, P2)? | **It shakes for 0.7 s first** 🔒, with a crackle, falling dust and widening cracks. It stays solid for the whole shake, so running across is always safe; only standing still is not. Coyote time (7.6) still gives a jump just after it goes. |
+| K3 | Does it come back? | **Yes, 5 s after it falls** 🔒. A faint outline shows where, and fills in over the last second. It never grows back while someone is in its space. So a mistake never leaves a level unwinnable, and the partner has to wait or find another way. |
+| K4 | How does it look (4.2)? | **Stone with gold cracks** 🔒: gold means "this does something". No rune, because nothing powers it. Each block is one tile, and a bridge falls block by block behind you. |
+| K5 | How does it work online (13.1, P6)? | **Your phone starts the shake for your own character** 🔒 and tells the partner's phone, which starts the same 0.7 s clock about 0.1 s later. The host's world state (5× a second) carries every block's clock, so a lost message is repaired. Your own fall is always decided by your own phone. |
+| K6 | Homemade levels? | **Later** 🔒, like Don't touch (T4): first two phones test it in Chapter 10. |
+
+**Level rules for crumbling stones** (keep these in mind when building):
+- Never the floor under a start, a door, a button, a lever or a symbol stone (the level check refuses it).
+- What waits under a crumbling stone is visible before you step on it (D6): a pool, or a floor you can see.
+- A jump that starts or ends on a crumbling stone uses the standard sizes (7.7), and never needs a pause on the stone.
+- In a Don't touch level, two players are never asked to share a crumbling stretch at the same time.
+
+**As built (2026-11-10):**
+- A mechanism `{ kind: 'crumble', x, y, w }`: a row of `w` one-tile blocks (`src/game/mechanisms.ts`, `CRUMBLE_SHAKE` 0.7 s, `CRUMBLE_BACK` 5 s). It can carry `seen` like any mechanism (Different eyes).
+- Online: a new `crumble` message and `cr` in the host's world state, so the play version's `PROTOCOL` went from 3 to 4.
+- The route robot runs it with the real physics. `npm run check:routes` also tests the rule itself in the test room: running across is safe, standing still drops you, the bridge grows back, single stones work as quick steps, a block waits while someone is in its space, and two phones (0.1 s apart, one message lost) see every block fall and return within 0.11 s of each other.
+- Try it alone in the Feel Lab: `?lab=crumble` (swap with 🔥/💧).
+
+#### Timed switches: design 🔒
+*Approved by the owner 2026-11-10 and built the same day. First used in Chapter 11.*
+
+| # | Question | Decision |
+|---|---|---|
+| S1 | What is it? | **A button that pops back up slowly** 🔒. It is on while someone stands on it, and stays on for a set time after they step off. Each switch has its own time (1–15 s). It powers its rune like a button (10.1). |
+| S2 | What if you step on it again? | **The time is full again** 🔒, like winding it back up. |
+| S3 | How do you see the time left (P2, D6)? | **A gold ring that drains** 🔒, around the switch's rune **and on every gate and lift it powers**, so the runner never has to look back. The ring blinks in its last quarter, and the switch itself rises back up as the time runs out. A tick sounds twice a second, faster in the last 1.5 s (a bonus, never required: 15.1). |
+| S4 | Does a timed gate crush? | **Yes, like every closing gate** 🔒 (10.2). The countdown is drawn on the gate, so the death is always one you saw coming. |
+| S5 | How is it kept fair online (P6, 13.2)? | **The host's clock counts, and every level keeps 0.5 s to spare** 🔒. Each phone starts the clock when it sees the step-off, so the two can differ by the network delay (about 0.1–0.2 s); the guest's clock then follows the host's. **Level rule:** the route robot must also win the level with every clock 0.5 s shorter. |
+| S6 | Homemade levels? | **Later** 🔒, like Don't touch (T4). |
+
+**Level rules for timed switches** (keep these in mind when building):
+- **Clearly enough time or clearly not** (the spirit of 7.7): a run the level wants passes with every clock 0.5 s shorter; a shortcut the level forbids misses by a clear margin too. Never "almost".
+- Both the switch and what it powers are on screen together (5.1), so the ring on the gate can always be seen.
+- A hidden timed switch (Different eyes) keeps its gate or lift visible to the runner, ring included.
+
+**As built (2026-11-10):**
+- A mechanism `{ kind: 'timer', x, y, rune, secs }` (`src/game/mechanisms.ts`). `runeClock()` gives the ring for a rune that only a running clock keeps on.
+- Online: the host's world state carries every clock (`tm`), so the play version's `PROTOCOL` went from 4 to 5. No new message: like a button, each phone sees who stands on the switch.
+- The route robot: a level with timed switches writes its solution as a function and is played twice, as written and with every clock 0.5 s shorter (`LAG_CUT` in `tools/route_check.ts`). `npm run check:routes` also tests the rule in the test room: the run through the gate (also 0.5 s short), the gate shutting 3 s after the step-off, the crush, a timed lift, and two phones 0.1 s apart seeing the time run out at most 0.1 s apart, whoever pressed.
+- Try it alone in the Feel Lab: `?lab=timer` (swap with 🔥/💧).
+
+#### The rising tide: design 🔒
+*Approved by the owner 2026-11-10 and built the same day. First used in Chapter 12.*
+
+| # | Question | Decision |
+|---|---|---|
+| V1 | What is it? | **Violet poison that rises from the bottom of the level** 🔒 at one steady speed, up to a set height. It is poison like any other (4.2): deadly to both. It fills every open space under its surface. |
+| V2 | When does it start? | **When the first player moves** 🔒. Until then it rests where everyone can see it, so the team can plan on the call first (D5). A deep rumble and a small shake mark the start (P4). |
+| V3 | How is it kept readable and off the thumbs (P2, L6, 5.3)? | **It never speeds up, slows down or jumps** 🔒, and it is always seen by both players (it can't be hidden with Different eyes). **A tide level keeps both bottom 4 × 4 corners solid stone**, so no poison edge is ever under a thumb. Its resting surface shows from the first second. |
+| V4 | When does it kill (7.4)? | **When your feet are clearly under the surface** 🔒: 0.3 tiles. A splash at the edge is survived. Your character's "near danger" look (14.4) grows as it gets close. |
+| V5 | How is it kept fair (P3, P6)? | **Each phone decides its own character's death, and every level has time to spare** 🔒. Both phones raise the tide at the same speed from the first move; the guest follows the host's surface. **Level rule:** the route robot must also win the level with the tide rising 1.25× faster, so a team slower than the robot still makes it. |
+| V6 | Homemade levels? | **Later** 🔒, like Don't touch (T4). |
+
+**Level rules for the tide** (keep these in mind when building):
+- Both bottom corners solid, the resting poison visible at the start (checked by `npm run check:custom`).
+- The tide stops at a height the level sets. The doors are above it, so reaching them is always safe (D10).
+- No waiting puzzle may depend on the tide's exact height: it is a clock for the whole level, not a platform.
+
+**As built (2026-11-10):**
+- A level sets `tide: { from, to, speed }` (surface y at rest, highest y it reaches, tiles per second). The state lives in `Mechanisms` (`src/game/mechanisms.ts`, `TIDE_DEPTH` 0.3).
+- Online: the host's world state carries the surface (`td`), so the play version's `PROTOCOL` went from 5 to 6.
+- The route robot: a tide level writes its solution as a function and is played twice, as written and with the tide 1.25× faster (`TIDE_RUSH` in `tools/route_check.ts`). `npm run check:routes` also tests the rule in the test room: it waits for the first move, both climb ahead of it (also 1.25× faster), it stops under the top platform, it catches someone who stays below, and two phones 0.1 s apart keep their surfaces within 0.04 tiles.
+- Try it alone in the Feel Lab: `?lab=tide` (swap with 🔥/💧). There the tide sinks back when it catches someone.
 
 How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 
@@ -888,6 +1034,34 @@ How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 
 **Star times** are first guesses (D12). Level 5's target time (90 s) allows for a couple of wrong guesses (G7).
 
+#### Ten levels (2026-11-14, 16.7 "The road to 100 levels", H1–H2)
+The chapter grew to 10 levels. The vault is now **6-10** (the table above calls it level 5). Levels 6-5 to 6-9 are new, and the carvings moved:
+
+**Where the carvings are (H2).** Four of levels 1–9 carry one carving, off the main path, and the game never says which. From far away a carving is a blank stone plaque; its animal and dots show only while someone is near it (within about 2.6 tiles), so the team has to go and look. The route robot proves each one can be reached, and that the shortest winning route never comes close enough to read it (it stays 3.7 to 6.8 tiles away).
+
+| Level | Dots | Where | Who can reach it |
+|---|---|---|---|
+| 6-1 | 1 | on a ledge 3 tiles above his start (a short climb nobody needs) | Hot Boy |
+| 6-4 | 2 | the far end of the door room, away from the doors | both |
+| 6-6 | 3 | at the end of a low, flooded tunnel | Cool Girl (water) |
+| 6-8 | 4 | down a second shaft off the lava crawlway, past more lava | Hot Boy (lava) |
+
+6-2 and 6-3 lost their carvings; their maps are unchanged. 6-1 gained the ledge (three tiles of stone).
+
+**The five new levels** use only the story's basic mechanisms, each from an earlier chapter, mirrored and extended:
+
+| # | Name | Based on | How it plays |
+|---|---|---|---|
+| 5 | **Crossed Keys** | 2-1 + 6-4 | Two lanes. Each lane's gate opens with the lever on a shelf in the other lane (jump up onto the shelf, drop back off: one flip). His lane drops into hers past both gates; then a trapdoor to the door room, held from below and then by a button right beside the hole. |
+| 6 | **The Weighing Room** | 4-2, mirrored | One rune raises one lift and sinks the other. She holds the bottom button while he rides up; he holds the top button so her lift waits at the bottom, then lets go to bring her up. Carving 3 is in the flooded tunnel. |
+| 7 | **Three Gates** | 2-3 with a third gate | A crushing relay: a button two tiles before and after each of three gates; each holds while the other passes. A lava pool in one middle room and a water pool in the other. |
+| 8 | **The Drowned Archive** | 3-4, mirrored | Three seals: a lever at the end of a water tunnel (only she), one at the end of a lava crawlway (only he), and a button-and-lever seal. Carving 4 is down a side shaft off the crawlway. |
+| 9 | **The Last Stair** | 3-2 + 3-3, mirrored | One button raises three platforms into stairs over poison; the first up locks them with a lever. A last gate before the doors: one holds its button, the other locks it open from the far side. |
+
+**Proven winnable:** all ten pass the route robot; every gem in 6-5 to 6-9 is collected on the way (the older levels keep their old gems), and the vault still opens with 45 codes. **Star times** for 6-5 to 6-9 are first guesses (D12): 45, 50, 40, 55 and 50 s.
+
+**For players who were already past Chapter 6:** they keep 6-10 (their old 6-5 stars moved there) and everything after it (H3). The new levels show as unfinished. Their code doesn't change, and the carvings still show the same animal for the same dots, so notes from before stay right.
+
 ### 16.10 Chapter 7: The Whispering Vault 🔒
 *Planned and approved by the owner 2026-10-31.* Sketches: [`docs/levels/chapter7.png`](levels/chapter7.png). Mixes **Password gates** and **Different eyes** (16.7), as G10 promised: **each player holds half of the secret and has to say it out loud** (E1). A paid chapter (12.6).
 
@@ -919,6 +1093,32 @@ How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 
 **Star times** are first guesses (D12). Level 5's target time (100 s) allows for wrong guesses and for guiding each other onto hidden stones.
 
+#### Ten levels (2026-11-14, 16.7 "The road to 100 levels", H1–H2)
+The chapter grew to 10 levels. The vault is now **7-10** (the tables above call it level 5). Levels 7-5 to 7-9 are new.
+
+**Where the carvings are (H2, with W1 kept).** Cool Girl still sees carvings 1 and 3, Hot Boy 2 and 4. Each is off the main path, a blank plaque until someone is near (G9). The chapter's own twist: **in 7-6 and 7-8 the one who sees the carving is not the one who can reach it.** The one who sees it guides the other there; when the other stands next to it, it lights up on the seer's screen, and the seer reads it out. (For the one who can't see it, there is nothing on the wall at all, E4.)
+
+| Level | Dots | Seen by | Where | Who goes there |
+|---|---|---|---|---|
+| 7-1 | 1 | Cool Girl | on a shelf 3 tiles over her walkway | Cool Girl |
+| 7-4 | 2 | Hot Boy | the far end of the door room, across the open trapdoor | either |
+| 7-6 | 3 | Cool Girl | at the end of a low lava tunnel behind their start | **Hot Boy** (only he can walk in) |
+| 7-8 | 4 | Hot Boy | on a shelf past her door, up where only she climbs | **Cool Girl** |
+
+7-2 and 7-3 lost their carvings; their maps are unchanged. 7-1's shelf is new (one tile, two tiles left of the lever, so dropping off it never skips the lever).
+
+**The five new levels** take Chapter 5's layouts (Different eyes), mirrored, each with one more thing:
+
+| # | Name | Based on | How it plays |
+|---|---|---|---|
+| 5 | **Steps in the Dark** | 5-1 | Each crosses a poison pit on stones only the other sees. Then the gate to the doors: its button is on his ledge, and only she sees it. |
+| 6 | **Through the Fire** | 5-2 | Each gate's button is in the other's lane and seen only by the one it doesn't open. Carving 3 waits in the lava tunnel. |
+| 7 | **Mind the Floor** | 5-3 + 2-1 | Each lane hides pools only the partner sees. Each lane's gate opens with a lever in the other lane, past its pools: you get through when your partner does. |
+| 8 | **His Eyes Only** | 5-4, roles swapped | Now **he** sees every hidden ledge and talks **her** up over the poison; up top she stands on the button only he sees, which opens the gate to his door. Carving 4 is on the shelf past her door. |
+| 9 | **Trust, Turned Around** | 5-5, roles swapped | The Chapter 5 exam with the two players' jobs, liquids and eyes swapped. |
+
+**Proven winnable:** all ten pass the route robot; every gem in 7-5 to 7-9 is collected on the way, and the vault still opens with 45 codes. The robot also proves that the shortest winning route never reads a carving (it stays 3.1 to 6.4 tiles away; they light at 2.6). **Star times** for 7-5 to 7-9 are first guesses (D12): 45, 45, 40, 45 and 70 s.
+
 ### 16.11 Chapter 8: The Steam Halls 🔒
 *Planned and approved by the owner 2026-11-06.* Teaches **Don't touch** (16.7, T1–T4): fire meets water and both burst into steam. One new idea per level, simplest first; level 3 is a breather and level 5 the exam (D2, D3, D11). Every level of the chapter is a Don't touch level. A paid chapter (12.6).
 
@@ -940,6 +1140,21 @@ How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 - 8-5: below, a 6-tile lava pool guards the lift button, so only he can hold it, while the one-person lift is on the far left; they swap sides in the hall (one waits on the shelf). Then she holds the top button for his ride, and up top they leap over each other through a relay gate to the doors.
 
 **Proven winnable:** every level passes the route robot with the touch rule on. **Star times** are first guesses (D12).
+
+#### Ten levels (2026-11-14, 16.7 "The road to 100 levels", H1)
+Chapter 8 has no password, so it only grew: 8-6 to 8-10 are new and come after 8-5. They bring Don't touch to older layouts; the last two add Different eyes (the ladder, H4).
+
+| # | Name | Based on | How it plays |
+|---|---|---|---|
+| 6 | **The Tower, Apart** | 4-4 | Two trapdoors, each held from below and then from above by a button beside the hole. The rooms are 4 tiles low, too low to leap over a friend safely, so **the order is the puzzle**: whoever is ahead climbs first and the other holds behind them. Climb in the wrong order and you meet with no way past (restart from the pause menu). |
+| 7 | **Up the Stairs** | 3-2 | She holds the button that raises the stairs; he leaps over her to reach them and locks them at the top. The first one up takes the far door, so nobody passes on the ledge. |
+| 8 | **The Balance** | 4-2 | The counterweight lifts. Up on the narrow ledge he holds the top button; she arrives beside him and leaps over him to her door. |
+| 9 | **The Hidden Shelf** | 8-1, mirrored | Swap sides without touching: she waits on a shelf **only he sees** while he walks under it; then he holds her gate from a porch button **only she sees**. |
+| 10 | **Blind Steam** | 8-5, mirrored | The chapter's exam. Hidden: the shelf she waits on (only he sees it), the lift button he holds (only she sees it), and the top button she holds for his ride (only he sees it). Then the relay through the gate, each leaping over the other. |
+
+**Kept fair (T level rules):** every pass is a full jump over a friend who stands still, never two moving players. The robot measured each leap: the jumper's feet stay at least 2.9 tiles above the friend's while their bodies overlap sideways (a burst needs less than 0.68). While building, the first 8-6 had a leap inside a 4-tile-high room; the jumper bumped the ceiling and landed 0.75 tiles from the friend, a near miss that two phones might see differently. That is why 8-6 became an ordering puzzle. **Lesson:** never ask for a leap over a friend under a ceiling lower than 5 tiles.
+
+**Proven winnable:** all ten pass the route robot with the touch rule on, and every gem in 8-6 to 8-10 is collected on the way (their gems were placed on the arcs the players really jump). **Star times** for 8-6 to 8-10 are first guesses (D12): 55, 40, 45, 45 and 70 s.
 
 ### 16.12 Chapter 9: The Heart of the Temple 🔒
 *Planned and approved by the owner 2026-11-06.* The finale: **no new rule**. Each level mixes ideas players already know, and the chapter has **its own team code** (password gates, G1–G13): one carving in each of levels 1–4, the symbol stones at the final gate in level 5. Some carvings are seen by only one player (as in Chapter 7). A paid chapter (12.6).
@@ -963,6 +1178,194 @@ How to sell the game: see [`docs/MARKETING.md`](MARKETING.md).
 
 **The ending (story, 16.7):** small and wordless (D4). Level 9-5's background shows the glowing heart of the temple. When both reach their doors in 9-5, a short celebration plays (the heart lights up, fire and water sparks swirl together) and the results screen says "You reached the heart of the temple". A bigger story (pictures between chapters) can come later as its own project.
 *As built:* the whole of Chapter 9 shows the heart (great carved rings with marks of every earlier area, and a slow, dim two-beat glow). Finishing the last official level lights the heart up, sends fire and water sparks swirling out of the doors with a cloud of steam, and adds "🔥💧 You reached the heart of the temple." to the results.
+
+### 16.13 Chapter 10: The Crumbling Wing 🔒 (the Trials)
+*Approved by the owner and built 2026-11-10.* Sketches: [`docs/levels/chapter10.png`](levels/chapter10.png). The first of the Trials (16.7, R1–R5): a bonus chapter behind the "Bonus levels" tile, open once either player has finished 9-5. New here: **crumbling stones** (16.7, K1–K6). A paid chapter (12.6).
+
+**Relaxed on purpose (R3):** D2 (10-3 to 10-5 mix crumbling stones with Don't touch, Different eyes, lifts and crushing gates) and D11 (no breather level). Everything else holds.
+
+Four ways the chapter uses a crumbling stone:
+- **A bridge you can't stop on**, and that your friend can't use for about 6 s after you.
+- **A single stone as a step:** land, and jump again within 0.7 s.
+- **A floor that is a door:** walk over it from above and it opens a hole for your friend below (for 5 s); stand on it and you drop through yourself.
+- **A wall you dig through:** a column of stones from the hall above down to the floor. Stand on top and you sink through it block by block, which opens the wall below for a few seconds.
+
+| # | Name | What it asks | How it plays |
+|---|---|---|---|
+| 1 | **Fragile Bridge** | The mechanic alone: bridges and one single stone | Two lanes. Each crosses a 6-tile crumbling bridge to a solid island, then hops over one single stone to the far bank. He holds his island button for her gate; past it she holds a button for his. |
+| 2 | **Give Way** | A crumbling floor is a door | She holds the button for his lift. Upstairs he walks over the crumbling floor above her step, and she jumps up through the hole before it grows back. Then a second lift to the top, three single stones to hop, and a crumbling floor over the door room: stand on it and drop in, then hold the lift for your friend. |
+| 3 | **Steam on Thin Stone** | Don't touch on one path | They start at opposite ends of one path of three crumbling bridges and two islands, and must swap sides. One waits on an island; the other runs the middle bridge and leaps over them. A bridge your friend just used is gone, so you wait for it. Then a button-and-gate swap up to the doors. |
+| 4 | **Blind Bridge** | Different eyes | Each lane's crumbling stones are seen only by the partner; the pits and the solid island are seen by both. You can't stop to listen on a stone you can't see, so your friend describes a whole stretch first ("two stones, a gap of two, one stone, a gap of two"), and then you run it from memory. |
+| 5 | **The Collapse** | Exam: dig, run through, leap, with Don't touch | She holds the button for his lift. Up top he sinks through the crumbling column, which opens the wall in the hall below. He steps onto the gate button; she runs through the open wall before it grows back and, in the same run, leaps over him through the gate. Then he leaps over her (after her stones grow back), and a last lift is held from below, then from the door room. |
+
+**Fairness notes:**
+- What is under every crumbling stone is visible before you step on it (a pool, or a floor): K level rules.
+- In 10-4 the hidden stones never hide a danger: the poison is seen by both (E2, E3). Not seeing your own stone shake is the level's point; the solid islands seen by both are the places to stop and listen (E1).
+- In 10-3 and 10-5 (Don't touch) nobody is asked to pass a moving friend: every leap is over a friend who stands still on solid ground (T level rules).
+- **Known cost in 10-5:** if she misses the open wall (about 4 s), he is on the far side and she is not, so the team restarts from the pause menu. Accepted for an exam level: restarts are instant (11.2).
+- No pit is 5 tiles wide: with a bridge gone, a pit is either a clear 4-tile jump or clearly too wide (7.7).
+
+**Proven winnable:** every level passes the route robot with all gems (so every gem can be reached), with Don't touch on in 10-3 and 10-5. **Star times** are first guesses (D12): 25, 60, 50, 60 and 70 s. 10-4's allows for the talking.
+
+**Still needed (D12):** a playthrough by two people on two phones. The robot proves each level can be won, not how hard it feels; 10-1 is the gentlest on purpose, since it shows the new mechanic alone.
+
+#### Ten levels (2026-11-14, 16.7 "The road to 100 levels", H1, H4)
+Levels 10-6 to 10-10 are new and come after 10-5. Each takes a proven Don't touch or Different eyes level and turns some of its stone to crumbling stone, adding one idea at a time up to the exam:
+
+| # | Name | Based on | Mix | How it plays |
+|---|---|---|---|---|
+| 6 | **Dust Relay** | 8-4 | C + T | The relay through two gates, with the floor around each gate turned to dust over poison. The buttons stand on solid stone; whoever leaps over the holder lands on dust and must keep going. |
+| 7 | **Hold On a Second** | 8-1 | C + T | Swap sides without touching, but the shelf she waits on crumbles: he waits beside it and runs under her the moment she lands (or as she jumps); when it falls she drops behind him. |
+| 8 | **Blind Dust** | 5-5 | C + E | Blind Trust with every hidden stepping stone crumbling: you cross stones you can't see without stopping, guided. |
+| 9 | **Steam and Dust** | 9-2 | C + E + T | Cross toward each other on hidden crumbling stones, one at a time: they fall behind the first one across, so the second waits until they grow back. |
+| 10 | **The Last Collapse** | 8-10 | C + E + T | The exam: the hidden shelf she waits on crumbles too, there is the one-person lift, and the relay gate stands on dust over the hall below. |
+
+**Timing measured (fairness, 13.2):** in 10-7 and 10-10 he may start running under the shelf up to 0.8 s after she leaves the ground (about 0.6 s after she lands) and still be clear when she drops; the shelf's shake is the warning, and he can start as soon as he sees her jump. Every leap over a friend keeps at least 2.5 tiles of clearance.
+
+**Proven winnable:** all ten pass the route robot (with Don't touch on where the level has it), and every gem in 10-6 to 10-10 is collected on the way. **Star times** for 10-6 to 10-10 are first guesses (D12): 40, 35, 70, 50 and 80 s.
+
+### 16.14 Chapter 11: The Hourglass Hall 🔒 (the Trials)
+*Built 2026-11-12 (levels 1–5; five more are planned, 16.7 H1).* Sketches: [`docs/levels/chapter11.png`](levels/chapter11.png). The second of the Trials. New here: **timed switches** (16.7, S1–S6). Mechanics are added one at a time (H4): timed switches alone, then with crumbling stones, Different eyes and Don't touch. A paid chapter (12.6). D2 and D11 are relaxed (R3).
+
+Three ways the chapter uses a clock:
+- **Press and run:** one press is enough for you, or for both of you, if you don't stop.
+- **Too short to make it yourself:** your friend waits at the gate and you press for them.
+- **Two clocks at once:** each of you needs the other's clock still running, so you start together ("three, two, one, go").
+
+| # | Name | Mix | How it plays |
+|---|---|---|---|
+| 1 | **Run!** | timed switches alone | Top: a 3 s switch and a gate 13 tiles and two pools away; one press lets both through. Bottom: a 1 s switch 16 tiles from its gate, clearly too short to make yourself, so she waits at the gate, and behind it a 3 s switch lets her open it for him. |
+| 2 | **On Three** | timed switches alone | Two lanes, two gates each. Your own 2.8 s switch opens your first gate; your friend's opens your second. Leave your switches more than about a second apart and somebody's second gate has shut. |
+| 3 | **Thin Time** | + crumbling stones | His 3.4 s switch opens her gate and hers opens his. Each gate stands at the end of a path of crumbling stones over poison, so nobody can cross first and wait: both leave together and hop without stopping. |
+| 4 | **Count Me Down** | + Different eyes | Left: only he can cross the lava, and only she sees the 2.5 s switch behind it; she guides him onto it, and one press lets both through the gate. Right: only she can cross the water, and only he sees the lift's 4 s switch behind it. He rides up; when the clock runs out the lift comes back for her, and he holds the button on the door ledge. The gate and the lift show their rings to both. |
+| 5 | **The Hourglass** | + Don't touch | Exam, three clocks in a row. Bottom: one press, two runners (she waits by the gate and goes first). The lift: she rides while he presses the switch on its shelf; the clock runs out, the lift returns, and she presses for him up top. Top: the last switch is in the corridor: press it and run for the gate, one after the other. |
+
+**Room for lag (S5):** every level is also won by the robot with all clocks 0.5 s shorter. Measured with the robot at full clocks: in 11-2 the two may leave up to about 0.8 s apart, in 11-3 about 1.0 s.
+
+**Lessons while building (keep for the next timed levels):**
+- **A timed switch in a corridor is pressed by everyone who walks over it** (like a lever, 16.1). That is wanted for "press and run", and wrong for a switch that must be pressed at one chosen moment: put that one on its own shelf 3 tiles up (11-5's lift switch), like a symbol stone.
+- **Never make the only waiting spot the tiles under a gate** (11-4 first had the lift right behind the gate).
+- **A "start together" level has a point of no return.** In 11-2 a team that leaves too far apart ends up shut between two gates and restarts from the pause menu; in 11-3 the same mistake is a fall or a crush, which restarts by itself. Prefer the 11-3 kind.
+
+**Proven winnable:** every level passes the route robot with all gems, also with every clock 0.5 s shorter, and 11-5 with Don't touch on. Checked too: 11-1's 1 s switch can't be made alone (the runner arrives at a shut gate, unharmed). **Star times** are first guesses (D12): 30, 20, 20, 60 and 55 s.
+
+**Still needed (D12):** a playthrough by two people on two phones, above all for 11-2 and 11-3, where the count-in happens over a voice call.
+
+#### Ten levels (2026-11-16, 16.7 "The road to 100 levels", H1, H4)
+Levels 11-6 to 11-10 are new and come after 11-5. They put the clocks together with crumbling stones (C), Different eyes (E) and Don't touch (T), up to all four in the exam.
+
+| # | Name | Mix | How it plays |
+|---|---|---|---|
+| 6 | **Close Behind** | S + C + T | New. He stands on a 4 s switch; then both run at once across a 12-tile crumbling bridge to the far gate. The bridge falls 0.7 s behind her, so he must stay close behind her without touching: single file, same speed. |
+| 7 | **Blind Seconds** | S + C + E | 11-3 with each timed switch seen only by the partner, who talks you onto it before the count. |
+| 8 | **Dust Hourglass** | S + C + T | 11-5 with the run to the first gate on dust over poison. She crosses first to wait by the gate, so he waits for the dust to grow back before he presses. |
+| 9 | **Hidden Hourglass** | S + E + T | 11-5 with the switches you press seen only by your partner (his first switch and the lift switch only by her, her top switch only by him). |
+| 10 | **The Last Hourglass** | S + C + E + T | 10-10's exam with a timed relay: he stands on a 2 s switch while she leaps over him through the gate, then he follows before it shuts, hopping the dust that fell under her landing. She is ahead, so she takes the far door. |
+
+**Timing measured (13.2, S5):** in 11-6 he may start running up to about 0.3 s after her or 0.2 s before her (start too early and you run into her, too late and the bridge is gone); the easiest way is for her to go and him to follow. Every level also passes with every clock 0.5 s shorter, and every leap over a friend keeps at least 2.97 tiles of clearance.
+
+**Proven winnable:** all ten pass the route robot, and every gem in 11-6 to 11-10 is collected on the way. **Star times** for 11-6 to 11-10 are first guesses (D12): 35, 25, 60, 60 and 80 s.
+
+### 16.15 Chapter 12: The Rising Dark 🔒 (the Trials)
+*Built 2026-11-12 (levels 1–5; five more are planned, 16.7 H1).* Sketches: [`docs/levels/chapter12.png`](levels/chapter12.png). The third of the Trials. New here: **the rising tide** (16.7, V1–V6). Mechanics are added one at a time (H4): the tide alone, then with crumbling stones, timed switches, Different eyes and Don't touch. A paid chapter (12.6). D2 and D11 are relaxed (R3).
+
+Every level is a climb. Both bottom 4 × 4 corners are solid stone and the poison lies between them, visible from the first second. The tide starts with the first move, so the team can plan on the call for as long as it likes, and it stops under the door ledge, so reaching the doors is always safe.
+
+| # | Name | Mix | How it plays |
+|---|---|---|---|
+| 1 | **Higher Ground** | the tide alone | Each climbs to a side ledge. The button on each ledge opens the gate on the other one; the first through climbs to the middle ledge and holds a button there for the second. The doors are one more climb up. |
+| 2 | **Burning Bridges** | + crumbling stones | The only way up is two single crumbling stones. One holds the gate from the bottom while the other climbs; from the door ledge the first then holds the gate, and the second climbs the moment the stones are back, with the poison at their heels. |
+| 3 | **Last Breath** | + timed switches | The lift rests up top. A 2.5 s switch brings it down; when the clock runs out it rises with whoever is on it, so the presser runs and jumps aboard. Up top, a 3.2 s switch on the right ledge opens the gate on the left one: one waits at the gate, the other presses and runs across the lift. |
+| 4 | **Trust Fall** | + Different eyes | Two ledges on each side are seen only by the partner. You describe them before anyone moves; once someone does, each has a few seconds to jump onto a ledge they can't see. The middle platforms and the door ledge are seen by both. |
+| 5 | **Keep Your Head** | + Don't touch | Exam so far. They climb onto one long ledge from opposite ends and must swap sides: one stands still, the other leaps over. Then he holds the button for her gate on the door ledge, and from up there she holds the button for his. |
+
+**How fast the tide is.** Speeds were set with the robot, by finding how much faster the tide could rise before the robot's own run fails: 12-1 3.75×, 12-2 1.75×, 12-3 2×, 12-4 4× or more, 12-5 2×. The rule (V5) asks for at least 1.25×. The robot never hesitates, so these numbers are the room a real team has for talking and small mistakes.
+
+| # | Rests at | Speed (tiles/s) | First deadline after the first move |
+|---|---|---|---|
+| 1 | y 15 | 0.3 | off the start ledge in about 4 s, off the side ledges in about 14 s |
+| 2 | y 16.4 | 0.2 | off the bottom in about 13 s (the stones need about 7 s to come back) |
+| 3 | y 16.2 | 0.2 | on the rising lift within about 12 s |
+| 4 | y 15 | 0.35 | onto the first hidden ledge in about 4 s |
+| 5 | y 15 | 0.25 | off the long ledge in about 17 s |
+
+**Fairness notes:**
+- In 12-4 the hidden things are ledges, never dangers; the tide is seen by both (V3, E2).
+- In 12-5 the only pass is a leap over a friend who stands still (T level rules).
+- 12-3's two clocks are also proven 0.5 s shorter (S5), together with the faster tide.
+
+**Proven winnable:** every level passes the route robot with all gems, also with the tide 1.25× faster, and 12-5 with Don't touch on. `npm run check:custom` confirms the solid corners and the visible resting poison for all five. **Star times** are first guesses (D12): 30, 35, 40, 45 and 45 s.
+
+**Still needed (D12):** a playthrough by two people on two phones. The tide speeds are the first thing to tune after it.
+
+#### Ten levels (2026-11-16, 16.7 "The road to 100 levels", H1, H4)
+Levels 12-6 to 12-10 are new and come after 12-5. Each builds on one of this chapter's own climbs (so the tide's rules already hold: solid bottom corners, the poison visible from the start) and adds more of the other mechanics, up to all five in 12-10.
+
+| # | Name | Based on | Mix | How it plays |
+|---|---|---|---|---|
+| 6 | **Dust and Tide** | 12-3 | R + C + S | The near half of the right ledge is dust. He walks out to the timed switch, the dust falls behind him, and he must wait for it to grow back while the poison climbs, then press and run back across it to the gate. |
+| 7 | **Blind Breath** | 12-6 | R + C + S + E | The same climb, and both switches he presses are seen only by her. |
+| 8 | **Two Clocks Rising** | 12-5 | R + S + T | Swap sides on the long ledge without touching, then open each other's gate on a 2.5 s clock: each runs through on the other's count. |
+| 9 | **Crumbling Trust** | 12-4 | R + C + E + T | Ledges only your partner sees, and every one crumbles under you: jump on and off without a pause as the poison climbs. |
+| 10 | **The Rising Dark** | 12-8 | all five | The exam: each timed switch is seen only by the partner, and four tiles of the long ledge are dust, so after she runs over them and leaps over him, he must jump the 4-tile gap she leaves. |
+
+**Time to spare (V5, measured):** the tide could rise 2× (12-6, 12-7), 2.5× (12-8, 12-10) and 4× (12-9) faster before the robot's own run fails; the rule asks for 1.25×. Every level with clocks also passes with every clock 0.5 s shorter, and every pass in a Don't touch level keeps at least 3.4 tiles of clearance.
+
+**Proven winnable:** all ten pass the route robot with every gem. **Star times** for 12-6 to 12-10 are first guesses (D12): 45, 50, 50, 45 and 60 s.
+
+
+#### Ten levels (2026-11-14, 16.7 "The road to 100 levels", H1–H2)
+The finale grew to 10 levels. The vault and the ending are now **9-10** (the table above calls it level 5); finishing it still lights up the heart and opens the Trials. Levels 9-5 to 9-9 are new.
+
+**Where the carvings are (H2).** Off the main path, a blank plaque until someone is near (G9). As in Chapter 7, in two of them the one who sees the carving is not the one standing next to it.
+
+| Level | Dots | Seen by | Where | Who goes there |
+|---|---|---|---|---|
+| 9-1 | 1 | both | on a shelf over his lane | Hot Boy |
+| 9-3 | 2 | Cool Girl | the corner behind the two starts | **Hot Boy** (it is behind him; Don't touch keeps her from walking through him) |
+| 9-6 | 3 | Hot Boy | on a shelf above her start | **Cool Girl** (only she is up there) |
+| 9-8 | 4 | both | on a shelf above the doors | either |
+
+9-2 and 9-4 lost their carvings; their maps are unchanged. 9-1 gained its one-tile shelf.
+
+**The five new levels** take the exam levels of Chapters 1–4, mirrored, and add the later chapters' ideas:
+
+| # | Name | Based on | Adds | How it plays |
+|---|---|---|---|---|
+| 5 | **Stones in the Gap** | 4-1 | Different eyes | Gate pillars over poison that only he sees; the button that opens his gate also lowers them, so she must be across first. |
+| 6 | **The Bridge Below** | 2-2 | Don't touch, carving 3 | He holds her gate from below; she crosses a bridge and walks over the lever that turns it into a hole, so he can climb up behind her. She is ahead, so she takes the far door. |
+| 7 | **Ferry in the Fog** | 1-5 | Don't touch, Different eyes | The ferry crosses while either button is held, and each one's button is seen only by the other. A lever off the ferry opens the gate to the door ledge; he climbs first, then she does. |
+| 8 | **The Old Machine** | 3-5 | Different eyes, carving 4 | The Deep Machine: a sinking lift, a lever behind water and one behind lava, stairs held by a button and locked by a lever only he sees. |
+| 9 | **The Summit Again** | 4-5 | Don't touch, Different eyes | One rune moves the pillars and both lifts; the pillars are hidden from her. Up top he takes the far door first, so she can rise beside him without touching. |
+
+**Kept fair:** in the Don't touch levels the two are never side by side closer than 4.67 tiles apart in height, and in 9-9 never side by side at all. The robot also proves the shortest winning route never reads a carving (3.5 to 4.9 tiles away; they light at 2.6).
+
+**Proven winnable:** all ten pass the route robot, every gem in 9-5 to 9-9 is collected on the way, and the vault still opens with 45 codes. **Star times** for 9-5 to 9-9 are first guesses (D12): 45, 45, 50, 70 and 70 s.
+### 16.16 Chapter 13: The Last Trial 🔒 (the Trials)
+*Built 2026-11-16.* Sketches: [`docs/levels/chapter13.png`](levels/chapter13.png). The end of the Trials and of the road to 100 levels (16.7, H5): **every mechanic in every level** (the rising tide, crumbling stones, timed switches, Different eyes and Don't touch), and **its own team code**: one carving in each of levels 1–4, off the main path, and the vault in 13-5 above the tide's highest point, after every danger. Once the team is in the vault nothing can hurt them, so a death never makes them enter the code again. A paid chapter (12.6). D2 and D11 are relaxed (R3).
+
+| # | Name | Based on | How it plays |
+|---|---|---|---|
+| 1 | **The Ascent** | 12-1 | Each side ledge has a 3 s timed switch for the other side's gate, seen only by the partner; the middle ledge is part dust; the doors moved to the right, so whoever arrives first goes up first and nobody passes anyone. |
+| 2 | **Two Shores** | 12-5, mirrored | She runs over the dust and leaps over him, he jumps the 4-tile gap she leaves; each climbs a side ledge only the other sees; each opens the other's gate on a 2.5 s clock. |
+| 3 | **Falling Stars** | 12-9, mirrored | Each starts standing on a timed switch that holds the other's first gate open, so you leave together; then hidden crumbling ledges up to the doors. |
+| 4 | **Mirror Image** | 13-1, mirrored | The Ascent turned around, with the poison rising faster. |
+| 5 | **The Last Trial** | new | Below: crumbling steps off the start corners (hers seen only by him) to the long ledge, where the poison stops. Her switch on the ledge (only he sees it) opens his trapdoor into the vault for 3 s; inside, his switch (only she sees it) opens hers. Above: the split vault of 6-10, out of the poison's reach. The code opens both gates onto the doors. |
+
+**Where the carvings are (H2):**
+
+| Level | Dots | Seen by | Where |
+|---|---|---|---|
+| 13-1 | 1 | both | on a shelf above his start (a climb nobody needs, with the poison coming) |
+| 13-2 | 2 | Cool Girl | on a shelf over the long ledge on his side: she sees it, he climbs to it |
+| 13-3 | 3 | Hot Boy | on a shelf above her first hidden ledge: he sees it, she jumps to it and on to her next ledge |
+| 13-4 | 4 | both | on the shelf above his start, now on the right |
+
+**Measured (fairness):** the tide could rise 2.25× (13-2) to 4× (13-3, 13-5) faster before the robot fails (the rule asks 1.25×); every level also passes with every clock 0.5 s shorter; every pass in these Don't touch levels keeps at least 3.4 tiles of clearance (13-1, 13-3, 13-4 and 13-5 never put the two side by side at all). The shortest winning route never reads a carving (2.7 to 4.1 tiles away; they light at 2.6; 13-2's is the closest call).
+
+**Notes from building 13-5:** each trapdoor stays an open hole for the rest of its 3 s clock, and half of each player's stones are across it, so you wait the 3 s before entering the code. His switch inside the vault sits at the far end of his half, away from the stones, so entering the code can never open her trapdoor under her. Even if someone steps on it again, falling through only lands on the long ledge above the poison: never a death, so the stones already entered stay down.
+
+**Proven winnable:** all five pass the route robot with every gem, and the vault opens with the test code and 45 others (one side only, repeats, 40 random), with the tide on. **Star times** are first guesses (D12): 50, 60, 45, 45 and 120 s.
 
 ---
 
@@ -1052,3 +1455,22 @@ We'll go through these in order and fill in a section for each.
 | 2026-11-06 | **Don't touch, Chapter 8 "The Steam Halls" and Chapter 9 "The Heart of the Temple" built (16.7, 16.11, 16.12).** The game now has **9 chapters and 45 levels**, all passing the route robot (9-5 with 46 codes). A touch counts online only when both phones saw it (a new message: `PROTOCOL` 2). Both chapters have their own background (steam pipes; the heart) and tune (a steam-engine chuff; the home theme slower). Finishing 9-5 plays the small ending. Changed while building, with the owner: 9-4 uses a trapdoor leapfrog instead of "two lifts passing", which could never be dangerous under T2. Store and marketing texts now say 45 levels. Still needed: a two-phone test of Don't touch (D12, T2); star times are guesses. |
 | 2026-11-06 | **Main menu designed (11.1, 11.2):** a main screen with the two characters drawn big in code (shading, rim light, shadows, each lighting the wall; tap them for a jump or a hair flip) over the furthest chapter's blurred background, and the modes as stone tiles: Co-op · Story and Level designer, plus Versus race and Bonus levels as "Soon". Co-op leads to Create / Join room (name box there and in Settings). A ⚙ Settings page: sound, music, vibration, name, full screen, Restore my purchase (app only, no Buy button), About / Privacy / Feedback links, version. Room links still join with no taps; leaving a room returns to the Co-op screen. No AI art (14.1, L4). |
 | 2026-11-10 | **Owner's playtest fixes:** (1) **Levers flip on each step-on, from either side**, and standing on one doesn't flip it again (10.1); vault levers in 6-5, 7-5 and 9-5 moved to where only one player goes, and 2-1's lever into its dead end. Play version `PROTOCOL` 3. (2) **A closing gate crushes anyone even a little under it**, never pushes them aside (the old forgiveness let the movement code shove a player through the gate); standing right beside it is still safe. (3) 2-4 three stars under 20 s. (4) 3-1's doors had no gap between them: Hot Boy's door moved one tile left. (5) Unreachable gems fixed: 9-1's two gems over the doors moved down, and 7-1's high blue gem moved one tile left (checked with the real physics). (6) Cool Girl's waiting pose is now **hands on hips** (owner's pick of 4 drawn options), and her sunglasses show one lens from the side. Also built: the solo test (`?solo`) for trying every level alone. |
+| 2026-11-10 | **The Trials proposed (16.7):** three extremely hard bonus chapters (10–12) for teams who finished the story. **Decided:** they live behind the "Bonus levels" tile and open when either player has finished 9-5 (not with stars); the story stays 9 chapters with its ending on 9-5; D2 and D11 are relaxed there on purpose; no password gates. **Still waiting for the owner** at that point: timed switches (Chapter 11) and the rising tide (Chapter 12). |
+| 2026-11-10 | **Crumbling stones approved and built (16.7, K1–K6):** a stone block with gold cracks shakes for 0.7 s when someone stands on it, falls away, and grows back 5 s later (never inside a character). Each phone starts the shake for its own character and tells the other; the host's world state repairs a lost message (`PROTOCOL` 4). Test room `?lab=crumble`; the route robot tests the rule with the real physics and on two simulated phones. Homemade levels get it later. No levels use it yet. |
+| 2026-11-10 | **Timed switches approved and built (16.7, S1–S6):** a switch that stays on for a set time after you step off, with a draining gold ring on the switch and on every gate and lift it powers. The host's clock counts online (`PROTOCOL` 5). **New level rule:** the route robot must also win a timed level with every clock 0.5 s shorter, so there is always room for lag. Test room `?lab=timer`. Homemade levels get it later. No levels use it yet. |
+| 2026-11-10 | **The rising tide approved and built (16.7, V1–V6):** violet poison rises from the bottom at a steady speed once the first player moves, up to a set height; it kills when the feet are 0.3 tiles under. Tide levels keep both bottom 4 × 4 corners solid (5.3). The guest follows the host's surface (`PROTOCOL` 6). **New level rule:** the route robot must also win a tide level with the tide 1.25× faster. Test room `?lab=tide`. **All three Trials mechanics are now built; next is Chapter 10.** |
+| 2026-11-10 | **Chapter 10 "The Crumbling Wing" built (16.13):** Fragile Bridge, Give Way, Steam on Thin Stone (Don't touch), Blind Bridge (Different eyes), The Collapse (exam). All five pass the route robot with every gem. It is a **bonus chapter**: `bonus` on `CHAPTERS`; the "Bonus levels" tile on the main screen is live and opens the map on the Trials; the story still says 9 chapters, "Next level" stops at 9-5, and the ending stays on 9-5 (`FINALE_ID`). Its own background (a collapsed wing) and tune (9.3). Changed while building: no pit is 5 tiles wide (7.7), so 10-1's first bridge is 6 and 10-4 has two wide pits instead of three. Star times are guesses; a two-phone playthrough is still needed. |
+| 2026-11-12 | **The road to 100 levels decided (16.7, H1–H5):** Chapters 6–12 grow to 10 levels each and a new Chapter 13 "The Last Trial" has 5, for 100 levels in 13 chapters (story 65, Trials 35). In the password chapters (6, 7, 9) the code stays 4 animals, but the 4 carvings move to hidden side spots in 4 of levels 1–9 and the vault moves to level 10. Nobody loses progress: a level also stays open if any later level is already finished. From Chapter 10 on, mechanics are added one at a time until all are on at once in Chapter 13. Not built yet. |
+| 2026-11-12 | **Chapter 11 "The Hourglass Hall", levels 1–5 built (16.14):** Run!, On Three, Thin Time (crumbling stones), Count Me Down (Different eyes), The Hourglass (Don't touch). All pass the route robot with every gem, also with every clock 0.5 s shorter. Its own background (giant hourglasses) and tune (9.3). Lessons added to 16.14: corridor switches are pressed by anyone walking over them, so a switch for one chosen moment goes on a shelf; never leave only the tiles under a gate to wait on. Known cost: a failed count-in in 11-2 means a restart from the pause menu. |
+| 2026-11-12 | **Chapter 12 "The Rising Dark", levels 1–5 built (16.15):** Higher Ground, Burning Bridges (crumbling stones), Last Breath (timed switches), Trust Fall (Different eyes), Keep Your Head (Don't touch). All pass the route robot with every gem, also with the tide 1.25× faster. Each tide's speed was set from how much faster it could be before the robot fails (1.75× to 4×). Its own background (the sinking temple) and tune (9.3). All three Trial chapters now have their first five levels: 15 bonus levels, 60 official levels in total. |
+| 2026-11-14 | **Ready for 10-level chapters (16.7, "The road to 100 levels", step 3):** the vaults moved to the end of their chapters (6-10, 7-10, 9-10) with 6-5…6-9, 7-5…7-9 and 9-5…9-9 planned but not built; saved vault results move with them once per phone; a level stays open if it or any later level is finished, so no old save loses anything; the ending is on 9-10; the map has two rows for a 10-level chapter, and on a sideways phone the 13 chapter tabs slide in one row. Tested with pretend saves in `check:custom` and by hand with an old save. |
+| 2026-11-14 | **Chapter 6 has 10 levels (16.9):** new 6-5 Crossed Keys, 6-6 The Weighing Room, 6-7 Three Gates, 6-8 The Drowned Archive, 6-9 The Last Stair, each built from earlier chapters' mechanisms. The 4 carvings moved off the main path into 6-1, 6-4, 6-6 and 6-8 (H2), and **a carving now shows its animal and dots only while someone is near** (G9 changed): from far away it is a blank plaque. This applies to every carving, also in Chapters 7 and 9 and in homemade levels. The robot proves each carving can be reached and that the shortest route never reads it. |
+| 2026-11-14 | **Chapter 7 has 10 levels (16.10):** new 7-5 Steps in the Dark, 7-6 Through the Fire, 7-7 Mind the Floor, 7-8 His Eyes Only, 7-9 Trust, Turned Around, built on Chapter 5's layouts with one more idea each (two with the roles swapped). The carvings moved off the main path into 7-1, 7-4, 7-6 and 7-8 (W1 kept). New for this chapter: in 7-6 and 7-8 the player who sees a carving can't reach it, so they guide the other there and read it when it lights up. |
+| 2026-11-14 | **Chapter 8 has 10 levels (16.11):** new 8-6 The Tower, Apart (an ordering puzzle), 8-7 Up the Stairs, 8-8 The Balance, 8-9 The Hidden Shelf and 8-10 Blind Steam (the last two with Different eyes). Every pass is a leap over a friend who stands still, measured by the robot at 2.9+ tiles of clearance. **New Don't touch rule:** no leap over a friend under a ceiling lower than 5 tiles (a low ceiling cuts the jump short). |
+| 2026-11-14 | **Chapter 9 has 10 levels (16.12), so the story is complete at 65 levels:** new 9-5 Stones in the Gap, 9-6 The Bridge Below, 9-7 Ferry in the Fog, 9-8 The Old Machine, 9-9 The Summit Again (the exams of Chapters 1–4, mirrored, with hidden things, Don't touch and carvings added). The carvings moved off the main path into 9-1, 9-3, 9-6 and 9-8. The ending stays on 9-10. |
+| 2026-11-14 | **Chapter 10 has 10 levels (16.13):** new 10-6 Dust Relay, 10-7 Hold On a Second, 10-8 Blind Dust, 10-9 Steam and Dust and 10-10 The Last Collapse: proven Don't touch and Different eyes levels with crumbling stones added, up to an exam with all three. A crumbling shelf to wait on gives the runner about 0.6 s after landing to pass under; measured by the robot. The Don't touch ceiling rule is corrected to 5 tiles (8-4 leaps safely under 5). |
+| 2026-11-16 | **Chapter 11 has 10 levels (16.14):** new 11-6 Close Behind (a single-file run across a crumbling bridge on one press), 11-7 Blind Seconds, 11-8 Dust Hourglass, 11-9 Hidden Hourglass and 11-10 The Last Hourglass (all four Trial and story mechanics with the clocks). 11-6's start window is about half a second, measured by the robot. |
+| 2026-11-16 | **Chapter 12 has 10 levels (16.15), 95 in the game:** new 12-6 Dust and Tide, 12-7 Blind Breath, 12-8 Two Clocks Rising, 12-9 Crumbling Trust and 12-10 The Rising Dark (all five Trial and story mechanics with the tide). The tide has 2× to 4× time to spare in each. Left on the road to 100: Chapter 13 and the wrap-up. |
+| 2026-11-16 | **H5 decided:** Chapter 13 gets the password gate after all: its own team code, carvings in 13-1 to 13-4, and the vault in 13-5 placed above the tide's highest point, after every danger, so a death never makes the team enter the code again (the one exception to R4). |
+| 2026-11-16 | **Chapter 13 "The Last Trial" built (16.16): the game has 100 levels.** The Ascent, Two Shores, Falling Stars, Mirror Image and The Last Trial, each with every mechanic (tide, crumbling stones, timed switches, Different eyes, Don't touch), and the chapter's own team code: carvings in 13-1 to 13-4, the vault in 13-5 above the tide's highest point. Its own background (the inner sanctum) and tune (the home theme at full speed). All pass the route robot; the vault with 45 codes. |
+| 2026-11-16 | **The road to 100 levels is finished.** Store and marketing texts updated to 100 levels in 13 chapters (a 65-level story and 35 Trials), store screenshot 4 regenerated, and everything pushed to `main`. The GitHub test APK now shows the solo test (🧪 Test levels alone) in Settings, built with `VITE_TEST_BUILD=1`; the Google Play build stays without it. Next: playtests, star times, tuning. |

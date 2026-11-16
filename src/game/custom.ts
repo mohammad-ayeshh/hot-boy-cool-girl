@@ -77,7 +77,10 @@ function mechList(m: MechDef): (string | number)[] {
   const eye = m.seen ? [m.seen === 'fire' ? 'h' : 'c'] : [];
   if (m.kind === 'stone') return ['s', m.x, m.y, ANIMALS.indexOf(m.animal), ...eye];
   if (m.kind === 'carving') return ['k', m.x, m.y, ANIMALS.indexOf(m.animal), m.dots, ...eye];
+  // crumbling stones (16.7): official levels only for now, so mechFromList() doesn't read them back (K6)
+  if (m.kind === 'crumble') return ['x', m.x, m.y, m.w, ...eye];
   const r = RUNES.indexOf(m.rune);
+  if (m.kind === 'timer') return ['t', m.x, m.y, r, m.secs, ...eye]; // official levels only for now (S6)
   if (m.kind === 'button') return ['b', m.x, m.y, r, ...eye];
   if (m.kind === 'lever') return ['l', m.x, m.y, r, ...eye];
   if (m.kind === 'platform') return ['p', m.x, m.y, m.w, m.to[0], m.to[1], r, ...eye];

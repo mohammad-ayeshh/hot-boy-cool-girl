@@ -6,7 +6,7 @@
 //  Climb up via the 3-tile block under the 3-tile gap.
 //  Bottom-left and bottom-right 4 × 4 corners stay plain floor/wall (thumb zones, 5.3).
 import { parseLevel } from './level.ts';
-import type { MechDef, Pattern } from './mechanisms';
+import type { MechDef, Pattern, Tide } from './mechanisms';
 
 export const LAB_ROWS = [
   '################################', // 0
@@ -75,3 +75,96 @@ export const VAULT_MECHS: MechDef[] = [
 export const VAULT_PATTERN: Pattern = { code: ['frog', 'bat', 'bat', 'monkey'], rune: 'star' };
 
 export const vaultLevel = () => parseLevel(VAULT_ROWS, VAULT_MECHS, undefined, VAULT_PATTERN);
+
+// The crumbling-stones test room (16.7, K1–K6), at ?lab=crumble. A 12-tile crumbling bridge over poison: run across
+// and it falls away behind you; stand still and you go down with it; about 5 s later it grows back. On the right,
+// two single crumbling stones are steps up to a gem shelf: land, and jump again before the stone gives way.
+export const CRUMBLE_ROWS = [
+  '################################', // 0
+  '#..............................#', // 1
+  '#..............................#', // 2
+  '#..............................#', // 3
+  '#..............................#', // 4
+  '#............................rb#', // 5   gems on the shelf
+  '#............................###', // 6   the shelf
+  '#..............................#', // 7
+  '#..............................#', // 8   second stepping stone (col 27)
+  '#..............................#', // 9
+  '#..............................#', // 10  first stepping stone (col 24)
+  '#..............................#', // 11
+  '#.h.c..........................#', // 12  starts
+  '##########............##########', // 13  the bridge fills the gap (cols 10–21)
+  '##########PPPPPPPPPPPP##########', // 14  poison under it
+  '################################', // 15
+  '################################', // 16
+  '################################', // 17
+] as const;
+
+export const CRUMBLE_MECHS: MechDef[] = [
+  { kind: 'crumble', x: 10, y: 13, w: 12 },
+  { kind: 'crumble', x: 24, y: 10, w: 1 },
+  { kind: 'crumble', x: 27, y: 8, w: 1 },
+];
+
+export const crumbleLevel = () => parseLevel(CRUMBLE_ROWS, CRUMBLE_MECHS);
+
+// The timed-switch test room (16.7, S1–S6), at ?lab=timer. The first switch (3 s) opens the gate: step off and
+// run through before the ring on the gate runs out (stand under it too long and it crushes). The second switch
+// (4 s) raises the lift to the shelf: put one character on the lift, press with the other, step off, and the rider
+// has 4 s to walk onto the shelf before the lift sinks again.
+export const TIMER_ROWS = [
+  '################################', // 0
+  '#..............................#', // 1
+  '#..............................#', // 2
+  '#..............................#', // 3
+  '#..............................#', // 4
+  '#..............................#', // 5
+  '#..............................#', // 6
+  '#..............................#', // 7
+  '#..........................rb..#', // 8   gems on the shelf
+  '#.......................########', // 9   the shelf
+  '#.......................########', // 10
+  '#.......................########', // 11
+  '#.......................########', // 12
+  '#.......................########', // 13
+  '#.h.c...................########', // 14  starts; switches at cols 7 and 17, the gate at col 13, the lift at 21–22
+  '################################', // 15
+  '################################', // 16
+  '################################', // 17
+] as const;
+
+export const TIMER_MECHS: MechDef[] = [
+  { kind: 'timer', x: 7, y: 14, rune: 'circle', secs: 3 },
+  { kind: 'gate', x: 13, y: 10, w: 1, h: 5, rune: 'circle' },
+  { kind: 'timer', x: 17, y: 14, rune: 'triangle', secs: 4 },
+  { kind: 'platform', x: 21, y: 14, w: 2, to: [21, 9], rune: 'triangle' },
+];
+
+export const timerLevel = () => parseLevel(TIMER_ROWS, TIMER_MECHS);
+
+// The rising-tide test room (16.7, V1–V6), at ?lab=tide. Poison rests in the pit until someone moves, then climbs:
+// over the floor, the middle ledge and the side ledges, and stops just under the top platform with the gems.
+// Both bottom 4 × 4 corners are solid stone, so no poison edge is ever under a thumb (5.3).
+export const TIDE_ROWS = [
+  '################################', // 0
+  '#..............................#', // 1
+  '#..............................#', // 2
+  '#..............................#', // 3
+  '#.............r..b.............#', // 4   gems on the top platform
+  '#.........############.........#', // 5   the top platform: the tide stops half a tile under its top
+  '#..............................#', // 6
+  '#..............................#', // 7
+  '#....#####............#####....#', // 8   side ledges
+  '#..............................#', // 9
+  '#..........##########..........#', // 10  the middle ledge
+  '#..............................#', // 11
+  '#....h....................c....#', // 12  starts
+  '############........############', // 13  the floor, with the pit in the middle
+  '############........############', // 14
+  '############........############', // 15
+  '################################', // 16
+  '################################', // 17
+] as const;
+export const TIDE_LAB: Tide = { from: 14.2, to: 5.5, speed: 0.4 };
+
+export const tideLevel = () => ({ ...parseLevel(TIDE_ROWS), tide: TIDE_LAB });

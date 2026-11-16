@@ -15,6 +15,9 @@ function hash(x: number, y: number, k = 0): number {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
+/** Chapter 11's giant hourglasses: middle x, middle y, half width (drawn in two parts: the glass, then its sand). */
+const HOURGLASSES = [[190, 250, 70], [520, 190, 54], [840, 280, 82]] as const;
+
 /** The still part of the back layers (9.1 layers 6–3): drawn once per chapter. */
 export function drawBackground(g: Graphics, th: Theme = THEMES[0]): void {
   g.clear();
@@ -184,6 +187,92 @@ const SCENERY: Record<Theme['scenery'], (g: Graphics, th: Theme) => void> = {
       else { g.circle(x, y, r * 0.8).stroke(line); g.moveTo(x, y - r * 0.8).lineTo(x, y + r * 0.8).stroke(line); }
     }
   },
+  // Ch 10 (the Trials): a collapsed wing: snapped pillars, fallen column drums, a cracked back wall and rubble
+  // heaps (dust and pebbles keep falling: drawScenery)
+  ruins(g, th) {
+    // cracks running down the back wall
+    for (let i = 0; i < 6; i++) {
+      let x = 80 + hash(i, 240) * (W - 160), y = hash(i, 241) * H * 0.3;
+      g.moveTo(x, y);
+      for (let k = 0; k < 7; k++) { x += (hash(i * 9 + k, 242) - 0.5) * 70; y += 30 + hash(i * 9 + k, 243) * 50; g.lineTo(x, y); }
+      g.stroke({ width: 2 + hash(i, 244) * 2, color: th.sky[1], alpha: 0.8 });
+    }
+    // pillars snapped at different heights: some still hold the roof, some stand as stumps
+    for (let i = 0; i < 6; i++) {
+      const x = 50 + i * (W / 6) + hash(i, 245) * 50, w = 44 + hash(i, 246) * 26;
+      const whole = i % 3 === 1, top = whole ? 0 : H * (0.3 + hash(i, 247) * 0.4);
+      g.poly([x, H, x, top + 22, x + w * 0.3, top, x + w * 0.55, top + 16, x + w * 0.8, top + 4, x + w, top + 26, x + w, H]).fill({ color: th.far, alpha: 0.75 });
+      g.rect(x + 4, top + 26, 3, H - top - 26).fill({ color: th.farEdge, alpha: 0.6 });
+      for (let k = 0; k < 9; k++) if (40 + k * 64 > top + 30) g.rect(x - 4, 40 + k * 64, w + 8, 6).fill({ color: th.sky[1], alpha: 0.8 });
+      // the piece that broke off lies tilted beside its stump
+      if (!whole) {
+        const bx = x + w + 20 + hash(i, 248) * 30, by = H - 96 - hash(i, 249) * 30, a = 0.25 + hash(i, 250) * 0.5, len = 90 + hash(i, 251) * 60;
+        const c = Math.cos(a), sn = Math.sin(a), hw = w * 0.45;
+        g.poly([bx - sn * hw, by + c * hw, bx + c * len - sn * hw, by - sn * len + c * hw, bx + c * len + sn * hw, by - sn * len - c * hw, bx + sn * hw, by - c * hw])
+          .fill({ color: th.far, alpha: 0.8 }).stroke({ width: 2, color: th.farEdge, alpha: 0.5 });
+      }
+    }
+    // rubble heaps along the bottom
+    for (let i = 0; i < 9; i++) {
+      const x = hash(i, 252) * W, r = 40 + hash(i, 253) * 70;
+      g.poly([x - r, H, x - r * 0.4, H - r * 0.5, x + r * 0.1, H - r * 0.35, x + r * 0.5, H - r * 0.6, x + r, H]).fill({ color: lerpColor(th.far, th.sky[1], 0.4), alpha: 0.9 });
+    }
+  },
+  // Ch 11 (the Trials): a hall of giant hourglasses in stone frames, with sand heaped along the floor (the sand
+  // keeps running: drawScenery)
+  hourglass(g, th) {
+    pillars(g, th, 3, 50, 270);
+    for (const [cx, cy, r] of HOURGLASSES) {
+      const h = r * 1.5;
+      // frame: two bars and four posts
+      g.rect(cx - r - 10, cy - h - 12, r * 2 + 20, 12).fill({ color: th.far, alpha: 0.9 });
+      g.rect(cx - r - 10, cy + h, r * 2 + 20, 12).fill({ color: th.far, alpha: 0.9 });
+      for (const sx of [-1, 1]) g.rect(cx + sx * (r + 2) - 3, cy - h, 6, h * 2).fill({ color: th.far, alpha: 0.8 });
+      // glass: two bulbs meeting at a narrow neck
+      g.poly([cx - r, cy - h, cx + r, cy - h, cx + 5, cy, cx + r, cy + h, cx - r, cy + h, cx - 5, cy]).fill({ color: th.sky[1], alpha: 0.55 }).stroke({ width: 3, color: th.farEdge, alpha: 0.6 });
+    }
+    // sand heaps along the bottom
+    for (let i = 0; i < 8; i++) {
+      const x = hash(i, 271) * W, r = 70 + hash(i, 272) * 110;
+      g.poly([x - r, H, x - r * 0.3, H - r * 0.28, x, H - r * 0.34, x + r * 0.35, H - r * 0.26, x + r, H]).fill({ color: lerpColor(th.far, th.farEdge, 0.5), alpha: 0.9 });
+    }
+  },
+  // Ch 12 (the Trials): the temple is sinking: leaning pillars, a broken arch, and old tide marks high on the back
+  // wall, each with dried drips under it (a low mist drifts: drawScenery). Dark grey-teal, never violet.
+  drowned(g, th) {
+    for (const y of [70, 150, 250, 380]) {
+      g.rect(0, y, W, 3).fill({ color: th.farEdge, alpha: 0.5 });
+      for (let i = 0; i < 26; i++) {
+        const x = hash(i, 280 + y) * W;
+        g.rect(x, y + 3, 2, 8 + hash(i, 281 + y) * 34).fill({ color: th.farEdge, alpha: 0.3 });
+      }
+    }
+    for (let i = 0; i < 5; i++) {
+      const x = 90 + i * (W / 5) + hash(i, 282) * 60, w = 46 + hash(i, 283) * 24, lean = (hash(i, 284) - 0.5) * 150;
+      g.poly([x, H, x + lean, 0, x + lean + w, 0, x + w, H]).fill({ color: th.far, alpha: 0.75 });
+      g.moveTo(x + 5, H).lineTo(x + lean + 5, 0).stroke({ width: 3, color: th.farEdge, alpha: 0.5 });
+      for (let k = 1; k < 8; k++) {
+        const f = k / 8;
+        g.rect(x + lean * (1 - f) - 4, H * f, w + 8, 6).fill({ color: th.sky[1], alpha: 0.8 });
+      }
+    }
+    // half of a great arch, the rest fallen
+    g.moveTo(W * 0.56, H).lineTo(W * 0.56, H * 0.42).quadraticCurveTo(W * 0.6, H * 0.16, W * 0.74, H * 0.13).stroke({ width: 26, color: th.far, alpha: 0.8 });
+  },
+  // Ch 13 (the Trials): the inner sanctum: one great round window far behind, its spokes carved with faint marks of
+  // every area on the way, between two rows of tall plain columns (the window breathes slowly: drawScenery)
+  sanctum(g, th) {
+    pillars(g, th, 6, 34, 290);
+    const cx = W / 2, cy = H * 0.4;
+    g.circle(cx, cy, 250).fill({ color: th.sky[1], alpha: 0.6 }).stroke({ width: 6, color: th.farEdge, alpha: 0.5 });
+    for (const r of [200, 150, 90]) g.circle(cx, cy, r).stroke({ width: 3, color: th.farEdge, alpha: 0.4 });
+    for (let k = 0; k < 13; k++) {
+      const a = -Math.PI / 2 + (k / 13) * Math.PI * 2;
+      g.moveTo(cx + Math.cos(a) * 90, cy + Math.sin(a) * 90).lineTo(cx + Math.cos(a) * 250, cy + Math.sin(a) * 250).stroke({ width: 3, color: th.farEdge, alpha: 0.35 });
+      const x = cx + Math.cos(a + Math.PI / 13) * 175, y = cy + Math.sin(a + Math.PI / 13) * 175;
+      g.circle(x, y, 9).stroke({ width: 2, color: th.farEdge, alpha: 0.3 });
+    }
+  },
   // Ch 7: a cold cave: hanging rocks and rising ones, far and near (the fog drifts: drawScenery)
   caves(g, th) {
     const layers = [[0, th.far, 22], [1, lerpColor(th.far, th.sky[1], 0.5), 16]] as const;
@@ -236,6 +325,39 @@ export function drawScenery(g: Graphics, th: Theme, time: number, glow = 0): voi
       }
       break;
     }
+    case 'sanctum': {
+      // the window's heart breathes: a very slow, dim swell
+      const b = 0.5 + 0.5 * Math.sin(time * 0.7);
+      g.circle(W / 2, H * 0.4, 80 + 10 * b).fill({ color: 0x8f8f9c, alpha: 0.03 + 0.03 * b });
+      break;
+    }
+    case 'drowned':
+      fog(6, H * 0.45, H * 0.98, 7, 0x7d979e, 0.04);
+      break;
+    case 'hourglass':
+      // each glass runs out over a minute or so and turns over: the top heap sinks, the bottom one grows, a thin
+      // stream falls through the neck
+      HOURGLASSES.forEach(([cx, cy, r], i) => {
+        const period = 50 + i * 17, f = ((time + i * 13) % period) / period, h = r * 1.5;
+        const color = lerpColor(th.farEdge, 0x8a8062, 0.35);
+        const top = h * 0.75 * (1 - f), bot = h * 0.75 * f;
+        if (top > 2) g.poly([cx - (r * top) / h, cy - top, cx + (r * top) / h, cy - top, cx, cy - 2]).fill({ color, alpha: 0.55 });
+        if (bot > 2) g.poly([cx - r * 0.85, cy + h - 2, cx, cy + h - 2 - bot, cx + r * 0.85, cy + h - 2]).fill({ color, alpha: 0.55 });
+        g.rect(cx - 1, cy, 2, h - bot).fill({ color, alpha: 0.35 + 0.15 * Math.sin(time * 9 + i) });
+      });
+      break;
+    case 'ruins':
+      // thin streams of dust trickle from the cracked roof, and now and then a pebble drops
+      for (let i = 0; i < 5; i++) {
+        const x = 90 + hash(i, 260) * (W - 180), period = 5 + hash(i, 261) * 6, t = (time + hash(i, 262) * period) % period;
+        if (t < 2.2) {
+          const a = Math.sin((t / 2.2) * Math.PI);
+          g.rect(x, 0, 2 + hash(i, 263) * 2, H * (0.25 + hash(i, 264) * 0.35)).fill({ color: 0xa39a86, alpha: 0.07 * a });
+        }
+        const pp = 3.5 + hash(i, 265) * 5, pt = (time + hash(i, 266) * pp) % pp;
+        if (pt < 1.2) g.circle(x + 60 + hash(i, 267) * 80, pt * pt * 420, 2.5).fill({ color: th.farEdge, alpha: 0.7 });
+      }
+      break;
     case 'summit':
       for (let i = 0; i < 14; i++) {
         const a = 0.5 + 0.5 * Math.sin(time * (0.8 + hash(i, 210)) + i * 2.1);

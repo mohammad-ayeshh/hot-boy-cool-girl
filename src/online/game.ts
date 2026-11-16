@@ -6,7 +6,7 @@ import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
 import type { DeathCause, Elem } from '../game/level';
 import type { MechSync } from '../game/mechanisms';
-import { ALL_LEVELS, CHAPTERS, chapterOf, getLevel, levelData, nextLevel, riddleFor, type LevelDef } from '../game/levels';
+import { ALL_LEVELS, BONUS_CHAPTERS, CHAPTERS, FINALE_ID, STORY_CHAPTERS, chapterOf, getLevel, levelData, nextLevel, riddleFor, type LevelDef } from '../game/levels';
 import { blankLevel, decodeLink, encodeLink, isCustomId, isVerified, levelHash, markVerified, newId, sanitize, type CustomLevel } from '../game/custom';
 import { checkLevel, hasErrors } from '../game/levelCheck';
 import { deleteLevel, forgetRoomLevels, getMyLevel, listLevels, rememberRoomLevel, roomLevel, roomLevels, saveLevel } from '../game/myLevels';
@@ -73,6 +73,8 @@ export async function startGame(): Promise<void> {
   let versionProblem = '';
   // level designer (16.3)
   let mapTab: number | 'mine' = 1; // a chapter number, or the homemade levels
+  /** The room was opened from the "Bonus levels" tile: the map opens on the first Trial (16.7, R1). */
+  let wantBonus = false;
   let editor: { close(): void } | null = null;
   let importLevel: CustomLevel | null = null;
   let pendingDelete = '';
@@ -91,6 +93,8 @@ export async function startGame(): Promise<void> {
       localLever: (i, on) => send({ t: 'lever', n: round, i, on }),
       // Symbol stones (16.7): the guest asks the host; the host's state goes out at once (13.1).
       localStone: (i) => { if (session.isHost) sendWorld(); else send({ t: 'stone', n: round, i }); },
+      // Crumbling stones (16.7, K5): my character stood on block i; it starts to shake on the partner's phone too.
+      localCrumble: (i) => send({ t: 'crumble', n: round, i }),
       // Don't touch (16.7, T2): tell the partner's phone (a few times a second while it lasts); burst only if it saw one too.
       localTouch: () => {
         if (screen !== 'play') return;
@@ -216,6 +220,8 @@ export async function startGame(): Promise<void> {
   // ---------------------------------------------------------------- screens
   function show(s: Screen): void {
     screen = s;
+    // came in through the "Bonus levels" tile: the first look at the map is the first Trial's tab (16.7, R1)
+    if (s === 'map' && wantBonus && BONUS_CHAPTERS.length) { mapTab = BONUS_CHAPTERS[0].n; wantBonus = false; }
     const playing = s === 'play';
     if (s !== 'editor' && editor) { editor.close(); editor = null; goHomeStage(); }
     if (s !== 'designer') pendingDelete = '';
@@ -247,7 +253,18 @@ export async function startGame(): Promise<void> {
     else if (screen === 'settings') scr.innerHTML = settingsHtml();
     else if (screen === 'invite') scr.innerHTML = inviteHtml();
     else if (screen === 'lobby') scr.innerHTML = lobbyHtml();
-    else if (screen === 'map') scr.innerHTML = mapHtml();
+    else if (screen === 'map') {
+      // the chapter tabs may be one sliding row (short screens): keep where it was slid to, and keep the open tab in view
+      const slid = scr.querySelector<HTMLElement>('.map-head .tabs')?.scrollLeft ?? 0;
+      scr.innerHTML = mapHtml();
+      const tabs = scr.querySelector<HTMLElement>('.map-head .tabs'), on = tabs?.querySelector<HTMLElement>('button.on');
+      if (tabs) {
+        tabs.scrollLeft = slid;
+        if (on && (on.offsetLeft < tabs.scrollLeft || on.offsetLeft + on.offsetWidth > tabs.scrollLeft + tabs.clientWidth)) {
+          tabs.scrollLeft = on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2;
+        }
+      }
+    }
     else if (screen === 'results') scr.innerHTML = resultsHtml();
     else if (screen === 'designer') scr.innerHTML = designerHtml();
     else if (screen === 'import') scr.innerHTML = importHtml();
@@ -263,11 +280,13 @@ export async function startGame(): Promise<void> {
     return `<div class="menu-main">
       <h1 class="logo"><span class="hot">Hot Boy</span> <span class="amp">&amp;</span> <span class="cool">Cool Girl</span></h1>
       <p class="tagline">A co-op puzzle game for two friends, each on their own phone.</p>
-      <button class="mode mode-big" data-act="coop"><span class="mode-ico">▶</span><span class="mode-txt"><b>Co-op</b><small>Story · ${CHAPTERS.length} chapters</small></span></button>
+      <button class="mode mode-big" data-act="coop"><span class="mode-ico">▶</span><span class="mode-txt"><b>Co-op</b><small>Story · ${STORY_CHAPTERS.length} chapters</small></span></button>
       <div class="mode-row">
         <button class="mode" data-act="designer"><span class="mode-ico">🛠</span><b>Level designer</b></button>
         ${soon('versus', '⚔', 'Versus race')}
-        ${soon('bonus', '⭐', 'Bonus levels')}
+        ${BONUS_CHAPTERS.length
+          ? '<button class="mode" data-act="bonus"><span class="mode-ico">⭐</span><b>Bonus levels</b></button>'
+          : soon('bonus', '⭐', 'Bonus levels')}
       </div>
       <div class="status" id="status"></div>
       ${ios ? '<p class="small">Tip: Share → “Add to Home Screen” plays fullscreen and keeps your progress safe.</p>' : ''}
@@ -305,8 +324,9 @@ export async function startGame(): Promise<void> {
     const extras = [
       device.isStandalone() ? '' : `<button data-act="fullscreen">${fsLabel()}</button>`,
       canBuy() && paywallOn() ? '<button data-act="restore">Restore my purchase</button>' : '',
-      // the owner's solo test (src/lab/soloTest.ts): shown in dev, or once ?solo was opened on this device
-      import.meta.env.DEV || isTester() ? '<a class="btn" href="?solo">🧪 Test levels alone</a>' : '',
+      // the owner's solo test (src/lab/soloTest.ts): shown in dev, in the GitHub test APK (VITE_TEST_BUILD, set by
+      // .github/workflows/android-apk.yml; never in the Google Play build), or once ?solo was opened on this device
+      import.meta.env.DEV || import.meta.env.VITE_TEST_BUILD === '1' || isTester() ? '<a class="btn" href="?solo">🧪 Test levels alone</a>' : '',
     ].join('');
     return `<div class="panel settings">
       <div class="map-head"><button data-act="tohome">← Back</button><h2>⚙ Settings</h2><span></span></div>
@@ -354,7 +374,11 @@ export async function startGame(): Promise<void> {
     const mine = Object.keys(progress);
     const ch = CHAPTERS.find((c) => c.n === mapTab) ?? CHAPTERS[0];
     // the path zigzags the other way in even chapters, so each chapter's map looks a little different
-    const spots = [[9, 60], [29, 27], [50, 57], [71, 25], [91, 52]].map(([x, y]) => [x, ch.n % 2 ? y : 85 - y]);
+    // a 10-level chapter (16.7, H1) gets two rows: 1–5 left to right on top, 6–10 back right to left below
+    const tall = ch.levels.length > 5;
+    const spots = tall
+      ? [[9, 30], [29, 20], [50, 30], [71, 20], [91, 30], [91, 76], [71, 66], [50, 76], [29, 66], [9, 76]]
+      : [[9, 60], [29, 27], [50, 57], [71, 25], [91, 52]].map(([x, y]) => [x, ch.n % 2 ? y : 85 - y]);
     const path = spots.map(([x, y], i) => (i ? 'L' : 'M') + x + ' ' + y).join(' ');
     const nodes = ch.levels.map((l, i) => {
       const open = l.rows !== null && isUnlocked(l.id, mine, partnerDone);
@@ -371,9 +395,9 @@ export async function startGame(): Promise<void> {
     const idea = !custom && pl && 'idea' in pl && pl.idea ? ` New here: ${pl.idea}.` : '';
     const hint = custom && pl && !isVerified(pl as CustomLevel) ? ' Finish it together to give it its ✅.' : idea;
     return `<div class="panel wide map-panel">
-      <div class="map-head"><button data-act="tolobby">← Characters</button><div class="tabs">${CHAPTERS.map((c) => tab(c.n, `Ch ${c.n}`)).join('')}${tab('mine', '🛠 Mine')}</div><span class="small">Room ${session.code}</span></div>
+      <div class="map-head"><button data-act="tolobby">← Characters</button><div class="tabs">${CHAPTERS.map((c) => tab(c.n, c.bonus ? `⭐ ${c.n}` : `Ch ${c.n}`)).join('')}${tab('mine', '🛠 Mine')}</div><span class="small">Room ${session.code}</span></div>
       ${mapTab !== 'mine'
-        ? `<div class="map-chapter">Chapter ${ch.n} · ${ch.name}</div>${riddleFor(ch, myElem) ? `<div class="map-riddle">${riddleFor(ch, myElem)}</div>` : ''}<div class="temple-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>`
+        ? `<div class="map-chapter">${ch.bonus ? '⭐ The Trials · ' : ''}Chapter ${ch.n} · ${ch.name}</div>${ch.bonus ? '<div class="map-riddle">For teams who reached the heart of the temple. Very hard, never unfair.</div>' : riddleFor(ch, myElem) ? `<div class="map-riddle">${riddleFor(ch, myElem)}</div>` : ''}<div class="temple-map ${tall ? 'tall' : ''}"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path}" /></svg>${nodes}</div>`
         : mineHtml()}
       <div class="row">
         <button class="${readyMe ? 'secondary' : 'primary'} big" data-act="ready">${readyMe ? 'Ready ✓ (tap to undo)' : `Ready: ${pl?.name ?? ''}`}</button>
@@ -406,7 +430,7 @@ export async function startGame(): Promise<void> {
 
   /** The last official level (16.12): its finish plays the small ending. */
   function isFinale(): boolean {
-    return !isCustomId(level.id) && level.id === ALL_LEVELS[ALL_LEVELS.length - 1].id;
+    return !isCustomId(level.id) && level.id === FINALE_ID;
   }
 
   function resultsHtml(): string {
@@ -524,7 +548,9 @@ export async function startGame(): Promise<void> {
     if (!el) return;
     const act = el.dataset.act;
     if (act === 'create') void create();
-    else if (act === 'coop') show('coop');
+    else if (act === 'coop') { wantBonus = false; show('coop'); }
+    // Bonus levels (16.7, R1–R2): the same rooms as the story; the map then opens on the Trials
+    else if (act === 'bonus') { wantBonus = true; toast('⭐ The Trials: very hard levels. They open when you or your friend finished the story.', 4500); show('coop'); }
     else if (act === 'settings') show('settings');
     else if (act === 'soon') toast(`${el.dataset.m === 'versus' ? '⚔ Versus race' : '⭐ Bonus levels'}: coming in a future update.`);
     else if (act === 'join') void join(normalizeRoomCode(($<HTMLInputElement>('#code')).value));
@@ -1108,6 +1134,9 @@ export async function startGame(): Promise<void> {
       case 'lever':
         if (n === round) stage.remoteLever(Number(m.i), !!m.on);
         break;
+      case 'crumble':
+        if (n === round && screen === 'play') stage.remoteCrumble(Number(m.i));
+        break;
       case 'w':
         if (n === round && !session.isHost) stage.correctMech(m as MechSync);
         break;
@@ -1274,7 +1303,7 @@ export async function startGame(): Promise<void> {
     session.sendFresh({ t: 'w', n: round, ...stage.mechState() });
   }
   setInterval(() => {
-    if (stage.mech.levers.length || stage.mech.platforms.length || stage.mech.vault) sendWorld();
+    if (stage.mech.levers.length || stage.mech.platforms.length || stage.mech.vault || stage.mech.crumbles.length || stage.mech.timers.length || stage.mech.tide) sendWorld();
   }, 200);
 
   // Send my character ~30×/s while playing (13.2).

@@ -28,6 +28,16 @@ export type MechDef = (
   | { kind: 'stone'; x: number; y: number; animal: Animal }
   /** an animal carved into the back wall (G9), with 1–4 dots for its place in the code (G6). Only decoration. */
   | { kind: 'carving'; x: number; y: number; animal: Animal; dots: number }
+  /**
+   * Crumbling stones (16.7, K1–K6): a row of `w` one-tile blocks starting at cell (x, y). Each block shakes when
+   * someone stands on it, falls away, and grows back a few seconds later. No rune: nothing powers them.
+   */
+  | { kind: 'crumble'; x: number; y: number; w: number }
+  /**
+   * A timed switch (16.7, S1–S6): on while someone stands on it, and for `secs` more seconds after they step off.
+   * It powers its rune like a button.
+   */
+  | { kind: 'timer'; x: number; y: number; rune: Rune; secs: number }
 ) & { seen?: Elem };
 
 type ButtonDef = Extract<MechDef, { kind: 'button' }>;
@@ -36,6 +46,8 @@ type PlatformDef = Extract<MechDef, { kind: 'platform' }>;
 type GateDef = Extract<MechDef, { kind: 'gate' }>;
 type StoneDef = Extract<MechDef, { kind: 'stone' }>;
 type CarvingDef = Extract<MechDef, { kind: 'carving' }>;
+type CrumbleDef = Extract<MechDef, { kind: 'crumble' }>;
+type TimerDef = Extract<MechDef, { kind: 'timer' }>;
 
 export interface ButtonState { def: ButtonDef; pressed: boolean; sink: number }
 /** `on` here: the characters (by key) standing on it right now, so standing still doesn't flip it again. */
@@ -52,11 +64,40 @@ export interface CarvingState { def: CarvingDef; near: number; lit: boolean }
  */
 export interface VaultState { pattern: Pattern; entered: number[]; solved: boolean; resets: number; holdUntil: number }
 
+/**
+ * One crumbling block (16.7, K1–K6). `t`: seconds since someone first stood on it, or -1 while it is whole.
+ * 0 … CRUMBLE_SHAKE: shaking (still solid); after that it is gone, until CRUMBLE_SHAKE + CRUMBLE_BACK has passed
+ * and nobody is in its space. `x`, `y`: its cell; `rect` is its solid part (no height while gone).
+ */
+export interface CrumbleState { def: CrumbleDef; x: number; y: number; t: number; rect: Rect; holdUntil: number }
+
+/**
+ * A timed switch (16.7, S1–S6). `pressed`: someone stands on it now; `left`: seconds it stays on after that
+ * (full while pressed, 0 = off); `on`: it was powering its rune at the last update (to notice it running out).
+ */
+export interface TimerState { def: TimerDef; pressed: boolean; left: number; sink: number; on: boolean }
+
+/**
+ * The rising tide (16.7, V1–V6): violet poison that fills the level from the bottom. `from`: where its surface
+ * rests before anyone moves (y in tiles); `to`: the highest it climbs (a smaller y); `speed`: tiles per second.
+ */
+export interface Tide { from: number; to: number; speed: number }
+/** `y`: the surface now; `running`: someone has moved, so it is rising (or has reached `to`). */
+export interface TideState { def: Tide; y: number; running: boolean }
+/** The tide kills only when the feet are clearly under its surface (7.4): this many tiles. */
+export const TIDE_DEPTH = 0.3;
+
 /** What the host sends 5× a second (and right after a stone is stepped on) to keep the guest's world in sync. */
-export interface MechSync { lv?: number[]; pl?: number[]; pw?: { en: number[]; ok: 0 | 1; rs: number } }
+export interface MechSync { lv?: number[]; pl?: number[]; pw?: { en: number[]; ok: 0 | 1; rs: number }; cr?: number[]; tm?: number[]; td?: [0 | 1, number] }
 
 /** What a mechanism needs to know about a character. */
 export interface Feet { left: number; right: number; y: number; vx: number; grounded: boolean }
+/** A character's whole body, for "is someone in this space?" */
+export interface Box { left: number; right: number; top: number; y: number }
+
+/** Crumbling stones (K2, K3): how long a block shakes before it falls, and how long it stays away. Seconds. */
+export const CRUMBLE_SHAKE = 0.7;
+export const CRUMBLE_BACK = 5;
 
 /** A carving lights up when a character's middle is this close (tiles), and goes dark again past CARVING_DARK (G9). */
 export const CARVING_LIGHT = 2.6;
@@ -78,7 +119,13 @@ export type MechEvent =
   /** a symbol stone was stepped on: `ok` = the right one (`n` = how many are entered now); wrong = everything reset. i = -1: unknown stone */
   | { k: 'stone'; i: number; ok: boolean; n: number; local: boolean }
   /** the whole pattern was entered: its rune is on for good */
-  | { k: 'solved' };
+  | { k: 'solved' }
+  /** crumbling block `i` started to shake (`local`: under a character simulated on this phone), fell, or grew back */
+  | { k: 'crumble'; i: number; what: 'shake' | 'fall' | 'back'; local: boolean }
+  /** timed switch `i` was stepped on, stepped off (its clock starts), ticked (`left` seconds to go) or ran out */
+  | { k: 'timer'; i: number; what: 'down' | 'up' | 'tick' | 'out'; left: number }
+  /** the tide started to rise */
+  | { k: 'tide' };
 
 export class Mechanisms {
   buttons: ButtonState[] = [];
@@ -87,16 +134,30 @@ export class Mechanisms {
   gates: GateState[] = [];
   stones: StoneState[] = [];
   carvings: CarvingState[] = [];
+  /** Crumbling stones, one entry per block (a def `w` wide gives `w` of them). */
+  crumbles: CrumbleState[] = [];
+  timers: TimerState[] = [];
+  /**
+   * The route robot's lag test (16.7, S5): every timed switch runs this many seconds short. A timed level must
+   * still be winnable like that, so two phones that disagree a little about a clock both leave room to spare.
+   */
+  timerCut = 0;
+  /** The level's rising tide, if it has one. */
+  tide: TideState | null = null;
+  /** The route robot's spare-time test (16.7, V5): the tide rises this many times faster. */
+  tideRush = 1;
   /** The level's password, if it has one. */
   vault: VaultState | null = null;
   /** Solid rectangles for collision (platforms + closed part of gates); updated in place. */
   readonly solids: Rect[] = [];
   private readonly defs: MechDef[];
   private readonly pattern: Pattern | undefined;
+  private readonly tideDef: Tide | undefined;
 
-  constructor(defs: MechDef[], pattern?: Pattern) {
+  constructor(defs: MechDef[], pattern?: Pattern, tide?: Tide) {
     this.defs = defs;
     this.pattern = pattern;
+    this.tideDef = tide;
     this.reset();
   }
 
@@ -107,6 +168,9 @@ export class Mechanisms {
     this.gates = [];
     this.stones = [];
     this.carvings = [];
+    this.crumbles = [];
+    this.timers = [];
+    this.resetTide();
     this.vault = this.pattern ? { pattern: this.pattern, entered: [], solved: false, resets: 0, holdUntil: 0 } : null;
     this.solids.length = 0;
     for (const d of this.defs) {
@@ -118,7 +182,14 @@ export class Mechanisms {
         this.solids.push(rect);
       } else if (d.kind === 'stone') this.stones.push({ def: d, on: new Set(), sink: 0, flash: 0 });
       else if (d.kind === 'carving') this.carvings.push({ def: d, near: 0, lit: false });
-      else {
+      else if (d.kind === 'timer') this.timers.push({ def: d, pressed: false, left: 0, sink: 0, on: false });
+      else if (d.kind === 'crumble') {
+        for (let k = 0; k < d.w; k++) {
+          const rect = { x0: d.x + k, y0: d.y, x1: d.x + k + 1, y1: d.y + 1 };
+          this.crumbles.push({ def: d, x: d.x + k, y: d.y, t: -1, rect, holdUntil: 0 });
+          this.solids.push(rect);
+        }
+      } else {
         const rect = { x0: d.x, y0: d.y, x1: d.x + d.w, y1: d.y + d.h };
         this.gates.push({ def: d, open: 0, rect, moving: false });
         this.solids.push(rect);
@@ -130,6 +201,7 @@ export class Mechanisms {
     return (
       this.buttons.some((b) => b.pressed && b.def.rune === rune) ||
       this.levers.some((l) => l.on && l.def.rune === rune) ||
+      this.timers.some((t) => (t.pressed || t.left > 0) && t.def.rune === rune) ||
       (!!this.vault?.solved && this.vault.pattern.rune === rune)
     );
   }
@@ -148,6 +220,55 @@ export class Mechanisms {
       if (down !== b.pressed) events.push({ k: 'button', i, down });
       b.pressed = down;
     });
+    // Timed switches: pressed like a button; the clock is full while someone stands there and starts on the step-off.
+    this.timers.forEach((t, i) => {
+      const { x, y } = t.def;
+      const down = all.some((f) => f.grounded && Math.abs(f.y - (y + 1)) < 0.08 && f.right > x + 0.15 && f.left < x + 0.85);
+      if (down) t.left = this.timerSecs(t);
+      if (down !== t.pressed) events.push({ k: 'timer', i, what: down ? 'down' : 'up', left: t.left });
+      t.pressed = down;
+    });
+  }
+
+  /** The tide goes back to where it rests (a restart; the Feel Lab after it caught someone). */
+  resetTide(): void {
+    this.tide = this.tideDef ? { def: this.tideDef, y: this.tideDef.from, running: false } : null;
+  }
+
+  /** Someone moved: the tide starts to rise (V2). Returns whether it just started. */
+  startTide(events: MechEvent[]): boolean {
+    const t = this.tide;
+    if (!t || t.running) return false;
+    t.running = true;
+    events.push({ k: 'tide' });
+    return true;
+  }
+
+  /** Are feet at `feetY` clearly under the tide (V4)? */
+  tideCovers(feetY: number): boolean {
+    return !!this.tide && feetY > this.tide.y + TIDE_DEPTH;
+  }
+
+  /** How long timed switch `t` stays on after the step-off (shortened by the robot's lag test). */
+  timerSecs(t: TimerState): number {
+    return Math.max(0, t.def.secs - this.timerCut);
+  }
+
+  /**
+   * A rune that is on only because a timed switch is running out: how much of its time is left, 0..1 (the draining
+   * ring on the things it powers, S3). null: the rune is off, or something else holds it on (a button, a lever, a
+   * solved password, a timed switch someone still stands on).
+   */
+  runeClock(rune: Rune): number | null {
+    if (this.buttons.some((b) => b.pressed && b.def.rune === rune) || this.levers.some((l) => l.on && l.def.rune === rune) ||
+      (!!this.vault?.solved && this.vault.pattern.rune === rune)) return null;
+    let best: number | null = null;
+    for (const t of this.timers) {
+      if (t.def.rune !== rune) continue;
+      if (t.pressed) return null;
+      if (t.left > 0) best = Math.max(best ?? 0, t.left / (this.timerSecs(t) || 1));
+    }
+    return best;
   }
 
   /**
@@ -214,6 +335,50 @@ export class Mechanisms {
     }
   }
 
+  /** Is crumbling block `i` gone right now (fallen, not back yet)? */
+  crumbleGone(i: number): boolean {
+    return this.crumbles[i].t >= CRUMBLE_SHAKE;
+  }
+
+  /** Block `i` starts to shake, if it is whole. Returns whether it did. */
+  shakeCrumble(i: number, events: MechEvent[], local = false, now = 0): boolean {
+    const c = this.crumbles[i];
+    if (!c || c.t >= 0) return false;
+    c.t = 0;
+    if (local) c.holdUntil = now + 700; // ignore older host corrections for a moment
+    events.push({ k: 'crumble', i, what: 'shake', local });
+    return true;
+  }
+
+  /**
+   * Crumbling stones (16.7, K1–K6). A block starts to shake when a character simulated on this phone stands on it
+   * (the partner's steps arrive over the network); it shakes for CRUMBLE_SHAKE, falls away, and grows back
+   * CRUMBLE_BACK later, but never while anyone (`all`: both characters as this phone shows them) is in its space.
+   */
+  updateCrumbles(local: Feet[], all: Box[], dt: number, now: number, events: MechEvent[]): void {
+    this.crumbles.forEach((c, i) => {
+      if (c.t < 0) {
+        if (local.some((f) => f.grounded && Math.abs(f.y - c.y) < 0.08 && f.right > c.x + 0.1 && f.left < c.x + 0.9)) this.shakeCrumble(i, events, true, now);
+        return;
+      }
+      const was = c.t;
+      c.t += dt;
+      if (was < CRUMBLE_SHAKE && c.t >= CRUMBLE_SHAKE) {
+        c.rect.y1 = c.rect.y0; // no height: it blocks nothing (like an open gate)
+        events.push({ k: 'crumble', i, what: 'fall', local: false });
+      } else if (c.t >= CRUMBLE_SHAKE + CRUMBLE_BACK && !all.some((b) => b.right > c.x && b.left < c.x + 1 && b.y > c.y && b.top < c.y + 1)) {
+        this.restoreCrumble(i, events);
+      }
+    });
+  }
+
+  private restoreCrumble(i: number, events: MechEvent[]): void {
+    const c = this.crumbles[i];
+    c.t = -1;
+    c.rect.y1 = c.y + 1;
+    events.push({ k: 'crumble', i, what: 'back', local: false });
+  }
+
   /** Is stone `i` sunk as part of what's entered so far? */
   stoneDown(i: number): boolean {
     return !!this.vault?.entered.includes(i);
@@ -224,8 +389,25 @@ export class Mechanisms {
    * `closing(rect, i)` is told the solid part of every gate that is closing: whoever is under it gets crushed.
    */
   update(dt: number, closing: (r: Rect, i: number) => void, events: MechEvent[]): void {
+    const tide = this.tide;
+    if (tide?.running) tide.y = Math.max(tide.def.to, tide.y - tide.def.speed * this.tideRush * dt);
     for (const b of this.buttons) b.sink += ((b.pressed ? 1 : 0) - b.sink) * Math.min(1, dt * 20);
     for (const l of this.levers) l.angle += ((l.on ? 1 : -1) - l.angle) * Math.min(1, dt * 14);
+    this.timers.forEach((t, i) => {
+      if (!t.pressed && t.left > 0) {
+        // ticks: twice a second, four times a second in the last 1.5 s (S3)
+        const beat = (v: number) => (v > 1.5 ? Math.ceil(v * 2) + 100 : Math.ceil(v * 4));
+        const old = t.left;
+        t.left = Math.max(0, t.left - dt);
+        if (t.left > 0 && beat(t.left) !== beat(old)) events.push({ k: 'timer', i, what: 'tick', left: t.left });
+      }
+      const on = t.pressed || t.left > 0;
+      if (t.on && !on) events.push({ k: 'timer', i, what: 'out', left: 0 });
+      t.on = on;
+      // the switch rises back up slowly as its time runs out
+      const target = t.pressed ? 1 : on ? 0.25 + 0.75 * (t.left / (this.timerSecs(t) || 1)) : 0;
+      t.sink += (target - t.sink) * Math.min(1, dt * 20);
+    });
     this.stones.forEach((s, i) => {
       s.sink += ((this.stoneDown(i) ? 1 : s.on.size ? 0.4 : 0) - s.sink) * Math.min(1, dt * 16);
       s.flash = Math.max(0, s.flash - dt * 1.8);
@@ -278,6 +460,9 @@ export class Mechanisms {
     const s: MechSync = { lv: this.levers.map((l) => (l.on ? 1 : 0)), pl: this.platforms.map((p) => Math.round(p.p * 1000) / 1000) };
     const v = this.vault;
     if (v) s.pw = { en: [...v.entered], ok: v.solved ? 1 : 0, rs: v.resets };
+    if (this.tide) s.td = [this.tide.running ? 1 : 0, Math.round(this.tide.y * 1000) / 1000];
+    if (this.timers.length) s.tm = this.timers.map((t) => Math.round(t.left * 100) / 100);
+    if (this.crumbles.length) s.cr = this.crumbles.map((c) => (c.t < 0 ? -1 : Math.round(c.t * 100) / 100));
     return s;
   }
 
@@ -285,7 +470,36 @@ export class Mechanisms {
    * Guest: blend toward the host's state (levers and the password snap unless we just touched them ourselves).
    * The host's word on the password is final (13.1); changes it brings are reported as events so they are heard.
    */
-  correct(s: MechSync, now: number, events: MechEvent[] = []): void {
+  correct(s: MechSync, now: number, events: MechEvent[] = [], all: Box[] = []): void {
+    // Crumbling stones: both phones run the same clock from the same step, so they normally agree already. The host
+    // only fixes a block that is clearly out of step (a lost message): one the guest never saw shake, one that is
+    // back on the host but not here, or clocks more than 0.3 s apart. A block the guest's own character just
+    // stepped on is left alone for a moment, and a block never grows back inside a character.
+    s.cr?.forEach((t, i) => {
+      const c = this.crumbles[i];
+      if (!c || now <= c.holdUntil) return;
+      if (t < 0) {
+        if (c.t >= CRUMBLE_SHAKE && !all.some((b) => b.right > c.x && b.left < c.x + 1 && b.y > c.y && b.top < c.y + 1)) this.restoreCrumble(i, events);
+        else if (c.t >= 0 && c.t < CRUMBLE_SHAKE) c.t = -1;
+      } else if (c.t < 0) {
+        if (t > CRUMBLE_SHAKE + CRUMBLE_BACK - 0.5) return; // it just grew back here; the host's is about to
+        this.shakeCrumble(i, events);
+        c.t = t;
+        if (t >= CRUMBLE_SHAKE) { c.rect.y1 = c.rect.y0; events.push({ k: 'crumble', i, what: 'fall', local: false }); }
+      } else if (Math.abs(c.t - t) > 0.3 && (c.t >= CRUMBLE_SHAKE) === (t >= CRUMBLE_SHAKE)) c.t = t;
+    });
+    // The tide: both phones raise it at the same speed from the moment they see the first move, so they differ by
+    // the network delay at most. The guest follows the host's surface (13.1) once they are clearly apart.
+    if (this.tide && s.td) {
+      if (s.td[0] === 1 && this.startTide(events)) this.tide.y = s.td[1];
+      else if (s.td[0] === 1 && Math.abs(this.tide.y - s.td[1]) > 0.05) this.tide.y += (s.td[1] - this.tide.y) * 0.5;
+    }
+    // Timed switches: the host's clock is the one that counts (13.1). Each phone starts the clock when it sees the
+    // step-off, so they differ by the network delay; the guest follows the host once they are more than 0.1 s apart.
+    s.tm?.forEach((left, i) => {
+      const t = this.timers[i];
+      if (t && !t.pressed && Math.abs(t.left - left) > 0.1) t.left = left;
+    });
     const v = this.vault, pw = s.pw;
     if (v && pw && now > v.holdUntil) {
       if (pw.rs > v.resets) {

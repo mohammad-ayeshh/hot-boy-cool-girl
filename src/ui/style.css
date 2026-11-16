@@ -479,6 +479,21 @@ button.chosen { outline: 3px solid var(--gold); outline-offset: 2px; }
   .map-node { width: 54px; height: 54px; }
   .map-node b { font-size: 17px; }
 }
+/* a 10-level chapter: two rows of smaller stones (16.7, H1) */
+.temple-map.tall { height: clamp(188px, 48vh, 280px); }
+.temple-map.tall .map-node { width: 52px; height: 52px; }
+.temple-map.tall .map-node b { font-size: 16px; }
+.temple-map.tall .map-name { font-size: 10px; margin-top: 2px; }
+@media (max-height: 430px) {
+  /* 13 chapters (16.7, H1): on a phone held sideways the tabs are one row you can slide, so the map and Ready fit */
+  .map-head .tabs { position: relative; min-width: 0; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .map-head .tabs::-webkit-scrollbar { display: none; }
+  .map-head .tabs button { flex: none; min-height: 34px; padding: 4px 10px; font-size: 13px; }
+  .temple-map.tall { height: 150px; }
+  .temple-map.tall .map-node { width: 42px; height: 42px; }
+  .temple-map.tall .map-node b { font-size: 14px; }
+  .temple-map.tall .map-node small { font-size: 8px; }
+}
 .map-node small .on { color: #e3b04b; }
 .map-node small .off { color: rgba(255, 255, 255, 0.18); }
 

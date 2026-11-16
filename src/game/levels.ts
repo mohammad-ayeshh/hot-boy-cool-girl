@@ -3,7 +3,7 @@
 import { parseLevel, type LevelData } from './level.ts';
 import { getMyLevel, roomLevel } from './myLevels.ts';
 import type { CustomLevel } from './custom.ts';
-import type { Animal, MechDef, Pattern } from './mechanisms';
+import type { Animal, MechDef, Pattern, Tide } from './mechanisms';
 import { CHAPTER_2 } from './chapter2.ts';
 import { CHAPTER_3 } from './chapter3.ts';
 import { CHAPTER_4 } from './chapter4.ts';
@@ -12,6 +12,10 @@ import { CHAPTER_6 } from './chapter6.ts';
 import { CHAPTER_7 } from './chapter7.ts';
 import { CHAPTER_8 } from './chapter8.ts';
 import { CHAPTER_9 } from './chapter9.ts';
+import { CHAPTER_10 } from './chapter10.ts';
+import { CHAPTER_11 } from './chapter11.ts';
+import { CHAPTER_12 } from './chapter12.ts';
+import { CHAPTER_13 } from './chapter13.ts';
 
 export interface LevelDef {
   id: string;
@@ -34,6 +38,11 @@ export interface LevelDef {
   teamCode?: number;
   /** Don't touch (16.7, T1): touching the partner bursts both into steam. A level has it as a whole. */
   apart?: boolean;
+  /**
+   * The rising tide (16.7, V1–V6): violet poison rises from `from` to `to` (y in tiles) at `speed` tiles a second,
+   * once someone moves. Such a level keeps both bottom 4 × 4 corners solid stone (5.3).
+   */
+  tide?: Tide;
 }
 
 export const CHAPTER_1: LevelDef[] = [
@@ -189,7 +198,8 @@ export const CHAPTER_1: LevelDef[] = [
 
 /** A chapter riddle (11.2): one line for both, or a half for each player (Chapter 5). */
 export type Riddle = string | { fire: string; water: string };
-export interface Chapter { n: number; name: string; levels: LevelDef[]; riddle?: Riddle }
+/** `bonus`: one of the Trials (16.7): after the story, behind the "Bonus levels" tile. */
+export interface Chapter { n: number; name: string; levels: LevelDef[]; riddle?: Riddle; bonus?: boolean }
 export const CHAPTERS: Chapter[] = [
   { n: 1, name: 'The Temple Gate', levels: CHAPTER_1, riddle: 'What burns one cradles the other. No door opens for one alone.' },
   { n: 2, name: 'The Flooded Halls', levels: CHAPTER_2, riddle: 'Your key hangs in another’s hand.' },
@@ -200,9 +210,20 @@ export const CHAPTERS: Chapter[] = [
   { n: 7, name: 'The Whispering Vault', levels: CHAPTER_7 },
   { n: 8, name: 'The Steam Halls', levels: CHAPTER_8 },
   { n: 9, name: 'The Heart of the Temple', levels: CHAPTER_9 },
+  { n: 10, name: 'The Crumbling Wing', levels: CHAPTER_10, bonus: true },
+  { n: 11, name: 'The Hourglass Hall', levels: CHAPTER_11, bonus: true },
+  { n: 12, name: 'The Rising Dark', levels: CHAPTER_12, bonus: true },
+  { n: 13, name: 'The Last Trial', levels: CHAPTER_13, bonus: true },
 ];
+/** The story (Chapters 1–9), and the Trials after it (16.7). */
+export const STORY_CHAPTERS: Chapter[] = CHAPTERS.filter((c) => !c.bonus);
+export const BONUS_CHAPTERS: Chapter[] = CHAPTERS.filter((c) => c.bonus);
+/** The story's last level (16.12): finishing it plays the ending, and opens the Trials. */
+export const FINALE_ID: string = STORY_CHAPTERS[STORY_CHAPTERS.length - 1].levels.slice(-1)[0].id;
 /** Every official level in play order: finishing one unlocks the next, across chapters (12.2). */
 export const ALL_LEVELS: LevelDef[] = CHAPTERS.flatMap((c) => c.levels);
+/** The levels that exist (a planned level has no map yet): the unlock chain and "Next level" walk these. */
+export const BUILT_LEVELS: LevelDef[] = ALL_LEVELS.filter((l) => l.rows !== null);
 export const chapterOf = (id: string): Chapter | undefined => CHAPTERS.find((c) => c.levels.some((l) => l.id === id));
 /** The riddle line one player sees (11.2), or '' for a chapter without one. */
 export const riddleFor = (ch: Chapter, elem: 'fire' | 'water'): string =>
@@ -225,9 +246,12 @@ export const levelData = (def: LevelDef, code?: Animal[]): LevelData => {
   const { mechs, pattern } = withCode(def, code);
   const data: LevelData = { ...parseLevel(def.rows!, mechs, def.seen, pattern), theme: chapterOf(def.id)?.n };
   if (def.apart) data.apart = true;
+  if (def.tide) data.tide = def.tide;
   return data;
 };
 export const nextLevel = (id: string): LevelDef | undefined => {
-  const i = ALL_LEVELS.findIndex((l) => l.id === id);
-  return i < 0 ? undefined : ALL_LEVELS[i + 1];
+  const i = BUILT_LEVELS.findIndex((l) => l.id === id);
+  const next = i < 0 ? undefined : BUILT_LEVELS[i + 1];
+  // the story ends at its last level: "Next level" never leads from the ending into the Trials (16.7, R1)
+  return next && id === FINALE_ID ? undefined : next;
 };

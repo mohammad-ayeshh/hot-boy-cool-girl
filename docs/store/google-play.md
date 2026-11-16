@@ -34,8 +34,9 @@ Everything here is true today; don't add claims we can't prove (no "best", no pl
 > • The Whispering Vault: each of you sees only half of the secret code. Say your half out loud, or the vault stays shut.
 > • The Steam Halls: fire meets water. If you touch, you both burst into steam, so take turns and leap over each other.
 >
-> 45 LEVELS IN 9 TEMPLE CHAPTERS
-> Lifts, levers, trapdoors, crushing gates, lava, water and poison, built to be readable at a glance and fair to play.
+> 100 LEVELS IN 13 TEMPLE CHAPTERS
+> A 65-level story through the temple: lifts, levers, trapdoors, crushing gates, lava, water and poison, built to be readable at a glance and fair to play.
+> Then the Trials: 35 extra-hard levels for teams who reached the heart of the temple, with crumbling stones, timed switches and a rising tide.
 >
 > MAKE YOUR OWN LEVELS
 > Build a level on your phone, beat it together with a friend to earn its ✅, then share it with a link.

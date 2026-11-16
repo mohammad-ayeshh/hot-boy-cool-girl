@@ -1,4 +1,4 @@
-// Solo test (?solo, or ?solo=6-5 to start on a level): the owner tries every official level alone on one
+// Solo test (?solo, or ?solo=6-4 to start on a level): the owner tries every official level alone on one
 // phone or PC. Both characters are on this device and you swap between them; the level plays by the real rules
 // (a death restarts it, both in their doors wins it). Nothing here counts as real progress, stars or a team code.
 import * as device from '../engine/device';
@@ -6,7 +6,7 @@ import * as sfx from '../engine/sfx';
 import { music } from '../engine/music';
 import type { Elem } from '../game/level';
 import type { Animal } from '../game/mechanisms';
-import { ALL_LEVELS, CHAPTERS, findLevel, levelData, type LevelDef } from '../game/levels';
+import { ALL_LEVELS, CHAPTERS, FINALE_ID, findLevel, levelData, type LevelDef } from '../game/levels';
 import { starsFor } from '../game/progress';
 import { load } from '../game/settings';
 import { randomCode } from '../game/teamCode';
@@ -160,7 +160,7 @@ export async function startSoloTest(): Promise<void> {
 
   function finish(): void {
     won = true;
-    const last = level === ALL_LEVELS[ALL_LEVELS.length - 1];
+    const last = level.id === FINALE_ID; // the story's ending (16.12), not the last Trial
     stage.celebrate(last);
     const g = stage.gemCount();
     const time = Math.round(stage.levelTime * 10) / 10;

@@ -27,8 +27,9 @@ first months) is in [`MARKETING_PLAN.md`](MARKETING_PLAN.md), written 2026-11-06
 ## 3. When to start selling
 Start selling when **a stranger who plays the free chapters wants to pay for the next one.** That is measured, not guessed.
 
-Where we are (updated 2026-11-06):
+Where we are (updated 2026-11-16):
 - ✅ 9 chapters, 45 levels: different eyes, password gates (both mixed in Chapter 7), Don't touch (Chapter 8) and the finale (Chapter 9) are built (2026-11-06).
+- ✅ **100 levels in 13 chapters** (2026-11-16): Chapters 6–9 grew to 10 levels each (the story is now 65 levels), and the Trials (Chapters 10–13, 35 levels) are built behind the "Bonus levels" tile. 💬 None of the new levels has been played by testers yet.
 - ✅ Each chapter has its own background and tune (2026-10-31), and Chapters 1–6 open with a riddle (2026-11-06).
 - 💬 Chapter 8 ("Don't touch") still needs a test on two real phones over the internet before it is final (design doc 16.11, T2).
 - ✅ A two-phone test over mobile data worked and was fun.

@@ -1,10 +1,11 @@
 // Checks for homemade levels (design doc 16.3): share links survive the round trip, the fingerprint
 // notices a one-tile edit, broken links are refused, and all our own levels pass the level checker.
 // Run: npm run check:custom
-import { ALL_LEVELS, withCode, type LevelDef } from '../src/game/levels.ts';
+import { ALL_LEVELS, BUILT_LEVELS, FINALE_ID, nextLevel, withCode, type LevelDef } from '../src/game/levels.ts';
 import { blankLevel, decodeLink, encodeLink, isVerified, levelHash, markVerified, sanitize, type CustomLevel } from '../src/game/custom.ts';
 import { checkLevel, hasErrors } from '../src/game/levelCheck.ts';
 import { isCode, loadCode, pairKey, phoneId, randomCode, saveCode } from '../src/game/teamCode.ts';
+import { isUnlocked, loadProgress, recordResult } from '../src/game/progress.ts';
 import { PAYWALL_LIVE, canPlay, isPaidLevel, ownsGame, setOwned } from '../src/game/unlock.ts';
 import { PROTOCOL, playVersion } from '../src/game/version.ts';
 
@@ -20,13 +21,24 @@ const asCustom = (i: number): CustomLevel => {
 };
 
 // Every official level passes (warnings are fine, errors are not).
-ALL_LEVELS.forEach((_, i) => {
+ALL_LEVELS.forEach((d, i) => {
+  if (!d.rows) return; // planned, not built yet (16.7, H1)
   const issues = checkLevel(asCustom(i));
   const errs = issues.filter((x) => x.error).map((x) => x.msg);
   check(`level ${ALL_LEVELS[i].id} has no errors`, !hasErrors(issues), errs.join('; ') || `${issues.length} warnings`);
   const noWarnSpace = issues.filter((x) => /hidden pool/.test(x.msg));
   if (noWarnSpace.length) check(`level ${ALL_LEVELS[i].id} leaves room to warn before hidden pools`, false, noWarnSpace.map((x) => `${x.x},${x.y}`).join(' '));
 });
+// The rising tide (16.7, V3): a tide level keeps both bottom 4 × 4 corners solid stone, so no poison edge is ever
+// under a thumb (5.3), and its resting surface shows from the first second (D5).
+for (const l of ALL_LEVELS) {
+  if (!l.tide || !l.rows) continue;
+  const rows = l.rows;
+  const corners = [14, 15, 16, 17].every((y) => [0, 1, 2, 3, 28, 29, 30, 31].every((x) => rows[y][x] === '#'));
+  check(`tide level ${l.id} keeps both bottom corners solid`, corners);
+  const row = Math.floor(l.tide.from);
+  check(`tide level ${l.id} shows its poison before it rises`, row < 17 && [...rows[row]].some((c) => c !== '#') && l.tide.to < l.tide.from && l.tide.speed > 0);
+}
 check('a blank level has no errors', !hasErrors(checkLevel(blankLevel('Blank', 'me'))));
 
 // Share link round trip.
@@ -92,7 +104,7 @@ check('4-tile ledge is a warning', checkLevel(ledge).some((x) => !x.error && /4-
 // Fingerprints of levels without password things must never change (their ✅ would fall off): these are frozen.
 check('old fingerprints stay the same (1-3)', levelHash(asCustom(2)) === '667ad3e4', levelHash(asCustom(2)));
 check('old fingerprints stay the same (5-5, hidden things)', levelHash(asCustom(24)) === 'f0f0580b', levelHash(asCustom(24)));
-const vaultIdx = ALL_LEVELS.findIndex((l) => l.id === '6-5');
+const vaultIdx = ALL_LEVELS.findIndex((l) => l.id === '6-10');
 const pw: CustomLevel = { ...asCustom(vaultIdx), pattern: { code: ['frog', 'bat', 'frog'], rune: 'star' } };
 pw.mechs = [...pw.mechs, { kind: 'carving', x: 2, y: 3, animal: 'frog', dots: 1 }, { kind: 'carving', x: 5, y: 3, animal: 'bat', dots: 2, seen: 'water' }];
 pw.mechs[6] = { ...pw.mechs[6], seen: 'fire' }; // a stone only Hot Boy sees
@@ -151,14 +163,47 @@ check('levels without a team code ignore it', withCode(ALL_LEVELS[3], ['frog', '
 check('a broken code is refused', !isCode(['frog', 'dog', 'bat', 'bat']) && !isCode(['frog', 'bat']));
 
 // Free to try, pay once (12.6, decided 2026-10-31): Chapters 1–2 free, the rest paid; homemade levels free.
-check('chapters 1 and 2 are free, 3 to 6 are paid', !isPaidLevel('1-1') && !isPaidLevel('2-5') && isPaidLevel('3-1') && isPaidLevel('6-5'));
+check('chapters 1 and 2 are free, 3 to 6 are paid', !isPaidLevel('1-1') && !isPaidLevel('2-5') && isPaidLevel('3-1') && isPaidLevel('6-10'));
 check('homemade levels are always free', !isPaidLevel('u-abcd1234'));
-check('the lock is off until launch (PAYWALL_LIVE)', PAYWALL_LIVE === false && canPlay('6-5', false));
+check('the lock is off until launch (PAYWALL_LIVE)', PAYWALL_LIVE === false && canPlay('6-10', false));
 use(phone()); setOwned(true);
 check('a purchase is remembered on the phone', ownsGame());
 setOwned(false);
 check('…and can be forgotten', !ownsGame());
 check('the play version is stable and has the protocol number', playVersion() === playVersion() && playVersion().startsWith(`${PROTOCOL}-`));
+
+// The road to 100 levels (16.7, H1–H3): levels are being added in the middle of a live game.
+{
+  const ids = (l: { id: string }[]) => l.map((x) => x.id);
+  check('planned levels are skipped by "Next level"', BUILT_LEVELS.every((l) => { const n = nextLevel(l.id); return !n || n.rows !== null; }));
+  check('the story ends at its last level, and "Next level" stops there', FINALE_ID === '9-10' && nextLevel(FINALE_ID) === undefined);
+  check('each vault is the last level of its chapter', ['6-10', '7-10', '9-10'].every((id) => !!ALL_LEVELS.find((l) => l.id === id)?.pattern) &&
+    !ALL_LEVELS.some((l) => /^[679]-5$/.test(l.id) && l.pattern));
+  // a new player: one level at a time, and a planned level never blocks the way
+  const built = ids(BUILT_LEVELS);
+  check('a new player opens one level at a time', isUnlocked('1-1') && !isUnlocked('1-2') && isUnlocked('1-2', ['1-1']) && !isUnlocked('1-3', ['1-1']));
+  const before = (id: string) => built[built.indexOf(id) - 1];
+  check('every built level opens from the built level before it', BUILT_LEVELS.slice(1).every((l) => isUnlocked(l.id, [before(l.id)])));
+  check('the Trials open with the end of the story', isUnlocked('10-1', [FINALE_ID]) && !isUnlocked('10-1', ['9-4']));
+  // an old save: a player who reached 7-2 before the vault moved keeps everything they had (H3)
+  const old = phone();
+  old.setItem('hbcg.progress.v1', JSON.stringify(Object.fromEntries(
+    [...ids(ALL_LEVELS.slice(0, 29)), '6-5', '7-1', '7-2'].map((id) => [id, { stars: id === '6-5' ? 3 : 2, bestTime: 40 }]))));
+  use(old);
+  const p1 = loadProgress();
+  check('an old vault result moves to level 10 with its stars', !p1['6-5'] && p1['6-10']?.stars === 3);
+  recordResult('6-5', 1, 99); // later, when the new 6-5 exists and is played
+  check('the move happens only once', loadProgress()['6-5']?.stars === 1 && loadProgress()['6-10']?.stars === 3);
+  const mine = Object.keys(loadProgress());
+  check('an old save keeps every level it could play', ['6-10', '7-1', '7-2', '7-3'].every((id) => isUnlocked(id, mine)) && !isUnlocked('7-4', mine));
+  // levels added before a finished one never lock it: finishing nothing in between, 7-3 stays open because 7-2 is done
+  check('a level stays open when a later one is finished', isUnlocked('3-1', ['5-2']) && isUnlocked('5-3', ['5-2']) && !isUnlocked('5-4', ['5-2']));
+  check('either phone can open a level (12.3)', isUnlocked('2-3', [], ['2-2']));
+  const fresh = phone();
+  use(fresh);
+  loadProgress(); recordResult('6-5', 2, 50);
+  check('a new phone never moves a result', loadProgress()['6-5']?.stars === 2 && !loadProgress()['6-10']);
+}
 
 process.exitCode = failed ? 1 : 0;
 console.log(failed ? `\n${failed} check(s) failed` : '\nAll checks passed');

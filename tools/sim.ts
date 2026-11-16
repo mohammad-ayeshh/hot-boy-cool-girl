@@ -4,7 +4,7 @@
 // proves every level can be won (decision log 2026-10-21: the checker alone can't see that).
 import { Body, HITBOX_H, HITBOX_W, NO_INPUT, STEP, derive, touching, type Input } from '../src/game/body.ts';
 import { ROWS, Level, parseLevel, type Elem, type Liquid, type Rect } from '../src/game/level.ts';
-import { CARVING_LIGHT, Mechanisms, carvingDistance, type MechDef, type MechEvent, type Pattern } from '../src/game/mechanisms.ts';
+import { CARVING_LIGHT, Mechanisms, carvingDistance, type MechDef, type MechEvent, type Pattern, type Tide } from '../src/game/mechanisms.ts';
 import { defaults } from '../src/game/settings.ts';
 
 const { phys } = derive(defaults());
@@ -29,10 +29,13 @@ export class World {
   /** Don't touch (16.7): a clear overlap bursts both. One "screen" here, so the true overlap counts (T2). */
   apart = false;
 
-  constructor(rows: readonly string[], mechs: MechDef[], pattern?: Pattern) {
+  private readonly spawn: Record<Elem, { x: number; y: number }>;
+
+  constructor(rows: readonly string[], mechs: MechDef[], pattern?: Pattern, tide?: Tide) {
     const data = parseLevel(rows, mechs, undefined, pattern);
+    this.spawn = data.spawn;
     this.level = new Level(data);
-    this.mech = new Mechanisms(mechs, pattern);
+    this.mech = new Mechanisms(mechs, pattern, tide);
     this.level.dynamic = this.mech.solids;
     this.doors = data.doors;
     this.gems = data.gems.map((g) => ({ ...g, alive: true }));
@@ -49,6 +52,12 @@ export class World {
   entered(): number { return this.mech.vault?.entered.length ?? 0; }
   solved(): boolean { return !!this.mech.vault?.solved; }
   plat(i: number): number { return this.mech.platforms[i].p; }
+  /** The rising tide (16.7): where its surface is now (y in tiles). */
+  tideY(): number { return this.mech.tide!.y; }
+  /** Timed switch `i` (16.7): seconds left on its clock (full while someone stands on it, 0 = off). */
+  timer(i: number): number { return this.mech.timers[i].left; }
+  /** Crumbling block `i` (16.7): fallen and not back yet? */
+  gone(i: number): boolean { return this.mech.crumbleGone(i); }
 
   step(input: Record<Elem, Input>): void {
     this.time += STEP;
@@ -62,6 +71,7 @@ export class World {
         for (const k of DEADLY[e]) if (under[k] >= HITBOX_W * 0.35) return this.die(e, `fell in ${k} at x ${b.x.toFixed(1)}`);
       }
       if (b.y > ROWS + 2) return this.die(e, 'fell out of the level');
+      if (this.mech.tideCovers(b.y)) return this.die(e, `was caught by the rising tide at x ${b.x.toFixed(1)}`);
       for (const g of this.gems) {
         if (!g.alive || g.elem !== e) continue;
         const cx = Math.min(Math.max(g.x, b.left), b.right), cy = Math.min(Math.max(g.y, b.top), b.y);
@@ -87,7 +97,10 @@ export class World {
     const m = this.mech;
     const events: MechEvent[] = [];
     const heroes = ELEMS.map((e) => this.body[e]);
+    // the tide starts when the first character moves (V2)
+    if (m.tide && !m.tide.running && ELEMS.some((e) => Math.abs(this.body[e].x - this.spawn[e].x) > 0.05 || this.body[e].y < this.spawn[e].y - 0.1)) m.startTide(events);
     m.updateButtons(heroes.map(feetOf), events);
+    if (m.crumbles.length) m.updateCrumbles(this.dead ? [] : heroes.map(feetOf), heroes, STEP, this.time * 1000, events);
     const riding = heroes.map((b) => m.platformUnder(feetOf(b)));
     const crush = (r: Rect) => {
       ELEMS.forEach((e) => {
@@ -196,9 +209,11 @@ export type Route = Record<Elem, Cmd[]>;
 export interface Result { won: boolean; time: number; gems: string; why: string; trace: string[]; world: World }
 
 /** Play the level with the solution. Wins when both stand in their doors at the same time. */
-export function play(rows: readonly string[], mechs: MechDef[], route: Route, opt: { trace?: boolean; limit?: number; pattern?: Pattern; apart?: boolean; goal?: (w: World) => boolean } = {}): Result {
-  const w = new World(rows, mechs, opt.pattern);
+export function play(rows: readonly string[], mechs: MechDef[], route: Route, opt: { trace?: boolean; limit?: number; pattern?: Pattern; apart?: boolean; goal?: (w: World) => boolean; cut?: number; tide?: Tide; rush?: number } = {}): Result {
+  const w = new World(rows, mechs, opt.pattern, opt.tide);
+  w.mech.tideRush = opt.rush ?? 1; // the spare-time test (16.7, V5): the tide rises this many times faster
   w.apart = !!opt.apart;
+  w.mech.timerCut = opt.cut ?? 0; // the lag test (16.7, S5): every timed switch runs this much short
   const pc: Record<Elem, number> = { fire: 0, water: 0 };
   const since: Record<Elem, number> = { fire: 0, water: 0 };
   const trace: string[] = [];
@@ -224,7 +239,7 @@ export function play(rows: readonly string[], mechs: MechDef[], route: Route, op
     w.step(input);
     if (opt.trace && Math.floor(w.time * 4) !== lastTrace) {
       lastTrace = Math.floor(w.time * 4);
-      trace.push(`${w.time.toFixed(2)}  fire ${where('fire')}  water ${where('water')}  gates ${w.mech.gates.map((g) => g.open.toFixed(2))}  plats ${w.mech.platforms.map((p) => p.p.toFixed(2))}${w.mech.vault ? `  code ${w.entered()}/${w.mech.vault.pattern.code.length} ${w.stoneLog.join(',')}` : ''}`);
+      trace.push(`${w.time.toFixed(2)}  fire ${where('fire')}  water ${where('water')}  gates ${w.mech.gates.map((g) => g.open.toFixed(2))}  plats ${w.mech.platforms.map((p) => p.p.toFixed(2))}${w.mech.tide ? `  tide ${w.mech.tide.y.toFixed(2)}` : ''}${w.mech.timers.length ? `  timers ${w.mech.timers.map((t) => t.left.toFixed(1))}` : ''}${w.mech.crumbles.length ? `  crumble ${w.mech.crumbles.map((c) => (c.t < 0 ? '#' : w.mech.crumbleGone(w.mech.crumbles.indexOf(c)) ? '.' : '~')).join('')}` : ''}${w.mech.vault ? `  code ${w.entered()}/${w.mech.vault.pattern.code.length} ${w.stoneLog.join(',')}` : ''}`);
     }
     if (w.dead) return { won: false, time: w.time, gems: gemText(), why: w.dead, trace, world: w };
     if (pc.fire >= route.fire.length && pc.water >= route.water.length && (opt.goal ? opt.goal(w) : w.atDoor('fire') && w.atDoor('water'))) {

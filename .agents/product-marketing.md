@@ -16,8 +16,8 @@
 **Product type:** Game. Today a free web game (GitHub Pages, opens from a link, no download); next a Capacitor app on Google Play, later the App Store, maybe Steam.
 **Business model (decided 2026-10-31):** No ads, ever. Chapters 1–2 and the level designer are free; one $2.99 purchase (Google Play, in the Android app) unlocks every other chapter forever. **Friend's pass:** if either player in a room owns the game, the room plays everything, so only one of two friends pays. The website is the free demo that leads to the app. Not launched yet.
 
-**What's in the game now (2026-11-06):**
-- 9 chapters, 45 levels, each proven winnable. Chapter 8 is "Don't touch" (if the two touch, both burst into steam) and Chapter 9 is the finale that mixes everything, with a small wordless ending. Chapter 8 still needs a two-phone test.
+**What's in the game now (2026-11-16):**
+- **100 levels in 13 chapters**, each proven winnable by the route robot. The story is 9 chapters and 65 levels: Chapter 8 is "Don't touch" (if the two touch, both burst into steam) and Chapter 9 is the finale that mixes everything, with a small wordless ending. After it come **the Trials**: 4 bonus chapters, 35 extra-hard levels for teams who finished the story, with crumbling stones, timed switches and a rising tide, ending in Chapter 13 where every mechanic is used at once. Not yet played by testers: the new story levels (Chapters 6–9 grew to 10 levels each) and all of the Trials; Don't touch still needs a two-phone test.
 - Buttons, levers, lifts, gates and trapdoors.
 - **Different eyes:** some things are visible to only one player, so you must describe them out loud.
 - **Password gates:** animal carvings hidden across a chapter. Each team gets its own random code, entered on symbol stones by taking turns.
@@ -144,6 +144,7 @@ Not running ads yet, and no ad budget. **Agent may:** draft, recommend. **Agent 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v5 (2026-11-16): 100 levels in 13 chapters (story 65, Trials 35); new levels not yet playtested.
 - v4 (2026-11-06): Chapter themes and riddles; Chapters 8–9 planned; age still open; pointer to the launch plan and how we measure.
 - v3 (2026-10-31): Playtests done (results to add).
 - v2 (2026-10-31): Business model decided; mobile-data test passed; ad lead line.
