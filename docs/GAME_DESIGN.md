@@ -676,6 +676,7 @@ Every level must follow all of these, plus the pillars, the level metrics (7.7) 
 | D11 | **Difficulty is a wave, not a wall** | A hard level is followed by an easier breather. Each chapter ends with a level that combines everything. |
 | D12 | **Playtested by two people on phones** | Before a level is final, two people play it on phones. We watch where they die and fix whatever felt unfair. |
 | D13 | **Proven winnable** | Every level has a written solution (`tools/routes.ts`) that a robot plays with the real game physics. `npm run check:routes` must pass before a level ships. *Added 2026-10-21 after level 1-5 shipped unwinnable.* |
+| D14 | **Every level is its own room** | No level is a copy of another: not mirrored, not with the roles swapped, not the same room with one more mechanic. A robot compares the stone and pools of every pair of levels, as built and mirrored (`npm run check:unique`), and fails when two share 80% or more. An idea may come back; the room may not. *Added 2026-11-16 by the owner: too many levels looked the same (16.7 "The remake").* |
 
 **Lessons learned while building Chapters 2–4** (keep these in mind for new levels):
 - **Every step onto a lever flips it** (since 2026-11-10). So never put a lever in a corridor that both players, or one player twice, must walk through: each pass flips it again. Put it in a dead end against a wall (step on, step back off: one flip), on a little shelf, or somewhere only one player goes (6-5, 7-5 and 9-5 moved theirs for this).
@@ -863,7 +864,26 @@ More ideas from the same talk:
 #### The Trials: bonus chapters for teams who finished the story 💬
 *Proposed 2026-11-10. The owner approved the placement and all three mechanics the same day. The mechanics are built; the levels are not.*
 
-Three **extremely hard** chapters (5 levels each) for skilled teams. Hard means tight timing between the two players, long chains, demanding jumps and several mechanics at once. It never means unfair: every pillar, hard limit, the level metrics (7.7), the thumb zones (5.3) and D6 still hold.
+Three **extremely hard** chapters (5 levels each) for skilled teams. Hard never means unfair: every pillar, hard limit, the level metrics (7.7), the thumb zones (5.3) and D6 still hold.
+
+**What HARD means 🔒** *(agreed with the owner 2026-11-16; replaces "tight timing, long chains, demanding jumps and several mechanics at once").* Adding a mechanic to an old room does not count as hard, and no level is a mirrored one (D14).
+
+A level in **Chapters 10–12** is hard when it has at least three of these four:
+
+| Kind of hard | In simple words |
+|---|---|
+| **Hard to figure out** | You can't see the solution in the first look. The team needs a plan with steps in the right order. |
+| **Hard to do together** | Both players must act at the same moment, or one must act for the other, guided by voice. |
+| **Hard to do** | Jumps and timing leave little room for error (about half a second), always inside the level metrics (7.7). |
+| **Hard to hold** | A chain of 8–12 steps with no safe place to rest. One mistake restarts the level. |
+
+"Figure out" and "together" are the main sources of hard; "hard to do" comes second, because tight finger-work on a touch screen frustrates (P1, P3). **Measure:** a team that finished the story needs about 10–20 tries per level.
+
+**SUPER HARD (Chapter 13):** all four kinds in every level; chains of 15 or more steps; both players under pressure the whole time, nobody stands and waits; timing room down to about a third of a second, never less (lag, R5); every level has one trick the team has never seen. **Measure:** about 30–50 tries per level.
+
+**Hard never means:** a death you couldn't see coming (D6); a jump beyond the level metrics or timing that lag can break (R5); long waiting or redoing a slow easy part after each death; luck; the same room again with one more thing added (D14).
+
+**The tide is faster 🔒** *(owner, 2026-11-16: "way too slow").* A tide's speed is now set from the robot: in Chapter 12 the robot must lose when the tide is 1.5× faster than built (2× in 12-1, which teaches it), in Chapter 13 at 1.35×; never faster than 0.6 tiles a second in Chapter 12 and 0.8 in Chapter 13, so it stays readable (V3). Before, the spare time was 1.8× to 11×. The 1.25× test (V5) stays. These are first numbers: tune them from play.
 
 | # | Decision |
 |---|---|
@@ -884,6 +904,30 @@ First level ideas (they will change while building):
 - **10:** Fragile Bridge · No Way Back · Steam on Thin Stone (Don't touch) · Blind Bridge (Different eyes) · The Collapse (exam).
 - **11:** Run! · Relay · Catch the Lift · Count Me Down (Different eyes) · The Hourglass (exam, Don't touch).
 - **12:** Higher Ground · Burning Bridges (crumbling) · Last Breath (timed) · Trust Fall (eyes, Don't touch) · The Last Trial (everything).
+
+#### The remake: every level its own room 💬
+*Started 2026-11-16. The rules are agreed (D14, "What HARD means" above); the order of work is proposed, not yet approved.*
+
+The owner played the 100 levels and found that many look the same: on the road to 100, most new levels were an older room mirrored or with a mechanic added. The look-alike robot (`npm run check:unique`) agrees. Each family below keeps its first room; the others get a new room under the same id, so saved progress and the map stay as they are.
+
+| Chapter | Clear copies (90% or more the same) | Close cousins (80–89%) |
+|---|---|---|
+| 4 | | 4-2 (of 1-4) |
+| 5 | | 5-5 (of 5-1) |
+| 6 | 6-2 (of 1-4), 6-8 (of 3-4), 6-9 (of 3-2) | 6-6 (of 4-2) |
+| 7 | 7-4 (of 6-4), 7-5 … 7-9 (of 5-1 … 5-5) | |
+| 8 | 8-6 (of 4-4), 8-7 (of 3-2), 8-8 (of 4-2), 8-9 (of 8-1), 8-10 (of 8-5) | 8-2 (of 6-2), 8-4 (of 8-3) |
+| 9 | 9-5 (of 4-1), 9-6 (of 2-2), 9-7 (of 1-5), 9-8 (of 3-5), 9-9 (of 4-5), 9-10 (of 7-10) | |
+| 10 | 10-6 (of 8-4), 10-7 (of 8-1), 10-8 (of 5-5), 10-9 (of 9-2), 10-10 (of 8-10) | 10-1, 10-4 (of each other and 5-1) |
+| 11 | 11-1 (of 5-3), 11-7 (of 11-3), 11-9 (of 11-5), 11-10 (of 10-10) | 11-2 (of 11-1), 11-3 (of 10-1), 11-8 (of 11-5) |
+| 12 | 12-6, 12-7 (of 12-3), 12-8, 12-10 (of 12-5) | |
+| 13 | 13-2 (of 12-5), 13-3 (of 12-9), 13-4 (of 13-1) | 13-1 (of 12-1) |
+
+That is 36 clear copies and 11 close cousins. The cousins are mostly simple rooms (a flat floor with gaps, a lift room); the owner decides which of them to remake.
+
+**Rules for a remade level:** a new room that passes `check:unique` against every other level; the same place in its chapter's teaching order; a hidden carving stays in the levels that carry one (6-8, 7-4, 7-6, 7-8, 9-6, 9-8, 13-1 to 13-4); a written solution the robot wins (D13); and in Chapters 10–13 the new room is built to "What HARD means".
+
+**Proposed order of work (stop for the owner after each step):** the story first, where only the room changes: Chapter 6, then 7, 8, 9. Then the Trials, where the new rooms are also made harder: Chapters 10, 11, 12, and last 13 (super hard).
 
 #### The road to 100 levels 🔒
 *Asked for and decided by the owner 2026-11-12. Nothing of it is built yet; Chapter 10's first five levels are (16.13).*
@@ -1474,3 +1518,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-11-16 | **H5 decided:** Chapter 13 gets the password gate after all: its own team code, carvings in 13-1 to 13-4, and the vault in 13-5 placed above the tide's highest point, after every danger, so a death never makes the team enter the code again (the one exception to R4). |
 | 2026-11-16 | **Chapter 13 "The Last Trial" built (16.16): the game has 100 levels.** The Ascent, Two Shores, Falling Stars, Mirror Image and The Last Trial, each with every mechanic (tide, crumbling stones, timed switches, Different eyes, Don't touch), and the chapter's own team code: carvings in 13-1 to 13-4, the vault in 13-5 above the tide's highest point. Its own background (the inner sanctum) and tune (the home theme at full speed). All pass the route robot; the vault with 45 codes. |
 | 2026-11-16 | **The road to 100 levels is finished.** Store and marketing texts updated to 100 levels in 13 chapters (a 65-level story and 35 Trials), store screenshot 4 regenerated, and everything pushed to `main`. The GitHub test APK now shows the solo test (🧪 Test levels alone) in Settings, built with `VITE_TEST_BUILD=1`; the Google Play build stays without it. Next: playtests, star times, tuning. |
+| 2026-11-16 | **The remake begins (16.7 "The remake", D14, "What HARD means"):** the owner found many levels look the same and wants Chapters 10–12 harder and 13 super hard. Agreed: a new rule D14 (every level is its own room: no mirrors, no old room with one more mechanic), checked by a new robot (`npm run check:unique`, which finds 36 clear copies and 11 close cousins today); a definition of HARD (figure out, together, do, hold: three of four; 10–20 tries) and SUPER HARD (all four, 30–50 tries). **The tide is faster:** every tide's speed is now set so the robot loses at 1.5× (Chapter 12) or 1.35× (Chapter 13), capped at 0.6 and 0.8 tiles a second; speeds went from 0.2–0.35 to 0.24–0.8. No room is remade yet. |

@@ -13,7 +13,7 @@ export const CHAPTER_12: LevelDef[] = [
     name: 'Higher Ground',
     idea: 'the rising tide: plan first, it starts when one of you moves',
     targetTime: 30,
-    tide: { from: 15, to: 5.6, speed: 0.3 },
+    tide: { from: 15, to: 5.6, speed: 0.59 },
     rows: [
       '################################',
       '#..............................#',
@@ -49,7 +49,7 @@ export const CHAPTER_12: LevelDef[] = [
     name: 'Burning Bridges',
     idea: 'the only stairs crumble behind the first climber, and the poison is coming',
     targetTime: 35,
-    tide: { from: 16.4, to: 5.6, speed: 0.2 },
+    tide: { from: 16.4, to: 5.6, speed: 0.24 },
     rows: [
       '################################',
       '#..............................#',
@@ -85,7 +85,7 @@ export const CHAPTER_12: LevelDef[] = [
     name: 'Last Breath',
     idea: 'a lift on a clock, then one press for two runners, with the poison behind you',
     targetTime: 40,
-    tide: { from: 16.2, to: 5.6, speed: 0.2 },
+    tide: { from: 16.2, to: 5.6, speed: 0.3 },
     rows: [
       '################################',
       '#..............................#',
@@ -120,7 +120,7 @@ export const CHAPTER_12: LevelDef[] = [
     name: 'Trust Fall',
     idea: 'your ledges up are seen only by your friend, and there is no time to feel for them',
     targetTime: 45,
-    tide: { from: 15, to: 4.6, speed: 0.35 },
+    tide: { from: 15, to: 4.6, speed: 0.6 },
     rows: [
       '################################',
       '#..............................#',
@@ -168,7 +168,7 @@ export const CHAPTER_12: LevelDef[] = [
     idea: 'swap sides without touching, then hold the gates for each other as the poison climbs',
     targetTime: 45,
     apart: true,
-    tide: { from: 15, to: 5.6, speed: 0.25 },
+    tide: { from: 15, to: 5.6, speed: 0.36 },
     rows: [
       '################################',
       '#..............##..............#',
@@ -203,7 +203,7 @@ export const CHAPTER_12: LevelDef[] = [
     name: 'Dust and Tide',
     idea: 'the ledge to your switch crumbles behind you: wait for it, then run on the clock',
     targetTime: 45,
-    tide: { from: 16.2, to: 5.6, speed: 0.2 },
+    tide: { from: 16.2, to: 5.6, speed: 0.3 },
     rows: [
       '################################',
       '#..............................#',
@@ -239,7 +239,7 @@ export const CHAPTER_12: LevelDef[] = [
     name: 'Blind Breath',
     idea: 'the same climb, and the switches he presses are seen only by her',
     targetTime: 50,
-    tide: { from: 16.2, to: 5.6, speed: 0.2 },
+    tide: { from: 16.2, to: 5.6, speed: 0.3 },
     rows: [
       '################################',
       '#..............................#',
@@ -275,7 +275,7 @@ export const CHAPTER_12: LevelDef[] = [
     idea: 'swap sides, then open the gates for each other on a clock as the poison climbs',
     targetTime: 50,
     apart: true,
-    tide: { from: 15, to: 5.6, speed: 0.25 },
+    tide: { from: 15, to: 5.6, speed: 0.42 },
     rows: [
       '################################',
       '#..............##..............#',
@@ -311,7 +311,7 @@ export const CHAPTER_12: LevelDef[] = [
     idea: 'ledges only your partner sees, and each one crumbles under you as the poison climbs',
     targetTime: 45,
     apart: true,
-    tide: { from: 15, to: 4.6, speed: 0.35 },
+    tide: { from: 15, to: 4.6, speed: 0.6 },
     rows: [
       '################################',
       '#..............................#',
@@ -346,7 +346,7 @@ export const CHAPTER_12: LevelDef[] = [
     idea: 'everything at once: the tide, dust, clocks you cannot see, and you must not touch',
     targetTime: 60,
     apart: true,
-    tide: { from: 15, to: 5.6, speed: 0.25 },
+    tide: { from: 15, to: 5.6, speed: 0.42 },
     rows: [
       '################################',
       '#..............##..............#',

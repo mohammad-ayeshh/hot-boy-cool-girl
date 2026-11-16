@@ -13,7 +13,7 @@ export const CHAPTER_13: LevelDef[] = [
     targetTime: 50,
     teamCode: 13,
     apart: true,
-    tide: { from: 15, to: 5.6, speed: 0.3 },
+    tide: { from: 15, to: 5.6, speed: 0.8 },
     rows: [
       '################################',
       '#..............................#',
@@ -53,7 +53,7 @@ export const CHAPTER_13: LevelDef[] = [
     targetTime: 60,
     teamCode: 13,
     apart: true,
-    tide: { from: 15, to: 5.6, speed: 0.25 },
+    tide: { from: 15, to: 5.6, speed: 0.45 },
     rows: [
       '################################',
       '#..............##..............#',
@@ -113,7 +113,7 @@ export const CHAPTER_13: LevelDef[] = [
     targetTime: 45,
     teamCode: 13,
     apart: true,
-    tide: { from: 15, to: 4.6, speed: 0.35 },
+    tide: { from: 15, to: 4.6, speed: 0.8 },
     rows: [
       '################################',
       '#..............................#',
@@ -155,7 +155,7 @@ export const CHAPTER_13: LevelDef[] = [
     targetTime: 45,
     teamCode: 13,
     apart: true,
-    tide: { from: 15, to: 5.6, speed: 0.35 },
+    tide: { from: 15, to: 5.6, speed: 0.8 },
     rows: [
       '################################',
       '#..............................#',
@@ -193,7 +193,7 @@ export const CHAPTER_13: LevelDef[] = [
     targetTime: 120,
     teamCode: 13,
     apart: true,
-    tide: { from: 15, to: 10.4, speed: 0.25 },
+    tide: { from: 15, to: 10.4, speed: 0.8 },
     rows: [
       '################################',
       '#............######............#',

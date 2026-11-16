@@ -7,6 +7,13 @@ import { CHAPTER_9 } from '../src/game/chapter9.ts';
 import { CHAPTER_13 } from '../src/game/chapter13.ts';
 import type { LevelDef } from '../src/game/levels.ts';
 import type { Animal } from '../src/game/mechanisms.ts';
+import { ROUTES_6 } from './routes/ch6.ts';
+import { ROUTES_7 } from './routes/ch7.ts';
+import { ROUTES_8 } from './routes/ch8.ts';
+import { CODE_ROUTES_9, ROUTES_9 } from './routes/ch9.ts';
+import { ROUTES_10 } from './routes/ch10.ts';
+import { ROUTES_11 } from './routes/ch11.ts';
+import { ROUTES_12 } from './routes/ch12.ts';
 
 /** The fixed code the robot plays password levels with (16.7 build notes): a repeat, and both sides' stones. */
 export const TEST_CODE: Animal[] = ['frog', 'bat', 'bat', 'monkey'];
@@ -16,7 +23,7 @@ export const TEST_CODE: Animal[] = ['frog', 'bat', 'bat', 'monkey'];
  * in the gap next to its shelf, jumps up onto the stone, and steps back down (a repeat = step off and on again, G11).
  * Hidden stones (7-10, W3) are real for both (E5), so the robot plays them the same way.
  */
-function enterCode(level: LevelDef, code: Animal[], fire: Cmd[], water: Cmd[], left: 'fire' | 'water' = 'fire', vaultGates: [number, number] = [3, 4]): Route {
+export function enterCode(level: LevelDef, code: Animal[], fire: Cmd[], water: Cmd[], left: 'fire' | 'water' = 'fire', vaultGates: [number, number] = [3, 4]): Route {
   const [l, r] = left === 'fire' ? [fire, water] : [water, fire];
   const stones = level.mechs!.flatMap((m) => (m.kind === 'stone' ? [m] : []));
   const gates = [13, 18]; // the vault gates: a shelf next to one is climbed from its other side
@@ -663,6 +670,10 @@ export const ROUTES: Record<string, Route | (() => Route)> = {
   }),
   '13-5': () => lastRoute(TEST_CODE),
 };
+
+// The remake (16.7, D14): each chapter's remade levels keep their solutions in tools/routes/ch<n>.ts; those win over the entries above.
+Object.assign(CODE_ROUTES, CODE_ROUTES_9);
+Object.assign(ROUTES, ROUTES_6, ROUTES_7, ROUTES_8, ROUTES_9, ROUTES_10, ROUTES_11, ROUTES_12);
 
 /**
  * The Feel Lab vault room (?lab=vault), code frog · bat · bat · monkey. Stones sit on shelves 3 tiles up

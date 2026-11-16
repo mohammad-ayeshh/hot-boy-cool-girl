@@ -12,6 +12,7 @@
     "check:metrics": "node tools/metrics_check.ts",
     "check:custom": "node tools/custom_check.ts",
     "check:routes": "node tools/route_check.ts",
+    "check:unique": "node tools/unique_check.ts",
     "build:app": "tsc --noEmit && vite build --mode app --outDir dist-app",
     "app:sync": "npm run build:app && cap sync android",
     "app:open": "cap open android"
