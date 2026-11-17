@@ -253,7 +253,7 @@ export const CHAPTER_8: LevelDef[] = [
   },
   {
     id: '8-8',
-    name: 'Stepping Stones',
+    name: 'The Poison Crossing',
     idea: 'cross the stones both ways without meeting: pass on the island, and each opens the other\'s door pit',
     targetTime: 25,
     apart: true,
