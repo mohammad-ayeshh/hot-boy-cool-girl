@@ -1106,6 +1106,32 @@ The chapter grew to 10 levels. The vault is now **6-10** (the table above calls 
 
 **For players who were already past Chapter 6:** they keep 6-10 (their old 6-5 stars moved there) and everything after it (H3). The new levels show as unfinished. Their code doesn't change, and the carvings still show the same animal for the same dots, so notes from before stay right.
 
+**Note:** the "Ten levels" table above describes the rooms before the remake; the remake below replaces them.
+
+#### The remake (2026-11-17, D14)
+Four levels of Chapter 6 were copies of older rooms (6-2 was 1-4's lift room, 6-6 was 4-2's counterweight room, 6-8 was 3-4 mirrored, 6-9 was 3-2 mirrored). Each one now has a brand-new room. Each new room still teaches what the old one taught, with the same simple parts (buttons, levers, lifts, gates, pools). 6-1, 6-3, 6-4, 6-5, 6-7 and 6-10 did not change. Picture: [`docs/levels/chapter6.png`](levels/chapter6.png).
+
+| # | Name | The room | What each player does |
+|---|---|---|---|
+| 2 | **The Hanging Tower** | A stone tower hangs from the middle of the room with the doors on its top. There is a lift on each side of it, a water pool on his side and a lava pool on hers. | He jumps the water onto his lift and climbs to a little shelf with a lever. The lever sends HER lift up. She rides it to the tower top and stands on the button there, which brings HIS lift up. |
+| 6 | **The Balance Hall** | Three floors: the start room at the bottom, a middle floor with a flooded cellar under it, and the door hall at the top. A low lift goes from the bottom to the middle floor, and a high lift from the middle floor to the top. | One rune moves both lifts in opposite ways: when it is on, the low lift goes up and the high lift goes down. He holds the floor button while she rides the low lift up and steps onto the high lift. Then he lets go: her lift rises and his comes back down. She holds the top button so his lift rises and the high lift comes down for him. Then she lets go and it carries him up. |
+| 8 | **The Twin Wells** | A long top hall above two wells: a water well on the left and a lava well on the right. The door room is underneath. | She holds a button while he drops through his trapdoor into the lava well. She drops down her open water well. Each walks to the lever at the end of their well, and each lever opens the OTHER player's gate into the door room. |
+| 9 | **Steps from the Pit** | A deep poison pit between a low left rim and a high right rim. The doors are in a room under the right rim. | She holds the button that raises three steps out of the poison. He climbs them and steps on the lever at the far end of the rim, which locks the steps up, and then she climbs. Now he holds the trapdoor button, she drops into the door room and locks the trapdoor open with the lever in the corner, and he drops after her. |
+
+**Where the two carvings are now** (same dots as before; from far away a carving is only a blank plaque):
+- **6-6, 3 dots:** in the flooded cellar under the middle floor, at its far end. Only Cool Girl can wade there (she drops through the hole and climbs back out over a stone pillar). A water gem next to it tempts her.
+- **6-8, 4 dots:** at the far end of a lava pool in the top hall, past his trapdoor. The pool is 6 tiles wide, too wide to jump, so only Hot Boy can wade there. A fire gem in the pool tempts him.
+
+The route robot visits both carvings. A shorter version of each solution, without the visit, still wins and never comes closer than 4.25 tiles (6-6) or 4.75 tiles (6-8) to the carving (it lights at 2.6 tiles), so the team only finds it if they go and look.
+
+**Proven winnable:** all ten levels of Chapter 6 pass the route robot, and every gem in the four new rooms is collected. Robot times and star times (about 2.5–3× the robot): 6-2 13.0 s → **35 s**, 6-6 18.0 s → **50 s**, 6-8 7.5 s → **20 s**, 6-9 14.9 s → **40 s**. These are first guesses (D12). The look-alike robot puts each new room well under the limit: 6-2 49% (closest 5-3), 6-6 62% (3-2), 6-8 46% (5-3), 6-9 53% (2-4).
+
+**Lessons worth keeping:**
+- **A trapdoor that is closing is already solid on top.** The moment someone steps off its button, you land on it instead of falling through. So a trapdoor whose button is a few tiles away always needs a friend to hold the button (6-8, 6-9), and nobody can "run for it" alone.
+- **Every lift stop is 5 tiles from the next floor in 6-6, never 4** (rule 7.7): 5 is clearly too high to jump, so everyone sees that the lift is needed. A 4-tile gap looks almost jumpable and only frustrates.
+- **Put a lift's top stop one tile clear of any ledge** (6-2). Then nobody standing under the ledge can get caught by a lift coming up.
+- **For a lever that locks something, use a dead end** (the far end of a rim or well) or a little shelf. Then the lever flips once and nobody walks back over it.
+
 ### 16.10 Chapter 7: The Whispering Vault 🔒
 *Planned and approved by the owner 2026-10-31.* Sketches: [`docs/levels/chapter7.png`](levels/chapter7.png). Mixes **Password gates** and **Different eyes** (16.7), as G10 promised: **each player holds half of the secret and has to say it out loud** (E1). A paid chapter (12.6).
 
@@ -1163,6 +1189,36 @@ The chapter grew to 10 levels. The vault is now **7-10** (the tables above call 
 
 **Proven winnable:** all ten pass the route robot; every gem in 7-5 to 7-9 is collected on the way, and the vault still opens with 45 codes. The robot also proves that the shortest winning route never reads a carving (it stays 3.1 to 6.4 tiles away; they light at 2.6). **Star times** for 7-5 to 7-9 are first guesses (D12): 45, 45, 40, 45 and 70 s.
 
+**Note:** the "Ten levels" table above describes the rooms before the remake; the remake below replaces them.
+
+#### The remake (2026-11-17, D14)
+Levels 7-4 to 7-9 got brand-new rooms. Before, 7-5 to 7-9 were Chapter 5's five rooms turned around and 7-4 was 6-4's room. Each new room starts from its own shape. The teaching stays the same: hidden carvings plus Different eyes, and in every level one player sees and the other acts. 7-1, 7-2, 7-3 and the vault (7-10) are unchanged.
+
+| # | Name | The room | What is hidden and from whom | What each player does |
+|---|---|---|---|---|
+| 4 | **The Quiet Lift** | Two floors with a lift shaft between them. The doors are up in the loft, and a lava pool and a water pool lie on the ground floor. | The button that sends the lift up. It sits on the steps past the lava, and only Cool Girl sees it. | She talks Hot Boy across the lava onto the button and rides the lift up. In the loft she stands on the second button to bring the lift back up for him. |
+| 5 | **One Bridge, Two Halves** | Two cliffs with a poison lake between them and one row of four stepping stones, going up and down. | She sees stones 1 and 3, he sees stones 2 and 4. He also sees the gate button at the end of the little water tunnel under their start. | She walks into the water tunnel and holds the button he tells her about. Each calls out "jump now" for the stones the other can't see. He climbs past the doors to a lever that keeps the gate open, then she crosses. |
+| 6 | **Two Stairs, One Tower** | A tower in the middle with both doors on top and a stair of ledges on each side. Her floor has water, his has lava. | Each stair has a lever in a corner that only the partner sees. Each lever opens the partner's gate into the tower. | Each one guides the other onto the lever they can't see: "go to the far corner of your middle ledge". |
+| 7 | **The Switchback** | Three long floors stacked on top of each other. He starts on the top floor, she starts on the bottom. | The top and middle floors hide water pools only she sees. The bottom floor hides two lava pools only he sees. | She holds a button on the bottom floor that opens his trapdoor. He flips a lever on the middle floor that sends her lift up. On every floor, the one who sees the pool calls the other's jump. |
+| 8 | **The Blind Well** | A wide well over poison between his high shelf and the rim with the doors. She starts in a water basin at the bottom. | He sees everything: the ledges up the well and the button on the rim. She sees none of it. | He opens her gate into the well and talks her up, ledge by ledge. On the rim she stands where he tells her. That spot is the hidden button that sends the ferry over the well to carry him across. |
+| 9 | **The Ring of Trust** (exam) | A ring of corridors round a big block, with the doors on top. | This time she sees almost everything: the button for her lift, the ledges up his shaft and the water on his path. He sees only the lava on top of the block. | She talks him onto her lift button, past the water and up his ledges. He warns her about the lava. At the top she holds the gate open for him. Water at the top of her lift keeps him from taking the lift himself. |
+
+**Where the carvings are now** (same dots, animals and eyes as before. In 7-6 and 7-8 the one who sees the carving still can't reach it):
+
+| Level | Dots | Seen by | Where | Who goes there |
+|---|---|---|---|---|
+| 7-4 | 2 | Hot Boy | high on the far-left wall of the loft, away from the doors | either |
+| 7-6 | 3 | Cool Girl | on a shelf high on his side of the tower, past the floating block | **Hot Boy** (it is on his stair) |
+| 7-8 | 4 | Hot Boy | over a water shelf in her basin, up a step only he sees | **Cool Girl** (only she can stand in the water) |
+
+**Proven winnable:** all ten levels pass the route robot, and every gem in 7-4 to 7-9 is collected. The robot also played the shortest winning routes of 7-4, 7-6 and 7-8, and none of them lights a carving: they come no closer than 5.2, 5.0 and 4.3 tiles, and a carving lights at 2.6. The look-alike check puts every new room at 61% or less (limit 80%, aim under 70%). Star times are first guesses (D12): 50, 35, 25, 30, 35 and 40 s. The robot's times are 16.3, 10.2, 5.4, 8.9, 10.0 and 11.3 s, and the star times leave extra room for talking.
+
+**Lessons worth keeping:**
+- A running jump under a ceiling 4 tiles high only covers about 2.7 tiles. In a low corridor, a hidden pool must be 1 tile wide, or the jump over it is unfair.
+- A liquid on a ledge makes a spot only one player can use: water on a shelf lets only Cool Girl stand there. That is how "the one who sees it can't reach it" works in 7-8, and how water keeps Hot Boy off her lift in 7-9.
+- Big solid blocks of stone are what make two rooms look alike. Hollowing one out (7-8's open hall over the poison) dropped its likeness to 3-2 from 78% to 56%.
+- Never change a map row with a find-and-replace that treats `.` as "any character": it quietly rewrote every all-stone row in the chapter. Replace exact text only.
+
 ### 16.11 Chapter 8: The Steam Halls 🔒
 *Planned and approved by the owner 2026-11-06.* Teaches **Don't touch** (16.7, T1–T4): fire meets water and both burst into steam. One new idea per level, simplest first; level 3 is a breather and level 5 the exam (D2, D3, D11). Every level of the chapter is a Don't touch level. A paid chapter (12.6).
 
@@ -1200,6 +1256,28 @@ Chapter 8 has no password, so it only grew: 8-6 to 8-10 are new and come after 8
 
 **Proven winnable:** all ten pass the route robot with the touch rule on, and every gem in 8-6 to 8-10 is collected on the way (their gems were placed on the arcs the players really jump). **Star times** for 8-6 to 8-10 are first guesses (D12): 55, 40, 45, 45 and 70 s.
 
+**Note:** the "Ten levels" table above describes the rooms before the remake; the remake below replaces them.
+
+#### The remake (2026-11-17, D14)
+Seven of Chapter 8's rooms were copies (8-6, 8-7 and 8-8 were old rooms with Don't touch switched on, 8-9 and 8-10 were 8-1 and 8-5 mirrored, 8-2 was a lift room like 1-4, 8-4 was nearly 8-3). They are now new rooms with the same ids. 8-1, 8-3 and 8-5 did not change. Each new room is built around its own way of getting past each other, and every pass is a friend who stands still (never two moving players). Sketches: [`docs/levels/chapter8.png`](levels/chapter8.png).
+
+| # | Name | The room | How the two get past each other | What each player does |
+|---|---|---|---|---|
+| 2 | **One at a Time** | A low room on the left, a poison pool on the right, and a high ledge hanging above with the doors. | A cable car one tile wide climbs slantwise over the pool: it fits only one, so they ride it in turns. The first one up goes to the far button, past both doors. | She holds the floor button while he rides up. He holds the button beyond the doors while she rides. |
+| 4 | **Tight Squeeze** | A hill in a cave: a gate at the foot of the hill, a second gate on the far side, the doors in a low room beyond. | Each gate's button is on the only path, so the one holding it is in the way: the other leaps over them (5+ tiles of headroom) and through the gate. | She holds the first button, he leaps over her and holds the button past the gate for her. Then he holds the second button and she leaps over him; she holds the far button so he can come through. |
+| 6 | **The Burrow** | Two long tunnels, one above the other, each with a little cellar under its floor (one behind water, one behind lava). The doors are at the far end of the lower tunnel. | The tunnels are too low to leap over a friend. The cellar's button opens the gate ahead, and whoever stands down in the cellar is out of the way, so the friend walks past above. | Upper tunnel: she ducks into the water cellar and holds, he goes through and holds the gate from the far side for her. Lower tunnel: he ducks into the lava cellar and holds, she goes through and holds the gate for him. |
+| 7 | **Under and Over** | A low tunnel under a big block, with water at the left exit and lava at the right; the doors are on top of the block. | Nobody can pass in the tunnel. In its middle is a one-person lift in a pocket: she stands on it, he steps on the plate beside it, which lifts her into the shaft above while he walks under her (the plate on the far side keeps her up). On top, the second one leaps over the first. | She waits on the lift, then climbs out on the left (water). He walks under her, climbs out on the right (lava), and stands still on top while she leaps over him to her door. |
+| 8 | **The Poison Crossing** | A poison pool with one-tile stones and a big island in the middle; a low nook at each end of the pool, floored with water on his side and lava on hers, with a lever at the end. The doors are pits in the island, closed by trapdoors. | Out and back across the stones, in opposite directions. The stones are too far apart to leap over a friend, so they pass on the island: one stands still, the other leaps. On the way back, the first one home drops into their door pit and the other jumps over. | She crosses to his side and flips the lever in the water nook (it opens his door pit). He crosses to her side and flips the lever in the lava nook (it opens hers). |
+| 9 | **The Zigzag** | Three floors joined by two trapdoors; he starts on the top floor, she on the bottom one; the doors are on the low middle floor, which has one small dip. | The middle floor is too low to leap over a friend: the dip is the only place to pass. One steps down into it and the other hops over. | Different eyes: he holds the top button (only she sees it) so she can climb up, on a ledge only he sees. She holds the button at the end of the middle floor (only he sees it) so he can drop down. Then they pass at the dip. |
+| 10 | **The Ring of Steam** | The exam. A ring round a big block: a one-person lift up the left side, ledges up the right side behind a wide lava pool, a tall hall on top with a gate between the doors. | One-person lift, then the two meet at the gate from opposite sides: she holds its near button and he leaps over her through it. | Different eyes everywhere: he holds the lift button (only she sees it) while she rides; he climbs ledges only she sees; she holds the near gate button (only he sees it); he holds the far one (only she sees it) so she can walk through to her door. |
+
+**Proven winnable:** all ten levels of Chapter 8 pass the route robot with the touch rule on, and the seven new ones collect all their gems (4 each). Robot times and star times (about 2.8× the robot, first guesses, D12): 8-2 16 s → 45 s, 8-4 8.5 s → 25 s, 8-6 18 s → 50 s, 8-7 8 s → 20 s, 8-8 8.5 s → 25 s, 8-9 12.5 s → 35 s, 8-10 10 s → 30 s. Every leap over a friend clears them by at least 2.5 tiles (a burst needs less than 0.68). The look-alike robot: each new room is at most 66% like any other level (8-10 vs 5-3).
+
+**Lessons:**
+- A pocket is the easiest fair way to pass under a low ceiling: a cellar, a dip or a lift shaft one tile wide. The one in the pocket is at least 2 tiles below the friend, so there is never a near miss.
+- A pool can only keep one player out if it is too wide to jump: 6 tiles in a 4-tall corridor (8-10), or any width in a 2-tall nook (8-8).
+- A button is a natural "stand still here" mark: put the passing place where someone already has to wait.
+
 ### 16.12 Chapter 9: The Heart of the Temple 🔒
 *Planned and approved by the owner 2026-11-06.* The finale: **no new rule**. Each level mixes ideas players already know, and the chapter has **its own team code** (password gates, G1–G13): one carving in each of levels 1–4, the symbol stones at the final gate in level 5. Some carvings are seen by only one player (as in Chapter 7). A paid chapter (12.6).
 
@@ -1222,6 +1300,31 @@ Chapter 8 has no password, so it only grew: 8-6 to 8-10 are new and come after 8
 
 **The ending (story, 16.7):** small and wordless (D4). Level 9-5's background shows the glowing heart of the temple. When both reach their doors in 9-5, a short celebration plays (the heart lights up, fire and water sparks swirl together) and the results screen says "You reached the heart of the temple". A bigger story (pictures between chapters) can come later as its own project.
 *As built:* the whole of Chapter 9 shows the heart (great carved rings with marks of every earlier area, and a slow, dim two-beat glow). Finishing the last official level lights the heart up, sends fire and water sparks swirling out of the doors with a cloud of steam, and adds "🔥💧 You reached the heart of the temple." to the results.
+
+**Note:** the "Ten levels" table above describes the rooms before the remake; the remake below replaces them.
+
+#### The remake (2026-11-17, D14)
+Levels 9-5 to 9-10 were old rooms: 9-5 to 9-9 were the last levels of Chapters 1–4 mirrored with something added, and the finale 9-10 was 7-10's vault with the roles swapped. All six are now new rooms with the same ids and the same mix of ideas (Different eyes, Don't touch, carvings). 9-1 to 9-4 are unchanged. Sketches: [`docs/levels/chapter9.png`](levels/chapter9.png).
+
+| # | Name | Mix | The room | What each player does |
+|---|---|---|---|---|
+| 5 | **The Island Tower** | Different eyes | A tall stone tower stands in a poison lake; the doors are on top of it, and a lift runs up each side. | Each crosses their half of the lake on a stepping stone only the partner can see. She stands on a button on her bank (only he sees it) to lift him up the tower; on top he stands on a button (only she sees it) to lift her. |
+| 6 | **Upstairs, Downstairs** | Don't touch, carving 3 | Two rooms upstairs, split by a wall, over one long hall downstairs with a small water pool. | She walks over the lever that opens his trapdoor; he drops down and walks onto the lever that opens hers. They land on each other's side, so she waits in the pool while he leaps over her. |
+| 7 | **The Floating Floor** | Don't touch, Different eyes | A wide floor floats in the middle of the room over a poison pit, with a lift on each side. | His lever sends her lift up; her lever on the floating floor sends his lift up. Up there they must pass: the lava only he sees, the water only she sees. She waits in the water while he leaps over her. |
+| 8 | **Three Floors Down** | Different eyes, carving 4 | A zigzag of three floors: the top floor, a low middle hall, the bottom floor. | They warn each other about the pools on the top floor. One holds the button at its end so the other can pass the gate in the middle hall, then holds the button below (only she sees it) for the partner. The lever at the far end of the middle hall (only she sees it) opens the door gate. |
+| 9 | **The Crossroads** | Don't touch, Different eyes | A cross: a chimney at the top, a long hall left to right, a poison pit below the middle. | The ferry over the pit is seen only by her. He holds the button on his ledge while she rides across; then he walks off his ledge onto the ferry he can't see, and she holds the button only he sees. At the end he leaps over her to his door. |
+| 10 | **The Beating Heart** | The finale: everything, and the vault | A shaft on the left, a vault on two floors (his upstairs, hers downstairs), the doors at the right end of each floor. | See below. |
+
+**Where the carvings are.** 9-6: carving 3 (seen only by Hot Boy) is on a shelf above her upstairs room; only she can climb there, so he has to ask her to go and look. 9-8: carving 4 (seen by both) is on a little shelf just past the end of the top floor, a jump nobody needs. Both are off the main path: the robot's shortest winning route stays 5.4 tiles (9-6) and 3.5 tiles (9-8) away; a carving lights up at 2.6.
+
+**The new finale vault (9-10).** She starts high and must go low; he starts low and must go high. She holds the button for his lift (it fits only one), he leaps over her on the ledge and walks onto the lever that opens her gate; she drops down, jumps the lava only he can see, and walks over the lever that opens his gate. Then each is alone on their own floor of the vault, so they can never touch in there, and nothing inside can kill: a death never makes the team enter the code again. The twist: **every stone on your floor is seen only by your partner**. You see four empty shelves, so the partner has to tell you which animal sits where ("your third shelf is the frog"), and the code is entered by taking turns, floor by floor. When the code is right, both vault gates open onto the two doors, one above the other at the right end.
+
+**Proven winnable:** all ten levels of Chapter 9 pass the route robot, every gem in 9-5 to 9-10 is collected on the way, and the new vault opens with 45 different codes (one side only, repeats, 40 random). The robot's times and the first-guess star times: 9-5 9.2 s (30 s), 9-6 6.6 s (25 s), 9-7 9.8 s (30 s), 9-8 15.7 s (45 s), 9-9 10.3 s (35 s), 9-10 15.8 s (80 s; more time because the team must remember the code and talk through every stone). Closest other rooms (`check:unique`): 9-5 50%, 9-6 62%, 9-7 53%, 9-8 53%, 9-9 61%, 9-10 68% (5-2, which is also a room on two floors); 9-10 is 42% or less like 6-10 and 7-10.
+
+**Lessons worth keeping:**
+- A lift that waits one tile above the floor blocks the walkway beside it: someone who drops next to it must hop over it or land on it.
+- A room with a 4-tile ceiling cuts every full jump short. A floor where players must jump pools needs 5 tiles of air above it, the same as a leap over a friend.
+- A ferry seen by only one player makes a good "blind drop": the one who can't see it walks off the ledge when the partner says "now".
 
 ### 16.13 Chapter 10: The Crumbling Wing 🔒 (the Trials)
 *Approved by the owner and built 2026-11-10.* Sketches: [`docs/levels/chapter10.png`](levels/chapter10.png). The first of the Trials (16.7, R1–R5): a bonus chapter behind the "Bonus levels" tile, open once either player has finished 9-5. New here: **crumbling stones** (16.7, K1–K6). A paid chapter (12.6).
