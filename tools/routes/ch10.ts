@@ -4,6 +4,28 @@
 import { enteredAt, gateOpen, gateShut, heard, jump, pause, platAt, say, to, until, type Cmd, type Route } from '../sim.ts';
 
 export const ROUTES_10: Record<string, Route | (() => Route)> = {
+  '10-5': () => ({
+    fire: [to(11.5), say('he holds'), until('she is through her gate', (w) => w.body.water.x < 6.6), jump(18.5, { at: 14.4 }), to(18.5),
+      until('she is in her hall', (w) => w.body.water.x > 7.9 && w.body.water.y < 7.1), heard('she holds the lift'), jump(21.5), jump(26.9, { at: 23.4 }), platAt(0, 1),
+      to(18.6), heard('she is ready'), until('she is on the stone', (w) => w.body.water.x > 15.2 && w.body.water.y > 6.9), jump(14.5, { at: 18.4 }), to(12.5)],
+    water: [heard('he holds'), gateOpen(0), jump(5.5, { at: 7.6 }), jump(4.5), jump(6.5), jump(8.5), to(10.5), say('she holds the lift'),
+      until('he is up', (w) => w.body.fire.y < 7.1 && w.body.fire.x < 25.9), to(14.5), say('she is ready'), until('he is at the edge', (w) => w.body.fire.x < 18.7),
+      jump(16.5, { hold: 0.1 }), until('he is over', (w) => w.body.fire.x < 15.4), jump(18.6, { hold: 0.1 }), to(20.5)],
+  }),
+  '10-3': () => ({
+    fire: [to(1.5), say('he holds'), until('she is past her gate', (w) => w.body.water.x < 21.3), heard('she holds'), gateOpen(0), to(9.5),
+      heard('she is ready'), jump(11.5), until('she is over', (w) => w.body.water.x < 10.6), jump(13.6), to(14.5)],
+    water: [heard('he holds'), gateOpen(1), to(17.5), say('she holds'), until('he is past his gate', (w) => w.body.fire.x > 5.9),
+      until('he is at the edge', (w) => w.body.fire.x > 9.3), to(15.5), say('she is ready'),
+      until('he hops', (w) => w.body.fire.x > 9.9), jump(9.5, { at: 13.6 }), to(7.5)],
+  }),
+  '10-2': () => ({
+    fire: [to(5.5), say('he holds'), until('she is through her gate', (w) => w.body.water.x > 9.0), jump(3.5), jump(5.5), jump(2.5), to(2.5),
+      until('she is on her ledge', (w) => w.body.water.x > 17.9 && w.body.water.y < 10.1), jump(5, { at: 3.4 }), to(13.4), heard('she holds'), gateOpen(2), jump(28, { at: 25.2 }), to(30.5)],
+    water: [heard('he holds'), gateOpen(0), jump(10.5, { at: 8.6 }), jump(12.5), jump(15.5), jump(18, { at: 15.4 }), to(19.5), say('she holds'),
+      until('he is past his gate', (w) => w.body.fire.x > 14.9), jump(25.5, { at: 21.3 }), jump(28), to(29.5),
+      until('he is in', (w) => w.body.fire.x > 29.9), to(27.5)],
+  }),
   '10-1': () => ({
     fire: [to(5.5), say('he holds'), until('she is through', (w) => w.body.water.x > 25.3), heard('she holds'),
       until('the stairs are back', (w) => [0, 1, 2, 3, 4].every((i) => w.mech.crumbles[i].t < 0)), jump(9.5, { at: 6.8 }), jump(12.5), jump(15.5), jump(18.5), jump(21.5),
