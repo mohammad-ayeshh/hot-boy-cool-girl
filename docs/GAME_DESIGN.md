@@ -906,7 +906,7 @@ First level ideas (they will change while building):
 - **12:** Higher Ground · Burning Bridges (crumbling) · Last Breath (timed) · Trust Fall (eyes, Don't touch) · The Last Trial (everything).
 
 #### The remake: every level its own room 💬
-*Started 2026-11-16. The rules are agreed (D14, "What HARD means" above); the order of work is proposed, not yet approved.*
+*Started 2026-11-16. The rules are agreed (D14, "What HARD means" above). Chapters 6–12 were remade on 2026-11-20 and Chapter 13 on 2026-11-21; left: the old cousins 1-4/4-2 and 5-1/5-5 (the owner decides).*
 
 The owner played the 100 levels and found that many look the same: on the road to 100, most new levels were an older room mirrored or with a mechanic added. The look-alike robot (`npm run check:unique`) agrees. Each family below keeps its first room; the others get a new room under the same id, so saved progress and the map stay as they are.
 
@@ -1611,6 +1611,48 @@ All ten levels of Chapter 12 got a new room (none was kept: the old rooms were d
 **Notes from building 13-5:** each trapdoor stays an open hole for the rest of its 3 s clock, and half of each player's stones are across it, so you wait the 3 s before entering the code. His switch inside the vault sits at the far end of his half, away from the stones, so entering the code can never open her trapdoor under her. Even if someone steps on it again, falling through only lands on the long ledge above the poison: never a death, so the stones already entered stay down.
 
 **Proven winnable:** all five pass the route robot with every gem, and the vault opens with the test code and 45 others (one side only, repeats, 40 random), with the tide on. **Star times** are first guesses (D12): 50, 60, 45, 45 and 120 s.
+**Note:** the tables above describe the rooms before the remake; the remake below replaces them (13-5 keeps its vault).
+
+#### The remake: SUPER HARD (2026-11-21, D14, "What HARD means")
+All five levels were rebuilt. 13-1 to 13-4 are brand-new rooms; 13-5 keeps its vault (and the code, H5) but got a new, harder climb. Every level has the tide, crumbling stones, timed switches, Different eyes and Don't touch, and **one trick the team has never seen** (SUPER HARD). The solutions are in `tools/routes/ch13.ts` (13-5's in `tools/routes.ts`, `lastRoute`).
+
+| # | Name | The new trick | The room | The plan the team must find |
+|---|---|---|---|---|
+| 1 | **The Hatch** | **Break the dust under your own feet so your friend can jump up through the hole.** | Two closed cells, each with a two-stone dust hatch in its roof; a bridge on lava above (only he can stand there). The doors are on the "wrong" sides. | He holds her gate from a low step by the poison (the button only she sees) while she climbs onto the roof of his cell. On his word she leaves the timed switch (only he sees it) that opens BOTH cells, and both run for their cell before it shuts: she over his hatch, which falls behind her. He jumps up through it, climbs onto the lava bridge while she holds its gate from inside her cell (the button only he sees), walks over her hatch to his door, and she jumps up to hers. Each passes over the other once. |
+| 2 | **Keep It Running** | **Keep the clock alive: leave the switch, do a job elsewhere, and get back before it runs out.** | A wide gap with a ferry; a gate hangs over its path; the doors high on his side. | He powers the ferry from his side to bring her over, but the gate's button is up on a shelf: he must leave the switch, hold the button while she passes, and be back on the switch before its clock runs out, or the ferry turns back and the closed gate scrapes her off. Both switches are seen only by her: she calls them out from the ferry. Then her door is the far one, behind a gate whose timed switch he presses once she is at it, and the way up is two single dust steps: she must land on one and leave him the other. |
+| 3 | **Before It Drowns** | **A lever the poison will take: whatever it shows then stays for good.** | Her lift on the left, his climb on the right, the doors on one shelf above. | The lever just above the poison drives her lift (on: up) and his bridge (on: a 6-wide hole). He flips it on when she is on the lift (only he sees the lift, only she sees the lever), and once she is off at the top, flips it off again before the poison gets there, and climbs. A timed switch on his first ledge (only she sees it) opens the gate to her door: from then on he must get up, leap over her (she waits on the stone, not on the dust he must not land on), and she must run through before it shuts. |
+| 4 | **Falling Swap** | **The only place to pass is over crumbling stone: the one standing still stands on it.** | A long low tunnel where nobody can pass; a skylight in the middle whose floor is dust over the poison; doors split by a pillar. | Each starts on the timed switch (only the other sees it) that opens the other's way into the tunnel, so both leave on three. They start on the wrong sides, so they must swap under the skylight: one steps onto the dust just as the other jumps, and steps off the moment the leaper is over, before it falls. Only he sees the dust: to her it is a hole, and she steps out over it on his word. |
+| 5 | **The Last Trial** | **One switch opens both trapdoors: press it, send your friend up, then run for your own** (and the vault, H5). | As before: crumbling steps from the corners, a long low ledge under the vault, the split vault above. Now the poison rises until it is just under the vault floor. | One timed switch in the middle of the ledge (only he sees it) opens both trapdoors into the vault: whoever presses it sends the other up first, then runs to their own trapdoor and jumps up through it before it shuts. Inside, the code as before. |
+
+**Where the carvings are now (H2):**
+
+| Level | Dots | Seen by | Where | Who goes there |
+|---|---|---|---|---|
+| 13-1 | 1 | both | on a one-tile ledge above his start | Hot Boy |
+| 13-2 | 2 | Hot Boy | on a nub above her start | **Cool Girl** (he reads it from across the room) |
+| 13-3 | 3 | Hot Boy | on a nub above her start | **Cool Girl** |
+| 13-4 | 4 | both | on the tunnel roof at the far right, past his way up | Hot Boy |
+
+**Measured (the robot):**
+
+| # | Robot time | Tide (tiles/s; robot loses at) | Tightest clock (what it may lose) | Star time (first guess, D12) |
+|---|---|---|---|---|
+| 1 | 8.4 s | 0.65; 1.35× | both cells' clock 1.7 s (0.75 s) | 25 s |
+| 2 | 11.8 s | 0.39; 1.35× | the ferry clock 3.2 s (0.7 s) | 32 s |
+| 3 | 8.9 s | 0.37; 1.35× | her door clock 3.7 s (0.7 s) | 25 s |
+| 4 | 6.1 s | 0.63; 1.35× | the two start clocks 1.2 s (0.6 s); the swap: she may step out from 0.35 s before his jump to 0.4 s after | 18 s |
+| 5 | 11.5 s | 0.8 from y 14.3 to 7.6; 1.35× | the trapdoor clock 1.95 s (0.7 s) | 45 s |
+
+**Proven winnable:** all five pass the route robot with every gem, with every clock 0.5 s shorter and the tide 1.25× faster, with Don't touch on; the vault opens with the test code and 45 others. `custom_check` passes all five; `unique_check`: 13-1 67% like 12-1, 13-2 56%, 13-3 57%, 13-4 49%, 13-5 53% (the limit is 80%, the aim under 70%).
+
+**Lessons worth keeping:**
+- A dust hatch only works from below if the cell under it is exactly 2 tiles high: the jump then just clears the roof (13-1).
+- A timed switch must never stand on dust (the level checker forbids it): put the switch on stone and the dust on the way to it (13-2).
+- A lever the poison is about to take is a clock everyone can see, and its last state stays (13-3).
+- The leapfrog spot decides who must stand on the dust only if the skylight is about one leap wide (13-4).
+- Raising where the poison rests (y 14.3 instead of 15) is the dial when a tide is already at the 0.8 cap (13-5).
+
+**Still to watch (D12):** the robot finishes in 6–12 s because it never talks; every level is a chain of calls ("step on now", "the switch is two stones left") that people must make on a voice call. 13-4's swap and 13-1's run into the cells are the tightest moments. The 30–50 tries goal is for playtests to check.
 
 ---
 
@@ -1721,3 +1763,4 @@ We'll go through these in order and fill in a section for each.
 | 2026-11-16 | **The road to 100 levels is finished.** Store and marketing texts updated to 100 levels in 13 chapters (a 65-level story and 35 Trials), store screenshot 4 regenerated, and everything pushed to `main`. The GitHub test APK now shows the solo test (🧪 Test levels alone) in Settings, built with `VITE_TEST_BUILD=1`; the Google Play build stays without it. Next: playtests, star times, tuning. |
 | 2026-11-16 | **The remake begins (16.7 "The remake", D14, "What HARD means"):** the owner found many levels look the same and wants Chapters 10–12 harder and 13 super hard. Agreed: a new rule D14 (every level is its own room: no mirrors, no old room with one more mechanic), checked by a new robot (`npm run check:unique`, which finds 36 clear copies and 11 close cousins today); a definition of HARD (figure out, together, do, hold: three of four; 10–20 tries) and SUPER HARD (all four, 30–50 tries). **The tide is faster:** every tide's speed is now set so the robot loses at 1.5× (Chapter 12) or 1.35× (Chapter 13), capped at 0.6 and 0.8 tiles a second; speeds went from 0.2–0.35 to 0.24–0.8. No room is remade yet. |
 | 2026-11-20 | **The remake of Chapters 6–12 is done.** Every look-alike story room in Chapters 6–9 is a new room (6-2, 6-6, 6-8, 6-9, 7-4 to 7-9, 8-2, 8-4, 8-6 to 8-10, 9-5 to 9-10, with a new finale vault in 9-10), and all 30 Trials levels of Chapters 10–12 are new HARD rooms (notes in 16.9–16.15). Every level keeps its id. All pass the route robot (with shorter clocks and a faster tide), and none is over 70% like another level. Still to do: Chapter 13 SUPER HARD (13-1 and 13-4 are copies), the old cousins 1-4/4-2 and 5-1/5-5, and playtests: the robot wins most Trials rooms in 5–18 s, so whether they take a team 10–20 tries must be checked by people. |
+| 2026-11-21 | **Chapter 13 remade SUPER HARD (16.16).** 13-1 The Hatch, 13-2 Keep It Running, 13-3 Before It Drowns and 13-4 Falling Swap are new rooms, each with a trick the team has never seen (break the dust under your feet so your friend can jump up through it; keep a clock alive by leaving the switch and coming back; a lever the poison will take; pass over a friend who stands on crumbling stone). 13-5 keeps its vault and code, with a new climb: the poison rises to just under the vault, and one timed switch opens both trapdoors. Carvings 2 and 3 are now seen by Hot Boy and reached by Cool Girl. All pass the route robot (each tide set so the robot loses at 1.35×, clocks with about 0.7 s to spare); no Chapter 13 level is over 67% like another. Left in the remake: the old cousins 1-4/4-2 and 5-1/5-5. |

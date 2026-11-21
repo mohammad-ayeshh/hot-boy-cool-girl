@@ -14,6 +14,7 @@ import { CODE_ROUTES_9, ROUTES_9 } from './routes/ch9.ts';
 import { ROUTES_10 } from './routes/ch10.ts';
 import { ROUTES_11 } from './routes/ch11.ts';
 import { ROUTES_12 } from './routes/ch12.ts';
+import { ROUTES_13 } from './routes/ch13.ts';
 
 /** The fixed code the robot plays password levels with (16.7 build notes): a repeat, and both sides' stones. */
 export const TEST_CODE: Animal[] = ['frog', 'bat', 'bat', 'monkey'];
@@ -78,10 +79,9 @@ export function heartRoute(code: Animal[]): Route {
  * she sees it) that opens hers. Above: the split vault, he has the left half and she the right.
  */
 export function lastRoute(code: Animal[]): Route {
-  const fire: Cmd[] = [to(3.4), jump(4.8), jump(6.8), to(8.0), say('he waits'), heard('she pressed'), gateOpen(0), jump(9.5), jump(5.4, { at: 9.2 }), to(1.5), say('he pressed'),
-    until('she is up', (w) => w.body.water.y < 7.1), to(4.5), gateShut(0)];
-  const water: Cmd[] = [to(28.6), jump(27.0), jump(25.2), to(20.5), heard('he waits'), say('she pressed'), until('he is up', (w) => w.body.fire.y < 7.1), to(24.0),
-    heard('he pressed'), gateOpen(1), jump(22.4), gateShut(1)];
+  const fire: Cmd[] = [to(3.4), jump(4.8), jump(6.8), to(7.9), say('he waits'), heard('she pressed'), gateOpen(0), jump(9.6), say('he is up'), jump(5.4, { at: 9.2 }), to(4.5), gateShut(0)];
+  const water: Cmd[] = [to(28.6), jump(27.0), jump(25.2), to(15.5), heard('he waits'), say('she pressed'), heard('he is up'), to(23.9), jump(25.6),
+    until('she is up', (w) => w.body.water.y < 7.1), to(26.5), gateShut(1)];
   return enterCode(CHAPTER_13[4], code, fire, water, 'fire', [2, 3]);
 }
 
@@ -673,7 +673,7 @@ export const ROUTES: Record<string, Route | (() => Route)> = {
 
 // The remake (16.7, D14): each chapter's remade levels keep their solutions in tools/routes/ch<n>.ts; those win over the entries above.
 Object.assign(CODE_ROUTES, CODE_ROUTES_9);
-Object.assign(ROUTES, ROUTES_6, ROUTES_7, ROUTES_8, ROUTES_9, ROUTES_10, ROUTES_11, ROUTES_12);
+Object.assign(ROUTES, ROUTES_6, ROUTES_7, ROUTES_8, ROUTES_9, ROUTES_10, ROUTES_11, ROUTES_12, ROUTES_13);
 
 /**
  * The Feel Lab vault room (?lab=vault), code frog · bat · bat · monkey. Stones sit on shelves 3 tiles up
