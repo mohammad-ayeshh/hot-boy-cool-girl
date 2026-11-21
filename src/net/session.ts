@@ -2,7 +2,7 @@
 // (design doc 13.5–13.7). The room code stays the same for the whole session.
 // If the host disappears, whoever is still around takes over the code, so either player can
 // reopen the same link and land back in the room.
-import { Room, RoomNotFoundError, RoomTakenError, normalizeRoomCode, type ConnectionKind, type RoomEvents } from './room';
+import { ConnectTimeoutError, Room, RoomNotFoundError, RoomTakenError, normalizeRoomCode, type ConnectionKind, type RoomEvents } from './room';
 
 export type SessionStatus = 'idle' | 'connecting' | 'waiting' | 'connected' | 'lost';
 
@@ -106,6 +106,7 @@ export class Session {
         return; // onConnected fires through the events
       } catch (err) {
         lastError = err;
+        if (err instanceof ConnectTimeoutError && attempt >= 1) break; // blocked twice: say so instead of waiting on
         if (!(err instanceof RoomNotFoundError)) continue; // timeout or network hiccup: just try again
       }
       try {

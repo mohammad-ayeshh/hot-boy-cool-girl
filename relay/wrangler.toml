@@ -1,0 +1,5 @@
+# Cloudflare Worker that gives the game short-lived relay (TURN) passwords. Deploy: see relay/README.md
+name = "hbcg-relay"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true

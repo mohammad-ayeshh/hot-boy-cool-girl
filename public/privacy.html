@@ -37,7 +37,9 @@
   <h2>Playing online with a friend</h2>
   <p>When you create or join a room, the game connects your phone to your friend's phone using WebRTC.
     To find each other, both phones briefly contact the free public connection service of
-    <a href="https://peerjs.com">PeerJS</a>. On some networks the game runs through a relay server instead of directly.
+    <a href="https://peerjs.com">PeerJS</a>. On some networks (often mobile data) the phones can't reach each other directly, and the game runs through
+    <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare</a>'s relay server instead; the game's own small Cloudflare service
+    gives your phone a temporary relay password for this.
     Like any internet service, these servers see your phone's IP address while connecting; they don't receive your progress or name.</p>
   <p>During a game, your phone sends your friend's phone what the game needs: your character's position and actions,
     your nickname, which levels you have finished, your phone's random ID, whether you own the full game,

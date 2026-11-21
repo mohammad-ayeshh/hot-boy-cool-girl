@@ -60,6 +60,6 @@ Still to make: a short **preview video** (YouTube link) that works with the soun
 - **Price:** the app is free to install; one in-app product.
 - **In-app product:** ID `full_game`, one-time (non-consumable), **$2.99** (decided 2026-10-31). Name "Full game", description "Unlock every chapter after chapter 2, forever. Your friend plays them with you for free."
 - **Ads:** no ads.
-- **Data safety:** no data collected or shared by the app; data stays on the device. Online play connects phones directly (WebRTC) through the public PeerJS connection service; see the privacy page. Payments are handled by Google Play.
+- **Data safety:** no data collected or shared by the app; data stays on the device. Online play connects phones directly (WebRTC) through the public PeerJS connection service, or through Cloudflare's relay when a network blocks the direct path; see the privacy page. Payments are handled by Google Play.
 - **Target audience:** pick the ages honestly; the game has no chat and no personal data, but don't pick "children" unless you're ready for Google's extra Families rules.
 - **Content rating:** fill the questionnaire honestly (cartoon peril only: characters dissolve into steam or sparks, no blood).

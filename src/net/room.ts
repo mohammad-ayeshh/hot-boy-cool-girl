@@ -1,11 +1,13 @@
-import Peer, { type DataConnection, type PeerError } from 'peerjs';
+import Peer, { type DataConnection, type PeerError, type PeerOptions } from 'peerjs';
+import { relayServers } from './relay.ts';
 
 // Peer IDs live on the public PeerJS broker, so namespace them to avoid clashing with other apps.
 const ID_PREFIX = 'hbcg-v1-';
 // No I/O/0/1 so codes are easy to read out loud.
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const CODE_LENGTH = 4;
-const CONNECT_TIMEOUT_MS = 15000;
+// A relayed connection takes a little longer to set up than a direct one.
+const CONNECT_TIMEOUT_MS = 20000;
 
 export type ConnectionKind = 'local' | 'direct' | 'relay' | 'unknown';
 
@@ -17,6 +19,8 @@ export interface RoomEvents {
 
 /** Joining failed because nobody is hosting this code (so we may host it ourselves). */
 export class RoomNotFoundError extends Error {}
+/** The room exists but the two phones never managed to connect (a network blocking it). */
+export class ConnectTimeoutError extends Error {}
 /** Hosting failed because someone else already hosts this code. */
 export class RoomTakenError extends Error {}
 
@@ -28,6 +32,12 @@ export function makeRoomCode(): string {
 
 export function normalizeRoomCode(input: string): string {
   return input.toUpperCase().replace(/[^A-Z]/g, '').slice(0, CODE_LENGTH);
+}
+
+/** Peer options with our relay pass (13.8) when we have one. */
+async function peerOptions(): Promise<PeerOptions> {
+  const iceServers = await relayServers();
+  return iceServers ? { debug: 1, config: { iceServers } } : { debug: 1 };
 }
 
 function waitForPeerOpen(peer: Peer): Promise<string> {
@@ -62,9 +72,10 @@ export class Room {
 
   /** Host a new random code, or (with `wanted`) a specific one, e.g. to take back your room after a drop. */
   static async host(events: RoomEvents, wanted?: string): Promise<Room> {
+    const options = await peerOptions();
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = wanted ?? makeRoomCode();
-      const peer = new Peer(ID_PREFIX + code, { debug: 1 });
+      const peer = new Peer(ID_PREFIX + code, options);
       try {
         await waitForPeerOpen(peer);
       } catch (err) {
@@ -95,7 +106,7 @@ export class Room {
   static async join(rawCode: string, events: RoomEvents): Promise<Room> {
     const code = normalizeRoomCode(rawCode);
     if (code.length !== CODE_LENGTH) throw new Error(`Room codes are ${CODE_LENGTH} letters.`);
-    const peer = new Peer({ debug: 1 });
+    const peer = new Peer(await peerOptions());
     try {
       await waitForPeerOpen(peer);
     } catch (err) {
@@ -106,7 +117,7 @@ export class Room {
     const conn = peer.connect(ID_PREFIX + code, { reliable: true, serialization: 'json' });
 
     await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => fail(new Error('Connection timed out. The network may need a relay server.')), CONNECT_TIMEOUT_MS);
+      const timer = setTimeout(() => fail(new ConnectTimeoutError('Could not connect to your friend.')), CONNECT_TIMEOUT_MS);
       const onPeerError = (err: PeerError<string>) => {
         fail(err.type === 'peer-unavailable' ? new RoomNotFoundError(`Room ${code} not found.`) : new Error(`Connection failed (${err.type}).`));
       };

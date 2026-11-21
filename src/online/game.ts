@@ -23,7 +23,7 @@ import { askForReview } from '../shop/review';
 import type { Animal } from '../game/mechanisms';
 import { defaults } from '../game/settings';
 import { Session, type SessionStatus } from '../net/session';
-import { normalizeRoomCode } from '../net/room';
+import { ConnectTimeoutError, normalizeRoomCode } from '../net/room';
 import { Stage, createApp, type HeroEvent, type Snapshot } from '../play/stage';
 import { TitleScene } from '../render/title';
 
@@ -612,6 +612,9 @@ export async function startGame(): Promise<void> {
 
   // "Doesn't connect" is the review that sinks an online game, so every connection error says what to try (MARKETING_PLAN M13).
   const NET_HELP = 'Check that both phones are online. On shared or school Wi-Fi, try mobile data instead.';
+  // The room was found but the phones never connected: almost always a network that blocks it (13.8).
+  const TIMEOUT_HELP = 'The room is there, but your phones could not reach each other. Both switch to mobile data (or both to the same Wi-Fi) and try again.';
+  const netError = (e: unknown) => (e instanceof ConnectTimeoutError ? `${e.message} ${TIMEOUT_HELP}` : `${(e as Error).message} ${NET_HELP}`);
   const setStatus = (text: string, err = false) => {
     const s = document.getElementById('status');
     if (s) { s.textContent = text; s.className = `status ${err ? 'err' : ''}`; }
@@ -630,7 +633,7 @@ export async function startGame(): Promise<void> {
       rememberRoomInUrl();
       show('invite');
     } catch (e) {
-      setStatus(`${(e as Error).message} ${NET_HELP}`, true);
+      setStatus(netError(e), true);
     }
   }
 
@@ -642,7 +645,7 @@ export async function startGame(): Promise<void> {
       rememberRoomInUrl();
       if (session.status === 'waiting') show('invite'); // nobody was there: we opened it
     } catch (e) {
-      setStatus(`${(e as Error).message} ${NET_HELP}`, true);
+      setStatus(netError(e), true);
     }
   }
 
