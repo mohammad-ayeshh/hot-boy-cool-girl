@@ -16,7 +16,7 @@ import { ParticleSystem, makeGlowTexture } from '../render/particles';
 import { CharacterView, type Pose } from '../render/character';
 import { Pools, T, airParticle, drawBackground, drawScenery, drawTiles, lerpColor } from '../render/world';
 import { THEMES, themeFor, type Theme } from '../render/themes';
-import { COOL_HAIR, HOT_FLAME, HairChain } from '../render/hair';
+import { COOL_HAIR, HOT_BAND, HOT_BAND_LOW, HairChain, drawBand } from '../render/hair';
 
 const FIRE_FX = [0xfff0c2, 0xffb02e, 0xff6a1a];
 const WATER_FX = [0xe4faff, 0x7adfff, 0x1fa3ff];
@@ -68,7 +68,10 @@ interface Hero {
   view: CharacterView;
   light: Sprite;
   status: Text;
+  /** her hair, or the upper tail of his headband */
   hair: HairChain;
+  /** the lower tail of his headband (null for her) */
+  hair2: HairChain | null;
   hairG: Graphics;
   hairReset: boolean;
   local: boolean;
@@ -399,7 +402,7 @@ export class Stage {
     status.anchor.set(0.5, 1);
     this.heroesLayer.addChild(status);
     const h: Hero = {
-      elem, body: new Body(), view, light, status, hair: new HairChain(elem === 'water' ? COOL_HAIR : HOT_FLAME), hairG, hairReset: true, local: true, alive: true, dying: null, deadT: 0,
+      elem, body: new Body(), view, light, status, hair: new HairChain(elem === 'water' ? COOL_HAIR : HOT_BAND), hair2: elem === 'water' ? null : new HairChain(HOT_BAND_LOW), hairG, hairReset: true, local: true, alive: true, dying: null, deadT: 0,
       sx: 1, sy: 1, vsx: 0, vsy: 0, whiten: 0, excite: 0, danger: 0, runPhase: 0, idle: 0, time: Math.random() * 10,
       ownPrev: 0, auraT: 0, lastGemT: -10, combo: 0, arcFull: [], arcTap: [], victory: -1, buf: [], queue: [],
     };
@@ -1162,10 +1165,10 @@ export class Stage {
     h.auraT -= dt;
     if (h.auraT > 0) return;
     const hx = x - b.facing * 4, hy = y - 1.35 * T;
-    const tip = s.hairTrail ? h.hair.tip() : null; // the trailing hair sheds embers / drops
+    const tip = s.hairTrail && h.elem === 'water' ? h.hair.tip() : null; // her trailing hair drops water; his embers rise from his flame hair
     if (h.elem === 'fire') {
       h.auraT = 0.13 - h.excite * 0.08;
-      if (s.aura && h.danger < 0.6) this.fx.emit({ x: tip ? tip.x : hx + (Math.random() - 0.5) * 14, y: tip ? tip.y : hy, count: 1, colors: FIRE_FX, speed: [20, 50], life: [0.4, 0.9], size: [3, 6], angle: -Math.PI / 2, spread: 0.5, gravity: -60 });
+      if (s.aura && h.danger < 0.6) this.fx.emit({ x: hx + (Math.random() - 0.5) * 14, y: hy - 8, count: 1, colors: FIRE_FX, speed: [20, 50], life: [0.4, 0.9], size: [3, 6], angle: -Math.PI / 2, spread: 0.5, gravity: -60 });
       if (s.nearDanger && h.danger > 0.25) this.dust.emit({ x: hx, y: hy, count: 1, colors: [0x7d8b8f, 0x5a6669], speed: [15, 40], life: [0.5, 0.9], size: [6, 11], angle: -Math.PI / 2, spread: 0.4, gravity: -50, alpha: 0.45 * h.danger }); // sputter smoke
       if (h.victory >= 0) this.fx.emit({ x: hx, y: hy - 6, count: 3, colors: FIRE_FX, speed: [80, 200], life: [0.3, 0.7], size: [3, 7], angle: -Math.PI / 2, spread: 0.7, gravity: 200 }); // his fireworks
     } else {
@@ -1178,29 +1181,23 @@ export class Stage {
     }
   }
 
-  /** Trailing hair (render/hair.ts): her long water ribbon, his flame tail. */
+  /** Trailing hair (render/hair.ts): her long water ribbon, his two headband tails. */
   private drawHair(h: Hero, dt: number, p: Pose): void {
     const g = h.hairG.clear();
     if (!this.settings.hairTrail) return;
     const v = h.view;
-    const root = h.elem === 'water' ? v.headPoint(-7.5, -2.5) : v.headPoint(-7.5, -5);
-    if (h.hairReset) {
-      h.hair.reset(root.x, root.y, v.facing);
-      h.hairReset = false;
-    }
-    h.hair.update(root.x, root.y, v.facing, dt, h.time, p.speed);
     const C = (c: number) => lerpColor(c, 0xffffff, h.whiten);
     if (h.elem === 'water') {
+      const root = v.headPoint(-7.5, -2.5);
+      if (h.hairReset) h.hair.reset(root.x, root.y, v.facing);
+      h.hair.update(root.x, root.y, v.facing, dt, h.time, p.speed);
       h.hair.ribbon(g, 7.5, 1.6, C(0x1fa3ff));
       h.hair.ribbon(g, 3, 0.6, C(0x7adfff), 0.55);
       h.hair.line(g, 1, 8, 1.1, C(0xe4faff), 0.7, 1.5);
-    } else {
-      const size = Math.max(0.35, 1 + h.excite * 0.35 - h.danger * 0.6) * (p.victory >= 0 ? 1.4 : 1);
-      const flick = (i: number) => 0.8 + 0.35 * Math.sin(h.time * (17 + i * 3) + i * 1.9);
-      h.hair.ribbon(g, 9 * size, 0, C(0xff6a1a), 0.95, flick);
-      h.hair.ribbon(g, 5.5 * size, 0, C(0xffb02e), 0.95, flick);
-      h.hair.ribbon(g, 2.4 * size, 0, C(0xfff0c2), 0.9, flick);
+    } else if (h.hair2) {
+      drawBand(h.hair, h.hair2, v, h.hairReset, dt, h.time, p.speed, g, C);
     }
+    h.hairReset = false;
   }
 
   private addFlame(x: number, y: number): void {

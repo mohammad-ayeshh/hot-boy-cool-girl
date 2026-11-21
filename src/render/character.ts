@@ -23,7 +23,26 @@ export interface Pose {
   excite: number;
   /** seconds since the level was completed, or -1 */
   victory: number;
+  /** 0..1 how strong his ignite flare is right now (Hot Boy's tap on the main screen; see igniteFlare) */
+  ignite?: number;
 }
+
+/** How long Hot Boy's ignite lasts, in seconds. */
+export const IGNITE_S = 2;
+
+/** The ignite flare's strength t seconds after the tap: a fast whoosh up, a blaze, then it settles. */
+export function igniteFlare(t: number): number {
+  if (t < 0 || t >= IGNITE_S) return 0;
+  if (t < 0.15) return 1 - (1 - t / 0.15) ** 2;
+  if (t < 1.1) return 1;
+  const u = (t - 1.1) / (IGNITE_S - 1.1);
+  return 1 - u * u * (3 - 2 * u);
+}
+
+/** His stiff crown of flame spikes, around the top of his head (head space). Every odd point is a spike's tip. */
+const CROWN = [-10, -1, -18, -5, -11, -9, -16, -17, -7, -12.5, -7, -22, -1, -13.5, 3, -22, 4.5, -12, 12, -17, 9.5, -7.5, 16, -7, 10, -1];
+const CROWN_IN = [-8, -5, -12, -14, -5, -11, -3, -17, 0, -11, 5, -16, 5, -9, 9, -7];
+const BAND = 0x7a1d08;
 
 const HOT = { core: 0xfff0c2, light: 0xffb02e, main: 0xff6a1a, dark: 0xb8320c, ink: 0x4a1204 };
 const COOL = { core: 0xe4faff, light: 0x7adfff, main: 0x1fa3ff, dark: 0x0b57c9, ink: 0x06244f };
@@ -110,8 +129,9 @@ export class CharacterView extends Container {
     g.roundShape([{ x: -3.5, y: 0 }, { x: 3.5, y: 0 }, { x: 8, y: -12 }, { x: -7, y: -12.5 }], 2.2).fill(C(HOT.main));
     g.poly([1, -2, 4, -2, 6.5, -11, 1, -11.5]).fill({ color: C(HOT.light), alpha: 0.65 });
     // front arm
-    const pump = p.victory >= 0 ? Math.abs(Math.sin(p.victory * 8)) : 0; // victory fist pump
-    const frontHand = p.victory >= 0 ? { x: 7, y: -22 - pump * 4 } : air ? { x: 9, y: p.vy < 0 ? -22 : -18 } : idleHot(p, 1) ?? { x: 4 + swing, y: -1 + Math.abs(swing) * 0.15 };
+    const ign = a ? p.ignite ?? 0 : 0;
+    const pump = p.victory >= 0 ? Math.abs(Math.sin(p.victory * 8)) : ign > 0.05 ? Math.abs(Math.sin(p.time * 9)) * ign : 0; // fist pump
+    const frontHand = p.victory >= 0 ? { x: 7, y: -22 - pump * 4 } : ign > 0.05 ? { x: 16.5, y: -19 - pump * 3 } : air ? { x: 9, y: p.vy < 0 ? -22 : -18 } : idleHot(p, 1) ?? { x: 4 + swing, y: -1 + Math.abs(swing) * 0.15 };
     limb(g, 5, -10.5, frontHand.x, frontHand.y, C(HOT.main), 4);
     g.circle(frontHand.x, frontHand.y, 2.8).fill(C(HOT.light));
 
@@ -119,30 +139,36 @@ export class CharacterView extends Container {
     this.head.position.set(2.5, -22.5);
     this.head.rotation = a ? -this.upper.rotation * 0.6 : 0;
     const h = this.headG.clear();
-    // flaming mohawk, swept back; grows when excited, shrinks and sputters near water
-    const flame = Math.max(0.35, 1 + p.excite * 0.55 - p.danger * 0.6) * (p.victory >= 0 ? 1.5 + pump * 0.3 : 1);
-    const sputter = p.danger > 0.2 && a ? (Math.random() < p.danger * 0.25 ? 0.5 : 1) : 1;
-    const layers: [number, number][] = [[HOT.main, 1], [HOT.light, 0.68], [HOT.core, 0.38]];
-    for (const [col, k] of layers) {
-      // spikes along the top of the head, front to back, each swept back and longer toward the back
-      const pts: number[] = [Math.cos(-0.7) * 8 * k, Math.sin(-0.7) * 8 * k];
-      for (let i = 0; i < 6; i++) {
-        const ang = -0.9 - i * 0.34;
-        const flick = a ? Math.sin(p.time * (11 + i * 3) + i * 1.7) * 0.16 + Math.sin(p.time * 23 + i) * 0.07 : 0;
-        const len = (6.5 + i * 2.4) * flame * sputter * (1 + flick) * (0.45 + k * 0.55);
-        const dir = ang - 0.75 - p.speed * 0.3;
-        const bx = Math.cos(ang) * 9.6, by = Math.sin(ang) * 9.6;
-        pts.push(bx + Math.cos(dir) * len, by + Math.sin(dir) * len);
-        const v = ang - 0.2;
-        pts.push(Math.cos(v) * (9.2 - (1 - k) * 2), Math.sin(v) * (9.2 - (1 - k) * 2));
+    // the ignite flare: a tall flame shooting up from the top of his head, behind the crown
+    if (ign > 0) {
+      const fl = a ? Math.sin(p.time * 17) * 0.08 + Math.sin(p.time * 29) * 0.05 : 0;
+      const sway = a ? Math.sin(p.time * 9) * 2 * ign : 0;
+      for (const [col, k] of [[HOT.main, 1], [HOT.light, 0.66], [HOT.core, 0.33]] as [number, number][]) {
+        const ht = (34 * k + 6) * ign * (1 + fl), w = (8 * k + 1.5) * Math.min(1, ign * 1.5);
+        h.moveTo(-w - 1, -6).bezierCurveTo(-w - 2, -6 - ht * 0.45, -2 + sway, -6 - ht * 0.7, -3 + sway, -6 - ht)
+          .bezierCurveTo(1 + sway, -6 - ht * 0.65, w + 2, -6 - ht * 0.4, w, -6).closePath().fill(C(col));
       }
-      pts.push(-8, 2, 0, 0);
-      h.poly(pts).fill(C(col));
     }
+    // stiff crown of flame spikes: it doesn't trail, but it flickers, grows when he's excited and shrinks and sputters near water
+    const flame = Math.max(0.35, 1 + p.excite * 0.25 - p.danger * 0.6) * (p.victory >= 0 ? 1.3 + pump * 0.15 : 1) * (1 + ign * 0.12);
+    const sputter = p.danger > 0.2 && a ? (Math.random() < p.danger * 0.25 ? 0.6 : 1) : 1;
+    const crown = (pts: number[]) => pts.map((v, i) => {
+      const k = i >> 1, tip = k % 2 === 1;
+      const flick = a && tip ? 1 + Math.sin(p.time * (11 + k * 2.3) + k * 1.7) * 0.06 + Math.sin(p.time * 23 + k) * 0.03 : 1;
+      return i % 2 === 0 ? v * flame * sputter * flick : -4 + (v + 4) * flame * sputter * flick; // grows from the head's middle
+    });
+    h.poly(crown(CROWN)).fill(C(HOT.main));
+    h.poly(crown(CROWN_IN)).fill(C(HOT.light));
     // head shape: slightly angular
     h.roundShape([{ x: -10, y: -6 }, { x: 0, y: -10.5 }, { x: 10.5, y: -5 }, { x: 10.5, y: 5 }, { x: 4, y: 10.5 }, { x: -6, y: 9.5 }, { x: -10.5, y: 3 }], 4.5).fill(C(HOT.light));
     h.ellipse(4, 2, 6.5, 6).fill({ color: C(HOT.core), alpha: 0.55 });
-    // face: angled brows, cocky grin with a fang
+    // the headband: his signature item. Its long tails are drawn by the stage as trailing chains (render/hair.ts);
+    // without them, two short stiff tails stick out of the knot.
+    if (!this.trailHair) h.poly([-10, -3, -21, -8, -19, -3.5]).poly([-10, -2, -20, 1.5, -15.5, 2.5]).fill(C(BAND));
+    h.poly([-10, -3, -13, -5, -12.5, -2]).fill(C(BAND)); // the knot
+    h.moveTo(-11.5, -5.5).quadraticCurveTo(0, -10, 12, -5).lineTo(12, -2).quadraticCurveTo(0, -7, -11.5, -2.5).closePath().fill(C(BAND));
+    // face, moved down a little to sit under the headband: angled brows, cocky grin (no fang since the 2026-11-21 redesign)
+    h.save().translateTransform(-0.5, 2);
     const ink = C(HOT.ink);
     if (this.blinking(p)) {
       h.moveTo(-0.5, 0).lineTo(3, 0).stroke({ width: 1.6, color: ink, cap: 'round' });
@@ -158,7 +184,7 @@ export class CharacterView extends Container {
     h.moveTo(-2, -5.2 - worried).lineTo(3.2, -3.4).stroke({ width: 2, color: ink, cap: 'round' });
     h.moveTo(5, -3.4).lineTo(10, -5.6 - worried).stroke({ width: 2, color: ink, cap: 'round' });
     h.moveTo(1.5, 4.8).quadraticCurveTo(6, 7.5, 9.5, 3.6).stroke({ width: 1.6, color: ink, cap: 'round' });
-    h.poly([6.4, 5.7, 7.8, 5.4, 7.1, 7.2]).fill(C(0xffffff)); // fang
+    h.restore();
   }
 
   // ------------------------------------------------------------------ Cool Girl

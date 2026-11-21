@@ -72,7 +72,7 @@ export const DEFS = {
   animations: t('Character', 'Animations (run, idle, jump)', true, { effect: true }),
   nudgeFx: t('Character', 'Puff when a helper saves you', true, { effect: true }),
   trails: t('Character', 'Trails (scorch / wet)', true, { effect: true }),
-  hairTrail: t('Character', 'Hair trails behind (her ribbon, his flame tail)', true, { effect: true }),
+  hairTrail: t('Character', 'Hair trails behind (her ribbon, his headband)', true, { effect: true }),
   stepFire: t('Character', 'Small flames in his footsteps', true, { effect: true }),
   nearDanger: t('Character', 'Near-danger reaction', true, { effect: true, hint: 'His flame sputters, she starts to boil' }),
   aura: t('Character', 'Floating embers / droplets', true, { effect: true }),
