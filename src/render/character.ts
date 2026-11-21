@@ -23,12 +23,17 @@ export interface Pose {
   excite: number;
   /** seconds since the level was completed, or -1 */
   victory: number;
-  /** 0..1 how strong his ignite flare is right now (Hot Boy's tap on the main screen; see igniteFlare) */
+  /** 0..1 how strong his ignite flare is right now (Hot Boy's tap on the main screen, or a double tap on him in a level; see igniteFlare) */
   ignite?: number;
+  /** seconds since her hair flip during a level (a double tap on her, 14.4), or -1: the sunglasses drop, then go back up */
+  flip?: number;
 }
 
 /** How long Hot Boy's ignite lasts, in seconds. */
 export const IGNITE_S = 2;
+
+/** How long her hair flip during a level lasts (the sunglasses drop and go back up), in seconds: as long as his ignite. */
+export const FLIP_S = IGNITE_S;
 
 /** The ignite flare's strength t seconds after the tap: a fast whoosh up, a blaze, then it settles. */
 export function igniteFlare(t: number): number {
@@ -130,8 +135,9 @@ export class CharacterView extends Container {
     g.poly([1, -2, 4, -2, 6.5, -11, 1, -11.5]).fill({ color: C(HOT.light), alpha: 0.65 });
     // front arm
     const ign = a ? p.ignite ?? 0 : 0;
-    const pump = p.victory >= 0 ? Math.abs(Math.sin(p.victory * 8)) : ign > 0.05 ? Math.abs(Math.sin(p.time * 9)) * ign : 0; // fist pump
-    const frontHand = p.victory >= 0 ? { x: 7, y: -22 - pump * 4 } : ign > 0.05 ? { x: 16.5, y: -19 - pump * 3 } : air ? { x: 9, y: p.vy < 0 ? -22 : -18 } : idleHot(p, 1) ?? { x: 4 + swing, y: -1 + Math.abs(swing) * 0.15 };
+    const ignPump = ign > 0.05 && p.grounded && !run; // standing still he pumps his fist; walking or jumping only the flame shows
+    const pump = p.victory >= 0 ? Math.abs(Math.sin(p.victory * 8)) : ignPump ? Math.abs(Math.sin(p.time * 9)) * ign : 0; // fist pump
+    const frontHand = p.victory >= 0 ? { x: 7, y: -22 - pump * 4 } : ignPump ? { x: 16.5, y: -19 - pump * 3 } : air ? { x: 9, y: p.vy < 0 ? -22 : -18 } : idleHot(p, 1) ?? { x: 4 + swing, y: -1 + Math.abs(swing) * 0.15 };
     limb(g, 5, -10.5, frontHand.x, frontHand.y, C(HOT.main), 4);
     g.circle(frontHand.x, frontHand.y, 2.8).fill(C(HOT.light));
 
@@ -234,7 +240,8 @@ export class CharacterView extends Container {
     // long water hair, flowing like a ribbon behind her
     const flow = a ? 1 + p.speed * 0.8 : 1;
     // angle away from "hanging straight down": more when running, up when falling
-    const flip = p.victory >= 0 ? Math.sin(Math.min(1, p.victory / 0.45) * Math.PI) * 1.3 : 0; // hair flip
+    const fv = p.victory >= 0 ? p.victory : a ? p.flip ?? -1 : -1; // the level's end, or a double tap on her (14.4)
+    const flip = fv >= 0 ? Math.sin(Math.min(1, fv / 0.45) * Math.PI) * 1.3 : 0; // hair flip
     const ang = 0.35 + flip + (a ? p.speed * 0.95 + (p.grounded ? 0 : p.vy > 0 ? Math.min(1.4, p.vy / 9) : Math.max(-0.3, p.vy / 40)) : 0);
     const N = 9;
     const top: number[] = [];
@@ -274,7 +281,9 @@ export class CharacterView extends Container {
     if (shock > 0.5) h.ellipse(6, 5.2, 1.3, 1.6).fill(ink); // "oh no"
     else h.moveTo(3.5, 5.4).quadraticCurveTo(6.5, 6.4, 8.8, 4.2).stroke({ width: 1.4, color: ink, cap: 'round' }); // smirk
     // sunglasses: resting on her head, they drop onto her face when the level is done 😎
-    const k = p.victory >= 0 ? easeOutBack(Math.min(1, Math.max(0, (p.victory - 0.3) / 0.25))) : 0;
+    // (and for a moment after a double tap on her during the level: they go back up at the end)
+    const up = p.victory < 0 && fv >= 0 ? smooth((fv - (FLIP_S - 0.35)) / 0.35) : 0;
+    const k = fv >= 0 ? easeOutBack(Math.min(1, Math.max(0, (fv - 0.3) / 0.25))) * (1 - up) : 0;
     // Seen from the side: only the near lens shows (the far one is behind her face), with its arm running back to her ear.
     const lerp = (a: number, b: number) => a + (b - a) * k;
     const cx = lerp(3.6, 6.6), cy = lerp(-10.3, 0.4); // lens middle: up on her head → over her eye
@@ -313,6 +322,11 @@ function hipsFront(g: Graphics, C: (c: number) => number): void {
   line(g, pts, C(COOL.ink), 4.6, 0.55);
   line(g, pts, C(ARM), 3.2);
   g.circle(4.2, -2.2, 1.9).fill(C(COOL.light));
+}
+
+function smooth(t: number): number {
+  const u = Math.min(1, Math.max(0, t));
+  return u * u * (3 - 2 * u);
 }
 
 function easeOutBack(t: number): number {

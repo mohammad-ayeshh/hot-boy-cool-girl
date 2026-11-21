@@ -5,7 +5,7 @@ import { CHAPTERS } from './levels.ts';
 import { defaults } from './settings.ts';
 
 /** Bump by hand whenever the messages between the two phones change (src/online/game.ts, src/net/). */
-export const PROTOCOL = 6; // 2: Don't touch (16.7) adds the 'touch' message; 3: levers flip on each step-on (both phones must agree); 4: crumbling stones (16.7) add the 'crumble' message and `cr` in the world state; 5: timed switches (16.7) add `tm` to the world state; 6: the rising tide (16.7) adds `td`
+export const PROTOCOL = 7; // 2: Don't touch (16.7) adds the 'touch' message; 3: levers flip on each step-on (both phones must agree); 4: crumbling stones (16.7) add the 'crumble' message and `cr` in the world state; 5: timed switches (16.7) add `tm` to the world state; 6: the rising tide (16.7) adds `td`; 7: the 'show' hero event (double-tap yourself, 14.4)
 
 let cached = '';
 /** "<protocol>-<fingerprint of every official level and the default physics>": the same on both phones = can play. */

@@ -13,7 +13,7 @@ import { CARVING_DARK, CARVING_LIGHT, CRUMBLE_BACK, CRUMBLE_SHAKE, Mechanisms, c
 import { drawAnimal } from '../render/animals';
 import type { Settings } from '../game/settings';
 import { ParticleSystem, makeGlowTexture } from '../render/particles';
-import { CharacterView, type Pose } from '../render/character';
+import { CharacterView, FLIP_S, IGNITE_S, igniteFlare, type Pose } from '../render/character';
 import { Pools, T, airParticle, drawBackground, drawScenery, drawTiles, lerpColor } from '../render/world';
 import { THEMES, themeFor, type Theme } from '../render/themes';
 import { COOL_HAIR, HOT_BAND, HOT_BAND_LOW, HairChain, drawBand } from '../render/hair';
@@ -30,8 +30,13 @@ const ELEMS: Elem[] = ['water', 'fire']; // draw order: she's behind him
 /** The partner is shown this far in the past, smoothly blended (13.2). */
 const INTERP_DELAY = 100;
 const PARTNER_GAIN = 0.6;
+/** Showing off (14.4): the most time between the two taps of a double tap on your character, in ms. */
+const SHOW_TAP_MS = 350;
+/** How long the special move plays; a double tap meanwhile is ignored. */
+const SHOW_S = Math.max(IGNITE_S, FLIP_S);
 
-export type HeroEvent = { k: 'jump' } | { k: 'land'; v: number } | { k: 'turn' };
+/** `show`: a double tap on your own character played their special move (14.4): his ignite, her hair flip. Visual only. */
+export type HeroEvent = { k: 'jump' } | { k: 'land'; v: number } | { k: 'turn' } | { k: 'show' };
 
 /** What the network sends ~30×/s about one character. p = platform stood on (-1 = none), rx/ry = position on it. */
 export interface Snapshot { x: number; y: number; vx: number; vy: number; g: 0 | 1; f: -1 | 1; p?: number; rx?: number; ry?: number }
@@ -92,6 +97,8 @@ interface Hero {
   arcFull: number[];
   arcTap: number[];
   victory: number;
+  /** seconds since a double tap played the special move (14.4: his ignite, her hair flip), or -1. Visual only. */
+  show: number;
   /** partner only: received snapshots and events, played back INTERP_DELAY ms late */
   buf: { t: number; s: Snapshot }[];
   queue: { t: number; run: () => void }[];
@@ -164,6 +171,8 @@ export class Stage {
   /** Seconds since the level (re)started; stops when it's completed. */
   levelTime = 0;
   completed = false;
+  /** when the last tap on your own character landed (performance.now ms), for the double tap (14.4) */
+  private showTapT = -1e9;
   fps = 0;
   /** The ending (16.12): 0..1, how lit the heart of the temple is behind the last level. */
   private heartGlow = 0;
@@ -228,6 +237,7 @@ export class Stage {
 
   constructor(readonly app: Application, readonly settings: Settings, level: LevelData, private opts: StageOptions) {
     this.controls = new Controls(app.canvas, { deadZone: settings.deadZone, anchorFollows: settings.anchorFollows, anchorLeash: settings.anchorLeash });
+    app.canvas.addEventListener('pointerdown', this.onShowTap);
     this.lights.addChild(this.levelLights);
     this.world.addChild(this.bg, this.scenery, this.air.view, this.tiles, this.lights, this.trails.view, this.doorsG, this.mechG, this.flamesG, this.gemsG, this.heroesLayer, this.dust.view, this.poolsG, this.tideG, this.revealG, this.fx.view, this.debug, this.overlay);
     app.stage.addChild(this.margins, this.world, this.screenFx, this.hints);
@@ -404,7 +414,7 @@ export class Stage {
     const h: Hero = {
       elem, body: new Body(), view, light, status, hair: new HairChain(elem === 'water' ? COOL_HAIR : HOT_BAND), hair2: elem === 'water' ? null : new HairChain(HOT_BAND_LOW), hairG, hairReset: true, local: true, alive: true, dying: null, deadT: 0,
       sx: 1, sy: 1, vsx: 0, vsy: 0, whiten: 0, excite: 0, danger: 0, runPhase: 0, idle: 0, time: Math.random() * 10,
-      ownPrev: 0, auraT: 0, lastGemT: -10, combo: 0, arcFull: [], arcTap: [], victory: -1, buf: [], queue: [],
+      ownPrev: 0, auraT: 0, lastGemT: -10, combo: 0, arcFull: [], arcTap: [], victory: -1, show: -1, buf: [], queue: [],
     };
     h.body.events = {
       jump: () => this.onJump(h),
@@ -451,6 +461,7 @@ export class Stage {
       h.ownPrev = 0;
       h.danger = 0;
       h.victory = -1;
+      h.show = -1;
       h.combo = 0;
       h.buf = [];
       h.queue = [];
@@ -504,6 +515,7 @@ export class Stage {
       if (!h.alive) return;
       if (ev.k === 'jump') this.onJump(h);
       else if (ev.k === 'land') this.onLand(h, ev.v);
+      else if (ev.k === 'show') this.startShow(h);
       else this.onTurn(h);
     });
   }
@@ -663,6 +675,47 @@ export class Stage {
     this.fx.emit({ x, y, count: 20, colors, speed: [60, 140], life: [0.25, 0.45], size: [4, 8], spread: Math.PI, drag: 0.05 });
   }
 
+  /**
+   * Showing off (14.4): two taps right on your own character within SHOW_TAP_MS play their special move.
+   * The taps still walk or jump as usual (the Controls see them too); nothing here touches physics.
+   */
+  private onShowTap = (e: PointerEvent): void => {
+    const h = this.controlled ? this.heroes[this.controlled] : null;
+    if (!h || !h.local || !h.alive || h.dying || this.completed || !this.inputEnabled || this.paused || !this.world.visible) return;
+    const p = this.toTile(e.clientX, e.clientY);
+    const b = h.body;
+    const hit = Math.abs(p.x - b.x) < 0.95 && p.y < b.y + 0.35 && p.y > b.y - HITBOX_H - 0.6;
+    const now = performance.now();
+    if (!hit) { this.showTapT = -1e9; return; }
+    if (now - this.showTapT > SHOW_TAP_MS) { this.showTapT = now; return; }
+    this.showTapT = -1e9;
+    if (h.show >= 0) return; // still playing: no restart (no other waiting time)
+    this.startShow(h);
+    this.haptic(15);
+    this.opts.hooks?.localEvent?.(h.elem, { k: 'show' });
+  };
+
+  /** His ignite / her hair flip with the sunglasses (14.4), as on the main screen (render/title.ts tap()). */
+  private startShow(h: Hero): void {
+    if (!h.alive || h.dying || this.completed || h.show >= 0) return;
+    h.show = 0;
+    h.idle = 0;
+    const s = this.settings;
+    const v = h.view;
+    if (h.elem === 'fire') {
+      if (s.squash) { h.sy = 1 + 0.15 * s.squashAmount; h.sx = 1 - 0.12 * s.squashAmount; h.vsx = h.vsy = 0; }
+      const top = v.headPoint(0, -12);
+      if (s.jumpFx) this.fx.emit({ x: top.x, y: top.y, count: 26, colors: FIRE_FX, speed: [80, 260], life: [0.3, 0.8], size: [3, 8], angle: -Math.PI / 2, spread: 0.9, gravity: 120, drag: 0.1 });
+      sfx.jump('fire', this.pan(h), this.gain(h));
+    } else {
+      if (s.hairTrail) h.hair.fling(-v.facing * 160, -420); // the flip: her hair swings up and back
+      if (s.jumpFx) this.fx.emit({ x: v.x, y: v.y - 1.2 * T, count: 12, colors: WATER_FX, speed: [40, 140], life: [0.3, 0.6], size: [2, 5], spread: Math.PI, gravity: 300, drag: 0.1 });
+      sfx.jump('water', this.pan(h), this.gain(h));
+      const g = this.gain(h);
+      setTimeout(() => { if (h.show >= 0) sfx.chime([1046.5, 1318.5], 0.07, 0.07 * g); }, 330); // the sunglasses drop 😎
+    }
+  }
+
   private onJump(h: Hero): void {
     const s = this.settings;
     if (s.squash) { h.sy = 1 + 0.32 * s.squashAmount; h.sx = 1 - 0.22 * s.squashAmount; h.vsx = h.vsy = 0; }
@@ -756,6 +809,7 @@ export class Stage {
     if (!h.alive || h.dying || this.completed) return;
     const s = this.settings;
     h.dying = cause;
+    h.show = -1;
     this.revealKiller(h, cause, gate);
     h.body.vx = h.body.vy = 0;
     if (cause === 'crush') { h.sy = 0.35; h.sx = 1.6; h.vsx = h.vsy = 0; } // flattened by the gate
@@ -850,6 +904,7 @@ export class Stage {
       const h = this.heroes[e];
       h.time += STEP;
       if (h.victory >= 0) h.victory += STEP;
+      if (h.show >= 0 && (h.show += STEP) >= SHOW_S) h.show = -1;
       // partner's delayed events
       while (h.queue.length && h.queue[0].t <= now - INTERP_DELAY) h.queue.shift()!.run();
       if (h.dying) this.explode(h, h.dying);
@@ -916,7 +971,8 @@ export class Stage {
         h.sy += h.vsy * STEP;
       } else h.sx = h.sy = 1;
       h.whiten = Math.max(0, h.whiten - STEP * 4);
-      const excite = h.victory >= 0 ? 1 : b.grounded ? Math.min(1, sp / this.phys.run) * 0.8 : 1;
+      let excite = h.victory >= 0 ? 1 : b.grounded ? Math.min(1, sp / this.phys.run) * 0.8 : 1;
+      if (h.elem === 'fire' && h.show >= 0) excite = Math.max(excite, igniteFlare(h.show)); // his light blazes with the ignite
       h.excite += (excite - h.excite) * Math.min(1, STEP * 6);
     }
     this.stepApart();
@@ -1143,6 +1199,7 @@ export class Stage {
     const pose: Pose = {
       time: h.time, speed: Math.min(1, Math.abs(b.vx) / this.phys.run), grounded: b.grounded, vy: b.vy, runPhase: h.runPhase,
       idle: h.idle, animate: s.animations, danger: h.danger, whiten: h.whiten, excite: h.excite, victory: h.victory,
+      ignite: h.elem === 'fire' && h.show >= 0 ? igniteFlare(h.show) : 0, flip: h.elem === 'water' ? h.show : -1,
     };
     h.view.trailHair = s.hairTrail;
     h.view.draw(pose);
@@ -1170,6 +1227,13 @@ export class Stage {
       h.auraT = 0.13 - h.excite * 0.08;
       if (s.aura && h.danger < 0.6) this.fx.emit({ x: hx + (Math.random() - 0.5) * 14, y: hy - 8, count: 1, colors: FIRE_FX, speed: [20, 50], life: [0.4, 0.9], size: [3, 6], angle: -Math.PI / 2, spread: 0.5, gravity: -60 });
       if (s.nearDanger && h.danger > 0.25) this.dust.emit({ x: hx, y: hy, count: 1, colors: [0x7d8b8f, 0x5a6669], speed: [15, 40], life: [0.5, 0.9], size: [6, 11], angle: -Math.PI / 2, spread: 0.4, gravity: -50, alpha: 0.45 * h.danger }); // sputter smoke
+      if (h.show >= 0 && s.aura) {
+        // the ignite: embers shoot up from the tall flame on his head (as on the main screen)
+        const ig = igniteFlare(h.show);
+        const tip = h.view.headPoint((Math.random() - 0.5) * 14, -14 - ig * 14);
+        h.auraT = 0.03;
+        this.fx.emit({ x: tip.x, y: tip.y, count: 1, colors: FIRE_FX, speed: [60, 140], life: [0.5, 1.1], size: [3, 6], angle: -Math.PI / 2, spread: 0.5, gravity: -60 });
+      }
       if (h.victory >= 0) this.fx.emit({ x: hx, y: hy - 6, count: 3, colors: FIRE_FX, speed: [80, 200], life: [0.3, 0.7], size: [3, 7], angle: -Math.PI / 2, spread: 0.7, gravity: 200 }); // his fireworks
     } else {
       h.auraT = tip && h.excite > 0.3 ? 0.07 : 0.16;

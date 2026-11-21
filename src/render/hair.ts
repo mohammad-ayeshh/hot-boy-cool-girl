@@ -100,6 +100,15 @@ export class HairChain {
     return [(-facing * b) / len, d / len];
   }
 
+  /** Give the whole strand a push (px per second), more toward the tip: her hair flip. */
+  fling(vx: number, vy: number): void {
+    const n = this.style.count;
+    for (let i = 1; i < n; i++) {
+      this.px[i] -= vx * STEP * (i / n);
+      this.py[i] -= vy * STEP * (i / n);
+    }
+  }
+
   tip(): { x: number; y: number } {
     const n = this.style.count - 1;
     return { x: this.x[n], y: this.y[n] };
